@@ -1,0 +1,95 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-slate-950 text-slate-100 antialiased;
+    background: radial-gradient(
+        circle at 20% 20%,
+        rgba(37, 99, 235, 0.14),
+        transparent 36%
+      ),
+      radial-gradient(
+        circle at 80% 0%,
+        rgba(34, 211, 238, 0.12),
+        transparent 32%
+      ),
+      #0f172a;
+  }
+  a {
+    @apply text-inherit no-underline;
+  }
+}
+
+@layer components {
+  .layout {
+    @apply min-h-screen flex bg-transparent;
+  }
+  .sidebar {
+    @apply w-60 bg-slate-900/90 border-r border-slate-800 p-4 space-y-2;
+  }
+  .content {
+    @apply flex-1 p-6;
+  }
+  .card {
+    @apply bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-2xl shadow-slate-950/50;
+  }
+  .navbar {
+    @apply flex items-center justify-between px-5 py-3 bg-slate-900/80 border-b border-slate-800 rounded-xl shadow-sm shadow-slate-900/40;
+  }
+  .btn {
+    @apply inline-flex items-center justify-center rounded-xl px-4 py-2 font-semibold transition disabled:opacity-60 disabled:cursor-not-allowed;
+  }
+  .btn-primary {
+    @apply bg-gradient-to-r from-brand-primary to-brand-glow text-slate-900 shadow-lg shadow-cyan-500/25 hover:translate-y-[-1px] active:translate-y-0 transition-transform;
+  }
+  .menu-item {
+    @apply block px-3 py-2 rounded-xl text-sm text-slate-100/90 hover:bg-slate-800/80 transition;
+  }
+  .menu-item.active {
+    @apply bg-slate-800 text-white;
+  }
+  .login-page {
+    @apply min-h-screen grid place-items-center px-4 py-10;
+  }
+  .login-card {
+    @apply w-full max-w-md bg-slate-900/90 border border-slate-800 rounded-2xl p-8 shadow-2xl shadow-slate-950/40 backdrop-blur;
+  }
+  .login-title {
+    @apply text-2xl font-bold mt-2 mb-1;
+  }
+  .login-subtext {
+    @apply text-sm text-slate-400 mb-5;
+  }
+  .login-form {
+    @apply flex flex-col gap-3;
+  }
+  .input {
+    @apply w-full rounded-xl border border-slate-800 bg-slate-950/80 px-4 py-3 text-sm text-slate-100 placeholder:text-slate-500 focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/50;
+  }
+  .input-error {
+    @apply text-sm text-rose-300;
+  }
+  .login-header {
+    @apply flex items-center gap-3 mb-3;
+  }
+  .logo-circle {
+    @apply w-12 h-12 grid place-items-center rounded-full bg-gradient-to-br from-brand-primary to-brand-glow text-slate-900 font-bold text-lg;
+  }
+  .logo-title {
+    @apply text-lg font-bold;
+  }
+  .logo-subtitle {
+    @apply text-xs text-slate-400;
+  }
+  .login-accounts {
+    @apply mt-4 p-4 border border-slate-800 rounded-xl bg-slate-900/70;
+  }
+  .login-accounts-title {
+    @apply font-semibold mb-2 text-slate-100;
+  }
+  .login-accounts ul {
+    @apply m-0 pl-5 text-sm text-slate-300 space-y-1;
+  }
+}

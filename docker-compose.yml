@@ -1,0 +1,36 @@
+version: '3.9'
+services:
+  mongo:
+    image: mongo:6
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  api:
+    build: ./server
+    depends_on:
+      - mongo
+    environment:
+      - PORT=5000
+      - MONGO_URI=mongodb://mongo:27017/booking_platform
+      - JWT_SECRET=super-secret-change-me
+      - JWT_REFRESH_SECRET=super-refresh-secret-change-me
+      - ACCESS_TOKEN_EXPIRES=15m
+      - REFRESH_TOKEN_EXPIRES=7d
+      - CLIENT_ORIGIN=http://localhost:5173
+    ports:
+      - "5000:5000"
+
+  client:
+    build: ./client
+    depends_on:
+      - api
+    environment:
+      - VITE_API_URL=http://localhost:5000/api
+    ports:
+      - "5173:5173"
+
+volumes:
+  mongo_data:

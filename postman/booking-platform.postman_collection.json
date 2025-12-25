@@ -1,0 +1,63 @@
+{
+  "info": {
+    "name": "Booking Platform API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth / Login",
+      "request": {
+        "method": "POST",
+        "header": [{"key": "Content-Type", "value": "application/json"}],
+        "url": {"raw": "{{base_url}}/auth/login", "host": ["{{base_url}}"], "path": ["auth", "login"]},
+        "body": {"mode": "raw", "raw": "{\n  \"email\": \"super@arkedia.com\",\n  \"password\": \"Password123!\"\n}"}
+      }
+    },
+    {
+      "name": "Auth / Refresh",
+      "request": {
+        "method": "POST",
+        "header": [{"key": "Content-Type", "value": "application/json"}],
+        "url": {"raw": "{{base_url}}/auth/refresh", "host": ["{{base_url}}"], "path": ["auth", "refresh"]},
+        "body": {"mode": "raw", "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"}
+      }
+    },
+    {
+      "name": "Sidebar",
+      "request": {
+        "method": "GET",
+        "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"}],
+        "url": {"raw": "{{base_url}}/sidebar", "host": ["{{base_url}}"], "path": ["sidebar"]}
+      }
+    },
+    {
+      "name": "Users / List",
+      "request": {
+        "method": "GET",
+        "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"}],
+        "url": {"raw": "{{base_url}}/users", "host": ["{{base_url}}"], "path": ["users"]}
+      }
+    },
+    {
+      "name": "Hotels / List",
+      "request": {
+        "method": "GET",
+        "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"}],
+        "url": {"raw": "{{base_url}}/hotels", "host": ["{{base_url}}"], "path": ["hotels"]}
+      }
+    },
+    {
+      "name": "Bookings / List",
+      "request": {
+        "method": "GET",
+        "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}"}],
+        "url": {"raw": "{{base_url}}/bookings", "host": ["{{base_url}}"], "path": ["bookings"]}
+      }
+    }
+  ],
+  "variable": [
+    {"key": "base_url", "value": "http://localhost:5001/api"},
+    {"key": "accessToken", "value": ""},
+    {"key": "refreshToken", "value": ""}
+  ]
+}
