@@ -39,7 +39,9 @@ export default function Navbar() {
         </div>
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <span style={{ color: isDark ? "#f1f5f9" : "#334155" }}>{user?.name}</span>
+        <span style={{ color: isDark ? "#f1f5f9" : "#334155" }}>
+          {user?.name}
+        </span>
         <button className="btn" onClick={handleLogout}>
           {t("logout")}
         </button>
