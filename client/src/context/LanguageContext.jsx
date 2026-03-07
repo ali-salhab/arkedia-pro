@@ -87,6 +87,16 @@ const translations = {
     comingSoon: "Coming soon",
     permissions: "Permissions",
     noPermissions: "No explicit permissions (inherited from role)",
+    // Sidebar items
+    users: "Users",
+    allHotels: "All Hotels",
+    allRestaurants: "All Restaurants",
+    allActivities: "All Activities",
+    allBookings: "All Bookings",
+    roomsTables: "Rooms/Tables",
+    finance: "Finance",
+    reports: "Reports",
+    unifiedBookingPlatform: "Unified Booking Platform",
     // Form fields
     basicInfo: "Basic Information",
     location: "Location",
@@ -194,6 +204,16 @@ const translations = {
     comingSoon: "قريباً",
     permissions: "الصلاحيات",
     noPermissions: "لا توجد صلاحيات محددة (موروثة من الدور)",
+    // Sidebar items
+    users: "المستخدمون",
+    allHotels: "جميع الفنادق",
+    allRestaurants: "جميع المطاعم",
+    allActivities: "جميع الأنشطة",
+    allBookings: "جميع الحجوزات",
+    roomsTables: "الغرف / الطاولات",
+    finance: "المالية",
+    reports: "التقارير",
+    unifiedBookingPlatform: "منصة الحجز الموحّدة",
     // Form fields
     basicInfo: "المعلومات الأساسية",
     location: "الموقع",
