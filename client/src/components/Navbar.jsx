@@ -24,6 +24,7 @@ export default function Navbar() {
             borderRadius: "999px",
             objectFit: "cover",
           }}
+          onError={(e) => { e.target.src = "/logo.svg"; }}
         />
         <div style={{ display: "flex", flexDirection: "column" }}>
           <span style={{ fontWeight: 600, color: "#1e293b" }}>Travky.com</span>
