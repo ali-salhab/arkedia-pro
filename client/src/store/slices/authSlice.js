@@ -3,7 +3,9 @@ import { createSlice } from "@reduxjs/toolkit";
 const loadAuth = () => {
   try {
     const serialized = localStorage.getItem("auth");
-    return serialized ? JSON.parse(serialized) : { user: null, accessToken: null, refreshToken: null };
+    return serialized
+      ? JSON.parse(serialized)
+      : { user: null, accessToken: null, refreshToken: null };
   } catch {
     return { user: null, accessToken: null, refreshToken: null };
   }
@@ -23,7 +25,11 @@ const authSlice = createSlice({
       state.user = action.payload.user;
       state.accessToken = action.payload.accessToken;
       state.refreshToken = action.payload.refreshToken;
-      saveAuth({ user: state.user, accessToken: state.accessToken, refreshToken: state.refreshToken });
+      saveAuth({
+        user: state.user,
+        accessToken: state.accessToken,
+        refreshToken: state.refreshToken,
+      });
     },
     logout: (state) => {
       state.user = null;
