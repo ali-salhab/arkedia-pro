@@ -166,7 +166,10 @@ html.dark select option {
   background: #1e293b;
   color: #f1f5f9;
 }
-html.dark h1, html.dark h2, html.dark h3, html.dark h4 {
+html.dark h1,
+html.dark h2,
+html.dark h3,
+html.dark h4 {
   color: #f1f5f9;
 }
 html.dark p {

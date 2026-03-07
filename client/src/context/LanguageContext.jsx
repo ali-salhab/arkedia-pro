@@ -10,7 +10,8 @@ const translations = {
     unifiedPlatform: "Unified Booking Platform",
     controlBooking: "Control every booking",
     inOnePlace: " in one place",
-    fiveDesc: "Five dashboards for super admin, admin company, hotels, restaurants, and activities. Role-based access, permissions-aware sidebar, and real-time data.",
+    fiveDesc:
+      "Five dashboards for super admin, admin company, hotels, restaurants, and activities. Role-based access, permissions-aware sidebar, and real-time data.",
     security: "Security",
     dashboards: "Dashboards",
     tailoredViews: "5 tailored views",
@@ -20,7 +21,8 @@ const translations = {
     signingIn: "Signing in...",
     sampleAccounts: "Sample accounts",
     loginFailed: "Login Failed",
-    invalidCredentials: "Invalid credentials. Please check your email and password.",
+    invalidCredentials:
+      "Invalid credentials. Please check your email and password.",
     tryAgain: "Try Again",
     // Nav / General
     dashboard: "Dashboard",
@@ -115,7 +117,8 @@ const translations = {
     unifiedPlatform: "منصة الحجز الموحّدة",
     controlBooking: "تحكّم في كل حجز",
     inOnePlace: " في مكان واحد",
-    fiveDesc: "خمس لوحات تحكم للمسؤول الرئيسي وشركة الإدارة والفنادق والمطاعم والأنشطة. وصول قائم على الأدوار وشريط جانبي وبيانات فورية.",
+    fiveDesc:
+      "خمس لوحات تحكم للمسؤول الرئيسي وشركة الإدارة والفنادق والمطاعم والأنشطة. وصول قائم على الأدوار وشريط جانبي وبيانات فورية.",
     security: "الأمان",
     dashboards: "لوحات التحكم",
     tailoredViews: "5 طرق عرض مخصصة",
@@ -125,7 +128,8 @@ const translations = {
     signingIn: "جاري تسجيل الدخول...",
     sampleAccounts: "حسابات تجريبية",
     loginFailed: "فشل تسجيل الدخول",
-    invalidCredentials: "بيانات غير صحيحة. يرجى التحقق من البريد الإلكتروني وكلمة المرور.",
+    invalidCredentials:
+      "بيانات غير صحيحة. يرجى التحقق من البريد الإلكتروني وكلمة المرور.",
     tryAgain: "حاول مرة أخرى",
     // Nav / General
     dashboard: "لوحة التحكم",
@@ -217,7 +221,9 @@ const LanguageContext = createContext();
 
 export function LanguageProvider({ children }) {
   const [lang, setLang] = useState(() => localStorage.getItem("lang") || "en");
-  const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "light");
+  const [theme, setTheme] = useState(
+    () => localStorage.getItem("theme") || "light",
+  );
 
   useEffect(() => {
     localStorage.setItem("lang", lang);
@@ -241,7 +247,14 @@ export function LanguageProvider({ children }) {
 
   return (
     <LanguageContext.Provider
-      value={{ lang, toggleLang, t, dir: translations[lang].dir, theme, toggleTheme }}
+      value={{
+        lang,
+        toggleLang,
+        t,
+        dir: translations[lang].dir,
+        theme,
+        toggleTheme,
+      }}
     >
       {children}
     </LanguageContext.Provider>
