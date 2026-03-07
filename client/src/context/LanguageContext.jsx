@@ -3,6 +3,25 @@ import { createContext, useContext, useState, useEffect } from "react";
 const translations = {
   en: {
     dir: "ltr",
+    // Login page
+    welcomeBack: "Welcome back",
+    loginSubtext: "Manage bookings across hotels, restaurants, and activities.",
+    signInToContinue: "Sign in to continue",
+    unifiedPlatform: "Unified Booking Platform",
+    controlBooking: "Control every booking",
+    inOnePlace: " in one place",
+    fiveDesc: "Five dashboards for super admin, admin company, hotels, restaurants, and activities. Role-based access, permissions-aware sidebar, and real-time data.",
+    security: "Security",
+    dashboards: "Dashboards",
+    tailoredViews: "5 tailored views",
+    emailPlaceholder: "Email",
+    passwordPlaceholder: "Password",
+    loginBtn: "Login",
+    signingIn: "Signing in...",
+    sampleAccounts: "Sample accounts",
+    loginFailed: "Login Failed",
+    invalidCredentials: "Invalid credentials. Please check your email and password.",
+    tryAgain: "Try Again",
     // Nav / General
     dashboard: "Dashboard",
     settings: "Settings",
@@ -51,6 +70,11 @@ const translations = {
     // Settings
     settingsTitle: "Settings",
     settingsSubtitle: "Manage your account and preferences.",
+    theme: "Theme",
+    lightMode: "Light Mode",
+    darkMode: "Dark Mode",
+    emailNotificationsLabel: "Email Notifications",
+    comingSoonLabel: "Coming soon",
     profile: "Profile",
     name: "Name",
     email: "Email",
@@ -84,6 +108,25 @@ const translations = {
   },
   ar: {
     dir: "rtl",
+    // Login page
+    welcomeBack: "مرحباً بك",
+    loginSubtext: "إدارة الحجوزات عبر الفنادق والمطاعم والأنشطة.",
+    signInToContinue: "سجّل دخولك للمتابعة",
+    unifiedPlatform: "منصة الحجز الموحّدة",
+    controlBooking: "تحكّم في كل حجز",
+    inOnePlace: " في مكان واحد",
+    fiveDesc: "خمس لوحات تحكم للمسؤول الرئيسي وشركة الإدارة والفنادق والمطاعم والأنشطة. وصول قائم على الأدوار وشريط جانبي وبيانات فورية.",
+    security: "الأمان",
+    dashboards: "لوحات التحكم",
+    tailoredViews: "5 طرق عرض مخصصة",
+    emailPlaceholder: "البريد الإلكتروني",
+    passwordPlaceholder: "كلمة المرور",
+    loginBtn: "تسجيل الدخول",
+    signingIn: "جاري تسجيل الدخول...",
+    sampleAccounts: "حسابات تجريبية",
+    loginFailed: "فشل تسجيل الدخول",
+    invalidCredentials: "بيانات غير صحيحة. يرجى التحقق من البريد الإلكتروني وكلمة المرور.",
+    tryAgain: "حاول مرة أخرى",
     // Nav / General
     dashboard: "لوحة التحكم",
     settings: "الإعدادات",
@@ -132,6 +175,11 @@ const translations = {
     // Settings
     settingsTitle: "الإعدادات",
     settingsSubtitle: "إدارة حسابك وتفضيلاتك.",
+    theme: "المظهر",
+    lightMode: "وضع نهاري",
+    darkMode: "وضع ليلي",
+    emailNotificationsLabel: "إشعارات البريد الإلكتروني",
+    comingSoonLabel: "قريباً",
     profile: "الملف الشخصي",
     name: "الاسم",
     email: "البريد الإلكتروني",
@@ -169,6 +217,7 @@ const LanguageContext = createContext();
 
 export function LanguageProvider({ children }) {
   const [lang, setLang] = useState(() => localStorage.getItem("lang") || "en");
+  const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "light");
 
   useEffect(() => {
     localStorage.setItem("lang", lang);
@@ -176,13 +225,23 @@ export function LanguageProvider({ children }) {
     document.documentElement.lang = lang;
   }, [lang]);
 
+  useEffect(() => {
+    localStorage.setItem("theme", theme);
+    if (theme === "dark") {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  }, [theme]);
+
   const toggleLang = () => setLang((l) => (l === "en" ? "ar" : "en"));
+  const toggleTheme = () => setTheme((t) => (t === "light" ? "dark" : "light"));
 
   const t = (key) => translations[lang][key] || key;
 
   return (
     <LanguageContext.Provider
-      value={{ lang, toggleLang, t, dir: translations[lang].dir }}
+      value={{ lang, toggleLang, t, dir: translations[lang].dir, theme, toggleTheme }}
     >
       {children}
     </LanguageContext.Provider>

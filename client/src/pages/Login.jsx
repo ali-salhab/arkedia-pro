@@ -75,7 +75,7 @@ export default function LoginPage() {
             <img
               src="/logo.png"
               alt="Travky.com"
-              className="w-20 h-20 rounded-full object-cover"
+              className="w-24 h-24    object-cover"
               onError={(e) => {
                 e.target.src = "/logo.svg";
               }}

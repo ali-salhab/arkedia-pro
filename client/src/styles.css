@@ -83,3 +83,92 @@
     @apply m-0 pl-5 text-sm text-slate-600 space-y-1;
   }
 }
+
+/* ── Dark mode overrides ─────────────────────────────── */
+html.dark body {
+  background: #0f172a !important;
+  color: #f1f5f9;
+}
+html.dark .layout {
+  background: #0f172a !important;
+}
+html.dark .content {
+  background: #0f172a !important;
+}
+html.dark .card {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+  color: #f1f5f9;
+}
+html.dark .sidebar {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+}
+html.dark .navbar {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+}
+html.dark .input {
+  background: #0f172a !important;
+  border-color: #475569 !important;
+  color: #f1f5f9 !important;
+}
+html.dark .input::placeholder {
+  color: #64748b !important;
+}
+html.dark .btn:not(.btn-primary) {
+  background: #334155 !important;
+  color: #f1f5f9 !important;
+  border-color: #475569 !important;
+}
+html.dark .menu-item {
+  color: #94a3b8 !important;
+}
+html.dark .menu-item:hover {
+  background: #334155 !important;
+  color: #f1f5f9 !important;
+}
+html.dark .menu-item.active {
+  background: #1e40af !important;
+  color: #bfdbfe !important;
+}
+html.dark .login-page {
+  background: #0f172a !important;
+}
+html.dark .login-card {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+  color: #f1f5f9;
+}
+html.dark .login-title {
+  color: #f1f5f9 !important;
+}
+html.dark .login-subtext {
+  color: #94a3b8 !important;
+}
+html.dark .logo-title {
+  color: #f1f5f9 !important;
+}
+html.dark .logo-subtitle {
+  color: #94a3b8 !important;
+}
+html.dark .login-accounts {
+  background: #0f172a !important;
+  border-color: #334155 !important;
+}
+html.dark .login-accounts-title {
+  color: #f1f5f9 !important;
+}
+html.dark .login-accounts ul {
+  color: #94a3b8 !important;
+}
+html.dark select option {
+  background: #1e293b;
+  color: #f1f5f9;
+}
+html.dark h1, html.dark h2, html.dark h3, html.dark h4 {
+  color: #f1f5f9;
+}
+html.dark p {
+  color: #94a3b8;
+}
