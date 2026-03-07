@@ -22,23 +22,22 @@ export default function Navbar() {
             borderRadius: "999px",
             display: "grid",
             placeItems: "center",
-            background:
-              "radial-gradient(circle at 30% 0%, #22d3ee, transparent 55%), #0f172a",
-            color: "#e5e7eb",
+            background: "#2563eb",
+            color: "#ffffff",
             fontWeight: 700,
           }}
         >
           T
         </div>
         <div style={{ display: "flex", flexDirection: "column" }}>
-          <span style={{ fontWeight: 600 }}>Travik.com</span>
-          <span style={{ fontSize: 11, color: "#9ca3af" }}>
+          <span style={{ fontWeight: 600, color: "#1e293b" }}>Travik.com</span>
+          <span style={{ fontSize: 11, color: "#64748b" }}>
             Unified Booking Platform
           </span>
         </div>
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <span>{user?.name}</span>
+        <span style={{ color: "#334155" }}>{user?.name}</span>
         <button className="btn" onClick={handleLogout}>
           Logout
         </button>

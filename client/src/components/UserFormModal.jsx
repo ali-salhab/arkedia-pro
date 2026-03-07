@@ -163,11 +163,11 @@ const rolePresets = {
 };
 
 const inputStyle = {
-  background: "#0f172a",
-  border: "1px solid #334155",
+  background: "#ffffff",
+  border: "1px solid #cbd5e1",
   borderRadius: 8,
   padding: "10px 14px",
-  color: "#e5e7eb",
+  color: "#1e293b",
   width: "100%",
   fontSize: 14,
 };
@@ -176,7 +176,7 @@ const labelStyle = {
   display: "block",
   marginBottom: 6,
   fontWeight: 500,
-  color: "#9ca3af",
+  color: "#475569",
   fontSize: 13,
 };
 
@@ -338,7 +338,7 @@ export default function UserFormModal({ open, onClose, onSave, user = null }) {
           maxWidth: 900,
           maxHeight: "90vh",
           overflow: "auto",
-          background: "#0f172a",
+          background: "#ffffff",
         }}
       >
         {/* Header */}
@@ -349,10 +349,10 @@ export default function UserFormModal({ open, onClose, onSave, user = null }) {
             alignItems: "center",
             marginBottom: 20,
             padding: "0 0 16px 0",
-            borderBottom: "1px solid #334155",
+            borderBottom: "1px solid #e2e8f0",
           }}
         >
-          <h2 style={{ margin: 0, color: "#f1f5f9" }}>
+          <h2 style={{ margin: 0, color: "#1e293b" }}>
             {user ? "Edit User" : "Create New User"}
           </h2>
           <button
@@ -370,7 +370,7 @@ export default function UserFormModal({ open, onClose, onSave, user = null }) {
             display: "flex",
             gap: 8,
             marginBottom: 20,
-            borderBottom: "1px solid #334155",
+            borderBottom: "1px solid #e2e8f0",
             paddingBottom: 12,
           }}
         >
@@ -378,10 +378,10 @@ export default function UserFormModal({ open, onClose, onSave, user = null }) {
             onClick={() => setActiveTab("basic")}
             style={{
               padding: "10px 20px",
-              background: activeTab === "basic" ? "#3b82f6" : "#1e293b",
+              background: activeTab === "basic" ? "#2563eb" : "#f1f5f9",
               border: "none",
               borderRadius: 8,
-              color: activeTab === "basic" ? "#fff" : "#9ca3af",
+              color: activeTab === "basic" ? "#fff" : "#64748b",
               cursor: "pointer",
               fontWeight: 500,
             }}
@@ -392,10 +392,10 @@ export default function UserFormModal({ open, onClose, onSave, user = null }) {
             onClick={() => setActiveTab("permissions")}
             style={{
               padding: "10px 20px",
-              background: activeTab === "permissions" ? "#3b82f6" : "#1e293b",
+              background: activeTab === "permissions" ? "#2563eb" : "#f1f5f9",
               border: "none",
               borderRadius: 8,
-              color: activeTab === "permissions" ? "#fff" : "#9ca3af",
+              color: activeTab === "permissions" ? "#fff" : "#64748b",
               cursor: "pointer",
               fontWeight: 500,
             }}

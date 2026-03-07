@@ -28,14 +28,14 @@ export default function SettingsPage() {
               className="input"
               value={user?.name || ""}
               readOnly
-              style={{ background: "#1e293b" }}
+              style={{ background: "#f8fafc" }}
             />
           </div>
           <div>
             <label
               style={{
                 display: "block",
-                color: "#9ca3af",
+                color: "#475569",
                 fontSize: 12,
                 marginBottom: 4,
               }}
@@ -46,14 +46,14 @@ export default function SettingsPage() {
               className="input"
               value={user?.email || ""}
               readOnly
-              style={{ background: "#1e293b" }}
+              style={{ background: "#f8fafc" }}
             />
           </div>
           <div>
             <label
               style={{
                 display: "block",
-                color: "#9ca3af",
+                color: "#475569",
                 fontSize: 12,
                 marginBottom: 4,
               }}
@@ -64,7 +64,7 @@ export default function SettingsPage() {
               className="input"
               value={user?.role || ""}
               readOnly
-              style={{ background: "#1e293b" }}
+              style={{ background: "#f8fafc" }}
             />
           </div>
         </div>

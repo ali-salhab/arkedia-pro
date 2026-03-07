@@ -154,7 +154,7 @@ export default function UsersPage() {
             <div
               key={role}
               style={{
-                background: "#1e293b",
+                background: "#f8fafc",
                 borderRadius: 12,
                 padding: 16,
                 borderLeft: `4px solid ${info.color}`,
@@ -169,7 +169,7 @@ export default function UsersPage() {
               <div
                 style={{
                   fontSize: 12,
-                  color: "#9ca3af",
+                  color: "#64748b",
                   textTransform: "capitalize",
                 }}
               >
@@ -199,10 +199,10 @@ export default function UsersPage() {
             <div
               key={user._id}
               style={{
-                background: "#1e293b",
+                background: "#ffffff",
                 borderRadius: 12,
                 padding: 20,
-                border: "1px solid #334155",
+                border: "1px solid #e2e8f0",
               }}
             >
               <div

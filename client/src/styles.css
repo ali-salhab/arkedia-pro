@@ -4,18 +4,8 @@
 
 @layer base {
   body {
-    @apply bg-slate-950 text-slate-100 antialiased;
-    background: radial-gradient(
-        circle at 20% 20%,
-        rgba(37, 99, 235, 0.14),
-        transparent 36%
-      ),
-      radial-gradient(
-        circle at 80% 0%,
-        rgba(34, 211, 238, 0.12),
-        transparent 32%
-      ),
-      #0f172a;
+    @apply bg-slate-100 text-slate-800 antialiased;
+    background: #f1f5f9;
   }
   a {
     @apply text-inherit no-underline;
@@ -24,72 +14,72 @@
 
 @layer components {
   .layout {
-    @apply min-h-screen flex bg-transparent;
+    @apply min-h-screen flex bg-slate-100;
   }
   .sidebar {
-    @apply w-60 bg-slate-900/90 border-r border-slate-800 p-4 space-y-2;
+    @apply w-60 bg-white border-r border-slate-200 p-4 space-y-2 shadow-sm;
   }
   .content {
-    @apply flex-1 p-6;
+    @apply flex-1 p-6 bg-slate-100;
   }
   .card {
-    @apply bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-2xl shadow-slate-950/50;
+    @apply bg-white border border-slate-200 rounded-2xl p-4 shadow-sm;
   }
   .navbar {
-    @apply flex items-center justify-between px-5 py-3 bg-slate-900/80 border-b border-slate-800 rounded-xl shadow-sm shadow-slate-900/40;
+    @apply flex items-center justify-between px-5 py-3 bg-white border-b border-slate-200 rounded-xl shadow-sm;
   }
   .btn {
     @apply inline-flex items-center justify-center rounded-xl px-4 py-2 font-semibold transition disabled:opacity-60 disabled:cursor-not-allowed;
   }
   .btn-primary {
-    @apply bg-gradient-to-r from-brand-primary to-brand-glow text-slate-900 shadow-lg shadow-cyan-500/25 hover:translate-y-[-1px] active:translate-y-0 transition-transform;
+    @apply bg-brand-primary text-white shadow-sm hover:bg-blue-700 active:bg-blue-800 transition-colors;
   }
   .menu-item {
-    @apply block px-3 py-2 rounded-xl text-sm text-slate-100/90 hover:bg-slate-800/80 transition;
+    @apply block px-3 py-2 rounded-xl text-sm text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition;
   }
   .menu-item.active {
-    @apply bg-slate-800 text-white;
+    @apply bg-blue-50 text-brand-primary font-semibold;
   }
   .login-page {
-    @apply min-h-screen grid place-items-center px-4 py-10;
+    @apply min-h-screen grid place-items-center px-4 py-10 bg-slate-100;
   }
   .login-card {
-    @apply w-full max-w-md bg-slate-900/90 border border-slate-800 rounded-2xl p-8 shadow-2xl shadow-slate-950/40 backdrop-blur;
+    @apply w-full max-w-md bg-white border border-slate-200 rounded-2xl p-8 shadow-md;
   }
   .login-title {
-    @apply text-2xl font-bold mt-2 mb-1;
+    @apply text-2xl font-bold mt-2 mb-1 text-slate-800;
   }
   .login-subtext {
-    @apply text-sm text-slate-400 mb-5;
+    @apply text-sm text-slate-500 mb-5;
   }
   .login-form {
     @apply flex flex-col gap-3;
   }
   .input {
-    @apply w-full rounded-xl border border-slate-800 bg-slate-950/80 px-4 py-3 text-sm text-slate-100 placeholder:text-slate-500 focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/50;
+    @apply w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-800 placeholder:text-slate-400 focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/30;
   }
   .input-error {
-    @apply text-sm text-rose-300;
+    @apply text-sm text-rose-500;
   }
   .login-header {
     @apply flex items-center gap-3 mb-3;
   }
   .logo-circle {
-    @apply w-12 h-12 grid place-items-center rounded-full bg-gradient-to-br from-brand-primary to-brand-glow text-slate-900 font-bold text-lg;
+    @apply w-12 h-12 grid place-items-center rounded-full bg-brand-primary text-white font-bold text-lg;
   }
   .logo-title {
-    @apply text-lg font-bold;
+    @apply text-lg font-bold text-slate-800;
   }
   .logo-subtitle {
-    @apply text-xs text-slate-400;
+    @apply text-xs text-slate-500;
   }
   .login-accounts {
-    @apply mt-4 p-4 border border-slate-800 rounded-xl bg-slate-900/70;
+    @apply mt-4 p-4 border border-slate-200 rounded-xl bg-slate-50;
   }
   .login-accounts-title {
-    @apply font-semibold mb-2 text-slate-100;
+    @apply font-semibold mb-2 text-slate-700;
   }
   .login-accounts ul {
-    @apply m-0 pl-5 text-sm text-slate-300 space-y-1;
+    @apply m-0 pl-5 text-sm text-slate-600 space-y-1;
   }
 }

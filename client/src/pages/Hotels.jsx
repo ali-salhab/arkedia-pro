@@ -134,7 +134,6 @@ export default function HotelsPage() {
             key={hotel._id}
             className="card"
             style={{
-              background: "#1e293b",
               borderRadius: 12,
               overflow: "hidden",
               transition: "transform 0.2s",

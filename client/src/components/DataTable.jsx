@@ -88,15 +88,18 @@ export default function DataTable({
   const thStyle = {
     textAlign: "left",
     padding: 8,
-    borderBottom: "1px solid #1f2937",
+    borderBottom: "1px solid #e2e8f0",
+    color: "#475569",
+    fontSize: 13,
+    fontWeight: 600,
   };
-  const tdStyle = { padding: 8 };
+  const tdStyle = { padding: 8, color: "#334155" };
   const inputStyle = {
-    background: "#0f172a",
-    border: "1px solid #334155",
+    background: "#ffffff",
+    border: "1px solid #cbd5e1",
     borderRadius: 6,
     padding: "4px 8px",
-    color: "#e5e7eb",
+    color: "#1e293b",
     width: "100%",
   };
   const btnSmall = {
@@ -120,7 +123,7 @@ export default function DataTable({
         >
           {editable && !addingNew && (
             <button
-              style={{ ...btnSmall, background: "#22d3ee", color: "#0f172a" }}
+              style={{ ...btnSmall, background: "#2563eb", color: "#ffffff" }}
               onClick={startAdd}
             >
               + Add
@@ -149,7 +152,7 @@ export default function DataTable({
         </thead>
         <tbody>
           {addingNew && (
-            <tr style={{ borderBottom: "1px solid #1f2937" }}>
+            <tr style={{ borderBottom: "1px solid #e2e8f0" }}>
               {columns.map((col) => (
                 <td key={col.key} style={tdStyle}>
                   <input
@@ -182,7 +185,7 @@ export default function DataTable({
             return (
               <tr
                 key={row[idKey]}
-                style={{ borderBottom: "1px solid #1f2937" }}
+                style={{ borderBottom: "1px solid #e2e8f0" }}
               >
                 {columns.map((col) => (
                   <td key={col.key} style={tdStyle}>

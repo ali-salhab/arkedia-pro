@@ -13,37 +13,40 @@ export default function LoginPage() {
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
-    console.log("login button");
     e.preventDefault();
-    const res = await login({ email, password }).unwrap();
-    dispatch(setCredentials(res));
-    const role = res.user.role;
-    const pathMap = {
-      super_admin: "/super-admin",
-      admin: "/admin",
-      hotel: "/hotel",
-      restaurant: "/restaurant",
-      activity: "/activity",
-    };
-    navigate(pathMap[role] || "/");
+    try {
+      const res = await login({ email, password }).unwrap();
+      dispatch(setCredentials(res));
+      const role = res.user.role;
+      const pathMap = {
+        super_admin: "/super-admin",
+        admin: "/admin",
+        hotel: "/hotel",
+        restaurant: "/restaurant",
+        activity: "/activity",
+      };
+      navigate(pathMap[role] || "/");
+    } catch (err) {
+      // error is already captured in the `error` state from useLoginMutation
+    }
   };
 
   return (
-    <div className="login-page bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+    <div className="login-page">
       <div className="w-full max-w-5xl grid gap-8 lg:grid-cols-2 items-center">
         <div className="hidden lg:block space-y-6">
-          <div className="inline-flex items-center gap-3 rounded-full border border-slate-800 px-4 py-2 bg-slate-900/70">
+          <div className="inline-flex items-center gap-3 rounded-full border border-slate-200 px-4 py-2 bg-white shadow-sm">
             <div className="logo-circle">TRAvi</div>
             <div>
               <div className="logo-title">Travik.com</div>
               <div className="logo-subtitle">Unified Booking Platform</div>
             </div>
           </div>
-          <h1 className="text-4xl font-bold text-white leading-tight">
+          <h1 className="text-4xl font-bold text-slate-800 leading-tight">
             Control every booking
-            <span className="text-brand-glow">in one place</span>.
+            <span className="text-brand-primary"> in one place</span>.
           </h1>
-          <p className="text-slate-400 text-lg max-w-xl">
+          <p className="text-slate-500 text-lg max-w-xl">
             Five dashboards for super admin, admin company, hotels, restaurants,
             and activities. Role-based access, permissions-aware sidebar, and
             real-time data.
