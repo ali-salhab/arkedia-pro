@@ -1,6 +1,5 @@
 require("dotenv").config();
 const express = require("express");
-const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const morgan = require("morgan");
 const helmet = require("helmet");
@@ -22,37 +21,27 @@ const { notFound, errorHandler } = require("./middleware/errorHandler");
 const app = express();
 const port = process.env.PORT || 5000;
 
-const allowedOrigins = (process.env.CLIENT_ORIGIN || "*")
-  .split(",")
-  .map((o) => o.trim());
+// ── CORS ── must be the very first middleware, before helmet and everything else
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  // Allow the requesting origin (or * when no origin header)
+  res.setHeader("Access-Control-Allow-Origin", origin || "*");
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type,Authorization,X-Requested-With");
+  // Answer all preflight requests immediately
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(204);
+  }
+  next();
+});
 
-const corsOptions = {
-  origin: (origin, callback) => {
-    if (
-      !origin ||
-      allowedOrigins.includes("*") ||
-      allowedOrigins.includes(origin)
-    ) {
-      callback(null, true);
-    } else {
-      callback(new Error(`CORS blocked: ${origin}`));
-    }
-  },
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-};
-
-// Handle OPTIONS preflight BEFORE helmet
-app.options("*", cors(corsOptions));
-app.use(cors(corsOptions));
-// helmet must NOT override CORS headers — disable conflicting policies
 app.use(
   helmet({
     crossOriginResourcePolicy: false,
     crossOriginOpenerPolicy: false,
     crossOriginEmbedderPolicy: false,
-  }),
+  })
 );
 app.use(express.json());
 app.use(cookieParser());
