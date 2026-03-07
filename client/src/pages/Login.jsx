@@ -40,7 +40,9 @@ export default function LoginPage() {
               src="/logo.png"
               alt="Travky.com"
               className="w-12 h-12 rounded-full object-cover"
-              onError={(e) => { e.target.src = "/logo.svg"; }}
+              onError={(e) => {
+                e.target.src = "/logo.svg";
+              }}
             />
             <div>
               <div className="logo-title">Travky.com</div>
@@ -74,7 +76,9 @@ export default function LoginPage() {
               src="/logo.png"
               alt="Travky.com"
               className="w-12 h-12 rounded-full object-cover"
-              onError={(e) => { e.target.src = "/logo.svg"; }}
+              onError={(e) => {
+                e.target.src = "/logo.svg";
+              }}
             />
             <div>
               <div className="logo-title">Travky.com</div>
