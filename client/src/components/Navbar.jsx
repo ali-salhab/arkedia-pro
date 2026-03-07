@@ -15,22 +15,18 @@ export default function Navbar() {
   return (
     <div className="navbar">
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        <div
+        <img
+          src="/logo.png"
+          alt="Travky.com"
           style={{
             width: 32,
             height: 32,
             borderRadius: "999px",
-            display: "grid",
-            placeItems: "center",
-            background: "#2563eb",
-            color: "#ffffff",
-            fontWeight: 700,
+            objectFit: "cover",
           }}
-        >
-          T
-        </div>
+        />
         <div style={{ display: "flex", flexDirection: "column" }}>
-          <span style={{ fontWeight: 600, color: "#1e293b" }}>Travik.com</span>
+          <span style={{ fontWeight: 600, color: "#1e293b" }}>Travky.com</span>
           <span style={{ fontSize: 11, color: "#64748b" }}>
             Unified Booking Platform
           </span>

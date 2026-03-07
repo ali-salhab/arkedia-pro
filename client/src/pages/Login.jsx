@@ -36,9 +36,13 @@ export default function LoginPage() {
       <div className="w-full max-w-5xl grid gap-8 lg:grid-cols-2 items-center">
         <div className="hidden lg:block space-y-6">
           <div className="inline-flex items-center gap-3 rounded-full border border-slate-200 px-4 py-2 bg-white shadow-sm">
-            <div className="logo-circle">TRAvi</div>
+            <img
+              src="/logo.png"
+              alt="Travky.com"
+              className="w-12 h-12 rounded-full object-cover"
+            />
             <div>
-              <div className="logo-title">Travik.com</div>
+              <div className="logo-title">Travky.com</div>
               <div className="logo-subtitle">Unified Booking Platform</div>
             </div>
           </div>
@@ -65,9 +69,13 @@ export default function LoginPage() {
 
         <div className="login-card">
           <div className="login-header mb-4">
-            <div className="logo-circle">Travi..</div>
+            <img
+              src="/logo.png"
+              alt="Travky.com"
+              className="w-12 h-12 rounded-full object-cover"
+            />
             <div>
-              <div className="logo-title">Travik.com</div>
+              <div className="logo-title">Travky.com</div>
               <div className="logo-subtitle">Sign in to continue</div>
             </div>
           </div>

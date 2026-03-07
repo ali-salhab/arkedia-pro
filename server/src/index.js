@@ -22,7 +22,25 @@ const { notFound, errorHandler } = require("./middleware/errorHandler");
 const app = express();
 const port = process.env.PORT || 5000;
 
-app.use(cors({ origin: process.env.CLIENT_ORIGIN || "*", credentials: true }));
+const allowedOrigins = (process.env.CLIENT_ORIGIN || "*")
+  .split(",")
+  .map((o) => o.trim());
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (
+        !origin ||
+        allowedOrigins.includes("*") ||
+        allowedOrigins.includes(origin)
+      ) {
+        callback(null, true);
+      } else {
+        callback(new Error(`CORS blocked: ${origin}`));
+      }
+    },
+    credentials: true,
+  }),
+);
 app.use(helmet());
 app.use(express.json());
 app.use(cookieParser());
