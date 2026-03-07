@@ -36,14 +36,14 @@ export default function HotelsPage() {
               v === "active"
                 ? "#22c55e20"
                 : v === "inactive"
-                ? "#ef444420"
-                : "#f59e0b20",
+                  ? "#ef444420"
+                  : "#f59e0b20",
             color:
               v === "active"
                 ? "#22c55e"
                 : v === "inactive"
-                ? "#ef4444"
-                : "#f59e0b",
+                  ? "#ef4444"
+                  : "#f59e0b",
           }}
         >
           {v || "active"}

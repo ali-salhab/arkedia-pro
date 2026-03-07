@@ -73,7 +73,7 @@ export default function DataTable({
           const val = row[c.key] ?? "";
           return `"${String(val).replace(/"/g, '""')}"`;
         })
-        .join(",")
+        .join(","),
     );
     const csv = [header, ...rows].join("\n");
     const blob = new Blob([csv], { type: "text/csv" });

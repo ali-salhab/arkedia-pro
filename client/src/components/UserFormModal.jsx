@@ -99,7 +99,7 @@ const permissionMatrix = [
 // Role presets with default permissions
 const rolePresets = {
   super_admin: permissionMatrix.flatMap((m) =>
-    m.actions.map((a) => `${m.module}:${a.key}`)
+    m.actions.map((a) => `${m.module}:${a.key}`),
   ),
   admin: [
     "hotels:view",
@@ -259,7 +259,7 @@ export default function UserFormModal({ open, onClose, onSave, user = null }) {
 
   const selectAllPermissions = () => {
     const allPerms = permissionMatrix.flatMap((m) =>
-      m.actions.map((a) => `${m.module}:${a.key}`)
+      m.actions.map((a) => `${m.module}:${a.key}`),
     );
     setForm((prev) => ({ ...prev, permissions: allPerms }));
   };
@@ -312,7 +312,7 @@ export default function UserFormModal({ open, onClose, onSave, user = null }) {
         .find((m) => m.module === module)
         ?.actions.map((a) => `${module}:${a.key}`) || [];
     const selected = modulePerms.filter((p) =>
-      (form.permissions || []).includes(p)
+      (form.permissions || []).includes(p),
     );
     return selected.length > 0 && selected.length < modulePerms.length;
   };
@@ -611,8 +611,8 @@ export default function UserFormModal({ open, onClose, onSave, user = null }) {
                     border: isModuleFullySelected(module.module)
                       ? "2px solid #22c55e"
                       : isModulePartiallySelected(module.module)
-                      ? "2px solid #f59e0b"
-                      : "2px solid transparent",
+                        ? "2px solid #f59e0b"
+                        : "2px solid transparent",
                   }}
                 >
                   {/* Module Header */}
@@ -661,7 +661,7 @@ export default function UserFormModal({ open, onClose, onSave, user = null }) {
                     {module.actions.map((action) => {
                       const perm = `${module.module}:${action.key}`;
                       const isSelected = (form.permissions || []).includes(
-                        perm
+                        perm,
                       );
                       return (
                         <label
