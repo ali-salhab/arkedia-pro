@@ -80,36 +80,38 @@ const initialFormState = {
 };
 
 const inputStyle = {
-  background: "#0f172a",
-  border: "1px solid #334155",
+  background: "#ffffff",
+  border: "1px solid #cbd5e1",
   borderRadius: 8,
   padding: "10px 14px",
-  color: "#e5e7eb",
+  color: "#1e293b",
   width: "100%",
   fontSize: 14,
+  boxSizing: "border-box",
 };
 
 const labelStyle = {
   display: "block",
   marginBottom: 6,
   fontWeight: 500,
-  color: "#9ca3af",
+  color: "#475569",
   fontSize: 13,
 };
 
 const sectionStyle = {
   marginBottom: 24,
   padding: 16,
-  background: "#1e293b",
+  background: "#f8fafc",
   borderRadius: 12,
+  border: "1px solid #e2e8f0",
 };
 
 const sectionTitleStyle = {
   fontSize: 16,
   fontWeight: 600,
   marginBottom: 16,
-  color: "#f1f5f9",
-  borderBottom: "1px solid #334155",
+  color: "#1e293b",
+  borderBottom: "1px solid #e2e8f0",
   paddingBottom: 8,
 };
 
@@ -295,7 +297,7 @@ export default function HotelFormModal({
                 checked={form.featured}
                 onChange={(e) => handleChange("featured", e.target.checked)}
               />
-              <label htmlFor="featured" style={{ color: "#e5e7eb" }}>
+              <label htmlFor="featured" style={{ color: "#334155" }}>
                 Featured Hotel (Show in homepage)
               </label>
             </div>
@@ -566,7 +568,7 @@ export default function HotelFormModal({
             {Object.entries(amenityGroups).map(([group, keys]) => (
               <div key={group} style={{ marginBottom: 20 }}>
                 <h5
-                  style={{ color: "#60a5fa", marginBottom: 12, fontSize: 14 }}
+                  style={{ color: "#2563eb", marginBottom: 12, fontSize: 14 }}
                 >
                   {group}
                 </h5>
@@ -587,7 +589,7 @@ export default function HotelFormModal({
                       />
                       <label
                         htmlFor={key}
-                        style={{ color: "#e5e7eb", fontSize: 14 }}
+                        style={{ color: "#334155", fontSize: 14 }}
                       >
                         {amenityLabels[key]}
                       </label>
@@ -638,7 +640,7 @@ export default function HotelFormModal({
             </div>
 
             <div style={{ marginTop: 20 }}>
-              <h5 style={{ color: "#60a5fa", marginBottom: 12, fontSize: 14 }}>
+              <h5 style={{ color: "#2563eb", marginBottom: 12, fontSize: 14 }}>
                 Rules
               </h5>
               <div
@@ -657,7 +659,7 @@ export default function HotelFormModal({
                       handlePolicyChange("smokingAllowed", e.target.checked)
                     }
                   />
-                  <label htmlFor="smokingAllowed" style={{ color: "#e5e7eb" }}>
+                  <label htmlFor="smokingAllowed" style={{ color: "#334155" }}>
                     Smoking Allowed
                   </label>
                 </div>
@@ -670,7 +672,7 @@ export default function HotelFormModal({
                       handlePolicyChange("petsAllowed", e.target.checked)
                     }
                   />
-                  <label htmlFor="petsAllowed" style={{ color: "#e5e7eb" }}>
+                  <label htmlFor="petsAllowed" style={{ color: "#334155" }}>
                     Pets Allowed
                   </label>
                 </div>
@@ -683,7 +685,7 @@ export default function HotelFormModal({
                       handlePolicyChange("partiesAllowed", e.target.checked)
                     }
                   />
-                  <label htmlFor="partiesAllowed" style={{ color: "#e5e7eb" }}>
+                  <label htmlFor="partiesAllowed" style={{ color: "#334155" }}>
                     Parties/Events Allowed
                   </label>
                 </div>
@@ -698,7 +700,7 @@ export default function HotelFormModal({
                   />
                   <label
                     htmlFor="extraBedAvailable"
-                    style={{ color: "#e5e7eb" }}
+                    style={{ color: "#334155" }}
                   >
                     Extra Bed Available
                   </label>
@@ -707,7 +709,7 @@ export default function HotelFormModal({
             </div>
 
             <div style={{ marginTop: 20 }}>
-              <h5 style={{ color: "#60a5fa", marginBottom: 12, fontSize: 14 }}>
+              <h5 style={{ color: "#2563eb", marginBottom: 12, fontSize: 14 }}>
                 Deposit
               </h5>
               <div style={checkboxContainerStyle}>
@@ -719,7 +721,7 @@ export default function HotelFormModal({
                     handlePolicyChange("depositRequired", e.target.checked)
                   }
                 />
-                <label htmlFor="depositRequired" style={{ color: "#e5e7eb" }}>
+                <label htmlFor="depositRequired" style={{ color: "#334155" }}>
                   Deposit Required
                 </label>
               </div>
@@ -767,7 +769,7 @@ export default function HotelFormModal({
           maxWidth: 800,
           maxHeight: "90vh",
           overflow: "auto",
-          background: "#0f172a",
+          background: "#ffffff",
         }}
       >
         {/* Header */}
@@ -778,16 +780,16 @@ export default function HotelFormModal({
             alignItems: "center",
             marginBottom: 20,
             padding: "0 0 16px 0",
-            borderBottom: "1px solid #334155",
+            borderBottom: "1px solid #e2e8f0",
           }}
         >
-          <h2 style={{ margin: 0, color: "#f1f5f9" }}>
+          <h2 style={{ margin: 0, color: "#1e293b" }}>
             {hotel ? "Edit Hotel" : "Add New Hotel"}
           </h2>
           <button
             className="btn"
             onClick={onClose}
-            style={{ background: "#475569" }}
+            style={{ background: "#e2e8f0", color: "#475569" }}
           >
             ✕
           </button>
@@ -799,7 +801,7 @@ export default function HotelFormModal({
             display: "flex",
             gap: 8,
             marginBottom: 20,
-            borderBottom: "1px solid #334155",
+            borderBottom: "1px solid #e2e8f0",
             paddingBottom: 12,
             overflowX: "auto",
           }}
@@ -810,10 +812,10 @@ export default function HotelFormModal({
               onClick={() => setActiveTab(tab.id)}
               style={{
                 padding: "10px 20px",
-                background: activeTab === tab.id ? "#3b82f6" : "#1e293b",
+                background: activeTab === tab.id ? "#2563eb" : "#f1f5f9",
                 border: "none",
                 borderRadius: 8,
-                color: activeTab === tab.id ? "#fff" : "#9ca3af",
+                color: activeTab === tab.id ? "#fff" : "#64748b",
                 cursor: "pointer",
                 fontWeight: 500,
                 whiteSpace: "nowrap",
@@ -836,13 +838,13 @@ export default function HotelFormModal({
             gap: 12,
             marginTop: 20,
             paddingTop: 16,
-            borderTop: "1px solid #334155",
+            borderTop: "1px solid #e2e8f0",
           }}
         >
           <button
             className="btn"
             onClick={onClose}
-            style={{ background: "#475569" }}
+            style={{ background: "#e2e8f0", color: "#475569" }}
           >
             Cancel
           </button>
@@ -851,7 +853,7 @@ export default function HotelFormModal({
             onClick={handleSubmit}
             disabled={loading || !form.name}
             style={{
-              background: loading ? "#475569" : "#3b82f6",
+              background: loading ? "#94a3b8" : "#2563eb",
               opacity: !form.name ? 0.5 : 1,
             }}
           >

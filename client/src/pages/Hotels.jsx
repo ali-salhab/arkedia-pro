@@ -200,7 +200,7 @@ export default function HotelsPage() {
                     margin: 0,
                     fontSize: 18,
                     fontWeight: 600,
-                    color: "#f1f5f9",
+                    color: "#1e293b",
                   }}
                 >
                   {hotel.name}
@@ -210,7 +210,7 @@ export default function HotelsPage() {
                 </span>
               </div>
 
-              <p style={{ color: "#9ca3af", fontSize: 14, margin: "8px 0" }}>
+              <p style={{ color: "#64748b", fontSize: 14, margin: "8px 0" }}>
                 📍 {hotel.city || "N/A"}, {hotel.country || "N/A"}
               </p>
 
@@ -218,8 +218,9 @@ export default function HotelsPage() {
                 <span
                   style={{
                     display: "inline-block",
-                    background: "#334155",
-                    color: "#94a3b8",
+                    background: "#f1f5f9",
+                    color: "#64748b",
+                    border: "1px solid #e2e8f0",
                     padding: "4px 10px",
                     borderRadius: 20,
                     fontSize: 12,

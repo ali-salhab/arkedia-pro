@@ -123,36 +123,38 @@ const initialFormState = {
 };
 
 const inputStyle = {
-  background: "#0f172a",
-  border: "1px solid #334155",
+  background: "#ffffff",
+  border: "1px solid #cbd5e1",
   borderRadius: 8,
   padding: "10px 14px",
-  color: "#e5e7eb",
+  color: "#1e293b",
   width: "100%",
   fontSize: 14,
+  boxSizing: "border-box",
 };
 
 const labelStyle = {
   display: "block",
   marginBottom: 6,
   fontWeight: 500,
-  color: "#9ca3af",
+  color: "#475569",
   fontSize: 13,
 };
 
 const sectionStyle = {
   marginBottom: 24,
   padding: 16,
-  background: "#1e293b",
+  background: "#f8fafc",
   borderRadius: 12,
+  border: "1px solid #e2e8f0",
 };
 
 const sectionTitleStyle = {
   fontSize: 16,
   fontWeight: 600,
   marginBottom: 16,
-  color: "#f1f5f9",
-  borderBottom: "1px solid #334155",
+  color: "#1e293b",
+  borderBottom: "1px solid #e2e8f0",
   paddingBottom: 8,
 };
 
@@ -416,7 +418,7 @@ export default function RestaurantFormModal({
                   checked={form.featured}
                   onChange={(e) => handleChange("featured", e.target.checked)}
                 />
-                <label htmlFor="featured" style={{ color: "#e5e7eb" }}>
+                <label htmlFor="featured" style={{ color: "#334155" }}>
                   Featured Restaurant
                 </label>
               </div>
@@ -427,7 +429,7 @@ export default function RestaurantFormModal({
                   checked={form.verified}
                   onChange={(e) => handleChange("verified", e.target.checked)}
                 />
-                <label htmlFor="verified" style={{ color: "#e5e7eb" }}>
+                <label htmlFor="verified" style={{ color: "#334155" }}>
                   Verified ✓
                 </label>
               </div>
@@ -578,7 +580,7 @@ export default function RestaurantFormModal({
                     handleChange("outdoorSeating", e.target.checked)
                   }
                 />
-                <label htmlFor="outdoorSeating" style={{ color: "#e5e7eb" }}>
+                <label htmlFor="outdoorSeating" style={{ color: "#334155" }}>
                   Outdoor Seating Available
                 </label>
               </div>
@@ -622,15 +624,16 @@ export default function RestaurantFormModal({
                     alignItems: "center",
                     gap: 16,
                     padding: 12,
-                    background: "#0f172a",
+                    background: "#f1f5f9",
                     borderRadius: 8,
+                    border: "1px solid #e2e8f0",
                   }}
                 >
                   <div
                     style={{
                       width: 100,
                       textTransform: "capitalize",
-                      color: "#e5e7eb",
+                      color: "#475569",
                     }}
                   >
                     {day}
@@ -645,7 +648,7 @@ export default function RestaurantFormModal({
                         handleHoursChange(day, "closed", !e.target.checked)
                       }
                     />
-                    <span style={{ color: "#9ca3af", fontSize: 13 }}>Open</span>
+                    <span style={{ color: "#64748b", fontSize: 13 }}>Open</span>
                   </label>
                   {!form.operatingHours[day]?.closed && (
                     <>
@@ -657,7 +660,7 @@ export default function RestaurantFormModal({
                           handleHoursChange(day, "open", e.target.value)
                         }
                       />
-                      <span style={{ color: "#9ca3af" }}>to</span>
+                      <span style={{ color: "#64748b" }}>to</span>
                       <input
                         type="time"
                         style={{ ...inputStyle, width: 120 }}
@@ -710,13 +713,13 @@ export default function RestaurantFormModal({
                     gap: 10,
                     padding: "12px 16px",
                     background: form.services[service.key]
-                      ? "#22c55e20"
-                      : "#0f172a",
+                      ? "#dcfce7"
+                      : "#f8fafc",
                     borderRadius: 8,
                     cursor: "pointer",
                     border: form.services[service.key]
-                      ? "1px solid #22c55e40"
-                      : "1px solid transparent",
+                      ? "1px solid #86efac"
+                      : "1px solid #e2e8f0",
                   }}
                 >
                   <input
@@ -726,14 +729,14 @@ export default function RestaurantFormModal({
                       handleNestedChange(
                         "services",
                         service.key,
-                        e.target.checked
+                        e.target.checked,
                       )
                     }
                   />
                   <span style={{ fontSize: 20 }}>{service.icon}</span>
                   <span
                     style={{
-                      color: form.services[service.key] ? "#22c55e" : "#9ca3af",
+                      color: form.services[service.key] ? "#16a34a" : "#64748b",
                     }}
                   >
                     {service.label}
@@ -767,10 +770,11 @@ export default function RestaurantFormModal({
                     gap: 8,
                     padding: "10px 12px",
                     background: form.paymentMethods[key]
-                      ? "#3b82f620"
-                      : "#0f172a",
+                      ? "#dbeafe"
+                      : "#f8fafc",
                     borderRadius: 8,
                     cursor: "pointer",
+                    border: "1px solid #e2e8f0",
                   }}
                 >
                   <input
@@ -780,13 +784,13 @@ export default function RestaurantFormModal({
                       handleNestedChange(
                         "paymentMethods",
                         key,
-                        e.target.checked
+                        e.target.checked,
                       )
                     }
                   />
                   <span
                     style={{
-                      color: form.paymentMethods[key] ? "#60a5fa" : "#9ca3af",
+                      color: form.paymentMethods[key] ? "#2563eb" : "#64748b",
                       fontSize: 13,
                     }}
                   >
@@ -836,13 +840,13 @@ export default function RestaurantFormModal({
                     gap: 10,
                     padding: "12px 16px",
                     background: form.amenities[amenity.key]
-                      ? "#8b5cf620"
-                      : "#0f172a",
+                      ? "#ede9fe"
+                      : "#f8fafc",
                     borderRadius: 8,
                     cursor: "pointer",
                     border: form.amenities[amenity.key]
-                      ? "1px solid #8b5cf640"
-                      : "1px solid transparent",
+                      ? "1px solid #c4b5fd"
+                      : "1px solid #e2e8f0",
                   }}
                 >
                   <input
@@ -852,7 +856,7 @@ export default function RestaurantFormModal({
                       handleNestedChange(
                         "amenities",
                         amenity.key,
-                        e.target.checked
+                        e.target.checked,
                       )
                     }
                   />
@@ -860,8 +864,8 @@ export default function RestaurantFormModal({
                   <span
                     style={{
                       color: form.amenities[amenity.key]
-                        ? "#a78bfa"
-                        : "#9ca3af",
+                        ? "#7c3aed"
+                        : "#64748b",
                     }}
                   >
                     {amenity.label}
@@ -905,7 +909,7 @@ export default function RestaurantFormModal({
         return (
           <div style={sectionStyle}>
             <h4 style={sectionTitleStyle}>Dietary Options</h4>
-            <p style={{ color: "#9ca3af", marginBottom: 16, fontSize: 13 }}>
+            <p style={{ color: "#64748b", marginBottom: 16, fontSize: 13 }}>
               Select the dietary options your restaurant offers
             </p>
             <div
@@ -925,12 +929,12 @@ export default function RestaurantFormModal({
                     padding: "16px",
                     background: form.dietaryOptions[item.key]
                       ? `${item.color}20`
-                      : "#0f172a",
+                      : "#f8fafc",
                     borderRadius: 12,
                     cursor: "pointer",
                     border: form.dietaryOptions[item.key]
-                      ? `2px solid ${item.color}40`
-                      : "2px solid transparent",
+                      ? `2px solid ${item.color}60`
+                      : "2px solid #e2e8f0",
                   }}
                 >
                   <input
@@ -940,7 +944,7 @@ export default function RestaurantFormModal({
                       handleNestedChange(
                         "dietaryOptions",
                         item.key,
-                        e.target.checked
+                        e.target.checked,
                       )
                     }
                   />
@@ -949,7 +953,7 @@ export default function RestaurantFormModal({
                     style={{
                       color: form.dietaryOptions[item.key]
                         ? item.color
-                        : "#9ca3af",
+                        : "#64748b",
                       fontWeight: 500,
                     }}
                   >
@@ -975,13 +979,13 @@ export default function RestaurantFormModal({
                     handleNestedChange(
                       "reservationSettings",
                       "acceptsReservations",
-                      e.target.checked
+                      e.target.checked,
                     )
                   }
                 />
                 <label
                   htmlFor="acceptsReservations"
-                  style={{ color: "#e5e7eb" }}
+                  style={{ color: "#334155" }}
                 >
                   Accept Reservations
                 </label>
@@ -995,13 +999,13 @@ export default function RestaurantFormModal({
                     handleNestedChange(
                       "reservationSettings",
                       "reservationRequired",
-                      e.target.checked
+                      e.target.checked,
                     )
                   }
                 />
                 <label
                   htmlFor="reservationRequired"
-                  style={{ color: "#e5e7eb" }}
+                  style={{ color: "#334155" }}
                 >
                   Reservation Required
                 </label>
@@ -1018,7 +1022,7 @@ export default function RestaurantFormModal({
                     handleNestedChange(
                       "reservationSettings",
                       "maxPartySize",
-                      parseInt(e.target.value)
+                      parseInt(e.target.value),
                     )
                   }
                   placeholder="20"
@@ -1034,7 +1038,7 @@ export default function RestaurantFormModal({
                     handleNestedChange(
                       "reservationSettings",
                       "advanceBookingDays",
-                      parseInt(e.target.value)
+                      parseInt(e.target.value),
                     )
                   }
                   placeholder="30"
@@ -1050,7 +1054,7 @@ export default function RestaurantFormModal({
                   handleNestedChange(
                     "reservationSettings",
                     "cancellationPolicy",
-                    e.target.value
+                    e.target.value,
                   )
                 }
               >
@@ -1069,11 +1073,11 @@ export default function RestaurantFormModal({
                     handleNestedChange(
                       "reservationSettings",
                       "depositRequired",
-                      e.target.checked
+                      e.target.checked,
                     )
                   }
                 />
-                <label htmlFor="depositRequired" style={{ color: "#e5e7eb" }}>
+                <label htmlFor="depositRequired" style={{ color: "#334155" }}>
                   Deposit Required for Reservations
                 </label>
               </div>
@@ -1088,7 +1092,7 @@ export default function RestaurantFormModal({
                       handleNestedChange(
                         "reservationSettings",
                         "depositAmount",
-                        e.target.value
+                        e.target.value,
                       )
                     }
                     placeholder="50"
@@ -1125,7 +1129,7 @@ export default function RestaurantFormModal({
           maxWidth: 900,
           maxHeight: "90vh",
           overflow: "auto",
-          background: "#0f172a",
+          background: "#ffffff",
         }}
       >
         {/* Header */}
@@ -1136,16 +1140,16 @@ export default function RestaurantFormModal({
             alignItems: "center",
             marginBottom: 20,
             padding: "0 0 16px 0",
-            borderBottom: "1px solid #334155",
+            borderBottom: "1px solid #e2e8f0",
           }}
         >
-          <h2 style={{ margin: 0, color: "#f1f5f9" }}>
+          <h2 style={{ margin: 0, color: "#1e293b" }}>
             🍽️ {restaurant ? "Edit Restaurant" : "Add New Restaurant"}
           </h2>
           <button
             className="btn"
             onClick={onClose}
-            style={{ background: "#475569" }}
+            style={{ background: "#e2e8f0", color: "#475569" }}
           >
             ✕
           </button>
@@ -1157,7 +1161,7 @@ export default function RestaurantFormModal({
             display: "flex",
             gap: 6,
             marginBottom: 20,
-            borderBottom: "1px solid #334155",
+            borderBottom: "1px solid #e2e8f0",
             paddingBottom: 12,
             overflowX: "auto",
           }}
@@ -1168,10 +1172,10 @@ export default function RestaurantFormModal({
               onClick={() => setActiveTab(tab.id)}
               style={{
                 padding: "8px 14px",
-                background: activeTab === tab.id ? "#3b82f6" : "#1e293b",
+                background: activeTab === tab.id ? "#2563eb" : "#f1f5f9",
                 border: "none",
                 borderRadius: 8,
-                color: activeTab === tab.id ? "#fff" : "#9ca3af",
+                color: activeTab === tab.id ? "#fff" : "#64748b",
                 cursor: "pointer",
                 fontWeight: 500,
                 whiteSpace: "nowrap",
@@ -1194,13 +1198,13 @@ export default function RestaurantFormModal({
             gap: 12,
             marginTop: 20,
             paddingTop: 16,
-            borderTop: "1px solid #334155",
+            borderTop: "1px solid #e2e8f0",
           }}
         >
           <button
             className="btn"
             onClick={onClose}
-            style={{ background: "#475569" }}
+            style={{ background: "#e2e8f0", color: "#475569" }}
           >
             Cancel
           </button>
@@ -1209,15 +1213,15 @@ export default function RestaurantFormModal({
             onClick={handleSubmit}
             disabled={loading || !form.name}
             style={{
-              background: loading ? "#475569" : "#3b82f6",
+              background: loading ? "#94a3b8" : "#2563eb",
               opacity: !form.name ? 0.5 : 1,
             }}
           >
             {loading
               ? "Saving..."
               : restaurant
-              ? "Update Restaurant"
-              : "Create Restaurant"}
+                ? "Update Restaurant"
+                : "Create Restaurant"}
           </button>
         </div>
       </div>
