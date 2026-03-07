@@ -46,7 +46,14 @@ const corsOptions = {
 // Handle OPTIONS preflight BEFORE helmet
 app.options("*", cors(corsOptions));
 app.use(cors(corsOptions));
-app.use(helmet());
+// helmet must NOT override CORS headers — disable conflicting policies
+app.use(
+  helmet({
+    crossOriginResourcePolicy: false,
+    crossOriginOpenerPolicy: false,
+    crossOriginEmbedderPolicy: false,
+  }),
+);
 app.use(express.json());
 app.use(cookieParser());
 app.use(morgan("dev"));

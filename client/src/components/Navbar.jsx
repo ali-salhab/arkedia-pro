@@ -19,8 +19,8 @@ export default function Navbar() {
           src="/logo.png"
           alt="Travky.com"
           style={{
-            width: 32,
-            height: 32,
+            width: 44,
+            height: 44,
             borderRadius: "999px",
             objectFit: "cover",
           }}
