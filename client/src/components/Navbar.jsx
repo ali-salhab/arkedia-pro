@@ -59,14 +59,20 @@ export default function Navbar() {
         left: 0,
         right: 0,
         zIndex: 100,
-        height: 56,
+        height: 60,
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
-        padding: "0 20px",
-        background: isDark ? "#0f172a" : "#ffffff",
-        borderBottom: `1px solid ${isDark ? "#1e293b" : "#e2e8f0"}`,
-        boxShadow: "0 1px 6px rgba(0,0,0,0.06)",
+        padding: "0 24px",
+        background: isDark
+          ? "linear-gradient(135deg, rgba(15,23,42,0.92) 0%, rgba(30,41,59,0.88) 100%)"
+          : "linear-gradient(135deg, rgba(255,255,255,0.88) 0%, rgba(241,245,249,0.82) 100%)",
+        backdropFilter: "blur(16px)",
+        WebkitBackdropFilter: "blur(16px)",
+        borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.07)"}`,
+        boxShadow: isDark
+          ? "0 2px 20px rgba(0,0,0,0.4)"
+          : "0 2px 20px rgba(99,102,241,0.08), 0 1px 4px rgba(0,0,0,0.06)",
       }}
     >
       {/* ── Left: Logo ── */}
@@ -75,29 +81,38 @@ export default function Navbar() {
           src="/logo.png"
           alt="Travky.com"
           style={{
-            width: 34,
-            height: 34,
-            borderRadius: "50%",
-            objectFit: "cover",
-            border: "2px solid #e2e8f0",
+            height: 44,
+            width: "auto",
+            objectFit: "contain",
+            display: "block",
           }}
           onError={(e) => {
             e.target.src = "/logo.svg";
           }}
         />
         <div
-          style={{ display: "flex", flexDirection: "column", lineHeight: 1.2 }}
+          style={{ display: "flex", flexDirection: "column", lineHeight: 1.25 }}
         >
           <span
             style={{
-              fontWeight: 700,
-              fontSize: 14,
-              color: isDark ? "#f1f5f9" : "#1e293b",
+              fontWeight: 800,
+              fontSize: 15,
+              background: "linear-gradient(90deg, #1d4ed8 0%, #7c3aed 100%)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+              letterSpacing: "-0.2px",
             }}
           >
             Travky.com
           </span>
-          <span style={{ fontSize: 10, color: isDark ? "#94a3b8" : "#64748b" }}>
+          <span
+            style={{
+              fontSize: 10,
+              color: isDark ? "#94a3b8" : "#64748b",
+              letterSpacing: 0.2,
+            }}
+          >
             {t("unifiedBookingPlatform")}
           </span>
         </div>

@@ -11,12 +11,12 @@ export default function MainLayout({ children }) {
       <div
         className="layout"
         dir={dir}
-        style={{ paddingTop: 56, height: "100vh", overflow: "hidden" }}
+        style={{ paddingTop: 60, height: "100vh", overflow: "hidden" }}
       >
         <Sidebar />
         <div
           className="content"
-          style={{ overflowY: "auto", height: "calc(100vh - 56px)" }}
+          style={{ overflowY: "auto", height: "calc(100vh - 60px)" }}
         >
           {children}
         </div>

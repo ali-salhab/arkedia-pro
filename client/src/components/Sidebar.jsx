@@ -76,7 +76,7 @@ export default function Sidebar() {
     <div
       style={{
         width: collapsed ? 64 : 240,
-        height: "calc(100vh - 56px)",
+        height: "calc(100vh - 60px)",
         background: isDark ? "#0f172a" : "#fff",
         borderRight: isRtl
           ? "none"
