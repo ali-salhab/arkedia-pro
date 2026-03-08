@@ -8,9 +8,18 @@ export default function MainLayout({ children }) {
   return (
     <>
       <Navbar />
-      <div className="layout" dir={dir} style={{ paddingTop: 56 }}>
+      <div
+        className="layout"
+        dir={dir}
+        style={{ paddingTop: 56, height: "100vh", overflow: "hidden" }}
+      >
         <Sidebar />
-        <div className="content">{children}</div>
+        <div
+          className="content"
+          style={{ overflowY: "auto", height: "calc(100vh - 56px)" }}
+        >
+          {children}
+        </div>
       </div>
     </>
   );

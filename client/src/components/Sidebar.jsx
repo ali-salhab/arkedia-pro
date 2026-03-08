@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { useGetSidebarQuery } from "../store/services/api";
 import { useLanguage } from "../context/LanguageContext";
 import { logout } from "../store/slices/authSlice";
@@ -61,7 +61,6 @@ export default function Sidebar() {
   const { t, theme, dir } = useLanguage();
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const user = useSelector((s) => s.auth.user);
   const [collapsed, setCollapsed] = useState(false);
   const isDark = theme === "dark";
   const isRtl = dir === "rtl";
@@ -73,31 +72,11 @@ export default function Sidebar() {
 
   const menu = isLoading ? [] : data?.menu || [];
 
-  const roleLabel =
-    {
-      super_admin: "Super Admin",
-      admin: "Admin",
-      hotel: "Hotel",
-      restaurant: "Restaurant",
-      activity: "Activity",
-    }[user?.role] ||
-    user?.role ||
-    "";
-
-  const roleColor =
-    {
-      super_admin: "#a78bfa",
-      admin: "#60a5fa",
-      hotel: "#34d399",
-      restaurant: "#fbbf24",
-      activity: "#f472b6",
-    }[user?.role] || "#94a3b8";
-
   return (
     <div
       style={{
         width: collapsed ? 64 : 240,
-        minHeight: "100vh",
+        height: "calc(100vh - 56px)",
         background: isDark ? "#0f172a" : "#fff",
         borderRight: isRtl
           ? "none"
@@ -111,7 +90,8 @@ export default function Sidebar() {
         overflow: "hidden",
         flexShrink: 0,
         boxShadow: isDark ? "none" : "2px 0 12px rgba(0,0,0,0.06)",
-        position: "relative",
+        position: "sticky",
+        top: 0,
         zIndex: 10,
       }}
     >
@@ -214,63 +194,6 @@ export default function Sidebar() {
           )}
         </button>
       </div>
-
-      {/* ── User Badge ── */}
-      {!collapsed && (
-        <div
-          style={{
-            padding: "12px 16px",
-            borderBottom: `1px solid ${isDark ? "#1e293b" : "#f1f5f9"}`,
-            background: isDark ? "#0f172a" : "#fafafa",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div
-              style={{
-                width: 34,
-                height: 34,
-                borderRadius: "50%",
-                background: `${roleColor}22`,
-                border: `2px solid ${roleColor}55`,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: 14,
-                fontWeight: 700,
-                color: roleColor,
-                flexShrink: 0,
-              }}
-            >
-              {user?.name?.charAt(0)?.toUpperCase() || "?"}
-            </div>
-            <div style={{ overflow: "hidden" }}>
-              <div
-                style={{
-                  fontWeight: 600,
-                  fontSize: 13,
-                  color: isDark ? "#f1f5f9" : "#1e293b",
-                  whiteSpace: "nowrap",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                }}
-              >
-                {user?.name || "User"}
-              </div>
-              <div
-                style={{
-                  fontSize: 10,
-                  color: roleColor,
-                  fontWeight: 600,
-                  textTransform: "uppercase",
-                  letterSpacing: 0.5,
-                }}
-              >
-                {roleLabel}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* ── Navigation Menu ── */}
       <nav

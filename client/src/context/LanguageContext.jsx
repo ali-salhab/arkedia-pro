@@ -233,6 +233,22 @@ const translations = {
       "Are you sure you want to delete this hotel account?",
     noHotelAccountsYet:
       'No hotel accounts yet. Click "+ Add Hotel Account" to create one.',
+    // SuperAdmin dashboard
+    superAdminOverview: "Super Admin Overview",
+    managePlatformResources: "Manage all platform resources from here.",
+    superAdminUsers: "Super Admin Users",
+    bookings: "Bookings",
+    // Table column labels
+    guest: "Guest",
+    checkIn: "Check-in",
+    checkOut: "Check-out",
+    capacity: "Capacity",
+    roomTableNum: "Room/Table #",
+    date: "Date",
+    revenue: "Revenue",
+    expenses: "Expenses",
+    reportTitle: "Report",
+    generatedAt: "Generated",
   },
   ar: {
     dir: "rtl",
@@ -463,6 +479,22 @@ const translations = {
     areYouSureDeleteHotelAccount: "هل أنت متأكد من حذف حساب الفندق هذا؟",
     noHotelAccountsYet:
       'لا توجد حسابات فنادق بعد. انقر على "+ إضافة حساب فندق" لإنشاء واحد.',
+    // SuperAdmin dashboard
+    superAdminOverview: "نظرة عامة على المدير الرئيسي",
+    managePlatformResources: "إدارة جميع موارد المنصة من هنا.",
+    superAdminUsers: "مستخدمو المدير الرئيسي",
+    bookings: "الحجوزات",
+    // Table column labels
+    guest: "الضيف",
+    checkIn: "تسجيل الوصول",
+    checkOut: "تسجيل المغادرة",
+    capacity: "السعة",
+    roomTableNum: "رقم الغرفة/الطاولة",
+    date: "التاريخ",
+    revenue: "الإيرادات",
+    expenses: "المصروفات",
+    reportTitle: "التقرير",
+    generatedAt: "تاريخ الإنشاء",
   },
 };
 

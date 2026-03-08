@@ -1,5 +1,6 @@
 import PermissionWrapper from "../../components/PermissionWrapper";
 import DataTable from "../../components/DataTable";
+import { useLanguage } from "../../context/LanguageContext";
 import {
   useGetUsersQuery,
   useCreateUserMutation,
@@ -30,6 +31,7 @@ import {
 } from "../../store/services/api";
 
 export default function SuperAdminDashboard() {
+  const { t } = useLanguage();
   // Users
   const { data: usersData, isLoading: usersLoading } = useGetUsersQuery();
   const [createUser] = useCreateUserMutation();
@@ -77,70 +79,68 @@ export default function SuperAdminDashboard() {
 
   // Filter only super_admin users
   const superAdminUsers = toArr(usersData).filter(
-    (user) => user.role === "super_admin"
+    (user) => user.role === "super_admin",
   );
 
   const userColumns = [
-    { key: "name", label: "Name" },
-    { key: "email", label: "Email" },
-    { key: "role", label: "Role" },
+    { key: "name", label: t("name") },
+    { key: "email", label: t("email") },
+    { key: "role", label: t("role") },
   ];
 
   const restaurantColumns = [
-    { key: "name", label: "Name" },
-    { key: "location", label: "Location" },
-    { key: "capacity", label: "Capacity" },
+    { key: "name", label: t("name") },
+    { key: "location", label: t("location") },
+    { key: "capacity", label: t("capacity") },
   ];
 
   const hotelColumns = [
-    { key: "name", label: "Name" },
-    { key: "location", label: "Location" },
-    { key: "stars", label: "Stars" },
+    { key: "name", label: t("name") },
+    { key: "location", label: t("location") },
+    { key: "stars", label: t("stars") },
   ];
 
   const activityColumns = [
-    { key: "name", label: "Name" },
-    { key: "type", label: "Type" },
-    { key: "price", label: "Price" },
+    { key: "name", label: t("name") },
+    { key: "type", label: t("type") },
+    { key: "price", label: t("price") },
   ];
 
   const bookingColumns = [
-    { key: "guestName", label: "Guest" },
-    { key: "checkIn", label: "Check-in" },
-    { key: "checkOut", label: "Check-out" },
-    { key: "status", label: "Status" },
+    { key: "guestName", label: t("guest") },
+    { key: "checkIn", label: t("checkIn") },
+    { key: "checkOut", label: t("checkOut") },
+    { key: "status", label: t("status") },
   ];
 
   const roomColumns = [
-    { key: "number", label: "Room/Table #" },
-    { key: "type", label: "Type" },
-    { key: "price", label: "Price" },
+    { key: "number", label: t("roomTableNum") },
+    { key: "type", label: t("type") },
+    { key: "price", label: t("price") },
   ];
 
   const financeColumns = [
-    { key: "date", label: "Date" },
-    { key: "revenue", label: "Revenue" },
-    { key: "expenses", label: "Expenses" },
+    { key: "date", label: t("date") },
+    { key: "revenue", label: t("revenue") },
+    { key: "expenses", label: t("expenses") },
   ];
 
   const reportColumns = [
-    { key: "title", label: "Report" },
-    { key: "generatedAt", label: "Generated" },
+    { key: "title", label: t("reportTitle") },
+    { key: "generatedAt", label: t("generatedAt") },
   ];
 
   return (
     <div className="space-y-6">
       <div className="card">
-        <h2 style={{ fontWeight: 600 }}>Super Admin Overview</h2>
-        <p style={{ color: "#9ca3af" }}>
-          Manage all platform resources from here.
-        </p>
+        <h2 style={{ fontWeight: 600 }}>{t("superAdminOverview")}</h2>
+        <p style={{ color: "#9ca3af" }}>{t("managePlatformResources")}</p>
       </div>
 
       <PermissionWrapper permission="users:view">
         <div className="card">
           <h2 style={{ marginBottom: 12, fontWeight: 600 }}>
-            Super Admin Users
+            {t("superAdminUsers")}
           </h2>
           {usersLoading ? (
             <div>Loading...</div>
@@ -163,7 +163,9 @@ export default function SuperAdminDashboard() {
 
       <PermissionWrapper permission="hotels:view">
         <div className="card">
-          <h2 style={{ marginBottom: 12, fontWeight: 600 }}>All Hotels</h2>
+          <h2 style={{ marginBottom: 12, fontWeight: 600 }}>
+            {t("allHotels")}
+          </h2>
           {hotelsLoading ? (
             <div>Loading...</div>
           ) : (
@@ -181,7 +183,9 @@ export default function SuperAdminDashboard() {
 
       <PermissionWrapper permission="restaurants:view">
         <div className="card">
-          <h2 style={{ marginBottom: 12, fontWeight: 600 }}>All Restaurants</h2>
+          <h2 style={{ marginBottom: 12, fontWeight: 600 }}>
+            {t("allRestaurants")}
+          </h2>
           {restaurantsLoading ? (
             <div>Loading...</div>
           ) : (
@@ -201,7 +205,9 @@ export default function SuperAdminDashboard() {
 
       <PermissionWrapper permission="activities:view">
         <div className="card">
-          <h2 style={{ marginBottom: 12, fontWeight: 600 }}>All Activities</h2>
+          <h2 style={{ marginBottom: 12, fontWeight: 600 }}>
+            {t("allActivities")}
+          </h2>
           {activitiesLoading ? (
             <div>Loading...</div>
           ) : (
@@ -221,7 +227,7 @@ export default function SuperAdminDashboard() {
 
       <PermissionWrapper permission="bookings:view">
         <div className="card">
-          <h2 style={{ marginBottom: 12, fontWeight: 600 }}>Bookings</h2>
+          <h2 style={{ marginBottom: 12, fontWeight: 600 }}>{t("bookings")}</h2>
           {bookingsLoading ? (
             <div>Loading...</div>
           ) : (
@@ -241,7 +247,9 @@ export default function SuperAdminDashboard() {
 
       <PermissionWrapper permission="rooms:view">
         <div className="card">
-          <h2 style={{ marginBottom: 12, fontWeight: 600 }}>Rooms / Tables</h2>
+          <h2 style={{ marginBottom: 12, fontWeight: 600 }}>
+            {t("roomsTables")}
+          </h2>
           {roomsLoading ? (
             <div>Loading...</div>
           ) : (
@@ -259,7 +267,7 @@ export default function SuperAdminDashboard() {
 
       <PermissionWrapper permission="finance:view">
         <div className="card">
-          <h2 style={{ marginBottom: 12, fontWeight: 600 }}>Finance</h2>
+          <h2 style={{ marginBottom: 12, fontWeight: 600 }}>{t("finance")}</h2>
           {financeLoading ? (
             <div>Loading...</div>
           ) : (
@@ -274,7 +282,7 @@ export default function SuperAdminDashboard() {
 
       <PermissionWrapper permission="reports:view">
         <div className="card">
-          <h2 style={{ marginBottom: 12, fontWeight: 600 }}>Reports</h2>
+          <h2 style={{ marginBottom: 12, fontWeight: 600 }}>{t("reports")}</h2>
           {reportsLoading ? (
             <div>Loading...</div>
           ) : (

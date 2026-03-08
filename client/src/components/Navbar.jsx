@@ -25,8 +25,9 @@ export default function Navbar() {
   const user = useSelector((s) => s.auth.user);
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { t, theme } = useLanguage();
+  const { t, theme, dir } = useLanguage();
   const isDark = theme === "dark";
+  const isRtl = dir === "rtl";
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
 
@@ -194,7 +195,8 @@ export default function Navbar() {
             <div
               style={{
                 position: "absolute",
-                right: 0,
+                right: isRtl ? "auto" : 0,
+                left: isRtl ? 0 : "auto",
                 top: 40,
                 width: 180,
                 background: isDark ? "#1e293b" : "#ffffff",
