@@ -81,10 +81,15 @@ export default function UsersPage() {
   };
 
   const handleSave = async (data) => {
-    if (data._id) {
-      await updateUser({ id: data._id, ...data });
-    } else {
-      await createUser(data);
+    try {
+      if (data._id) {
+        await updateUser({ id: data._id, ...data }).unwrap();
+      } else {
+        await createUser(data).unwrap();
+      }
+    } catch (err) {
+      alert(err.data?.message || "Failed to save user");
+      throw err; // throw so UserFormModal can catch it and not close
     }
   };
 

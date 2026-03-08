@@ -49,10 +49,15 @@ export default function AdminsPage() {
   };
 
   const handleSave = async (data) => {
-    if (data._id) {
-      await updateUser({ _id: data._id, ...data });
-    } else {
-      await createUser({ ...data, role: "admin" });
+    try {
+      if (data._id) {
+        await updateUser({ _id: data._id, ...data }).unwrap();
+      } else {
+        await createUser({ ...data, role: "admin" }).unwrap();
+      }
+    } catch (err) {
+      alert(err.data?.message || "Failed to save admin");
+      throw err;
     }
   };
 
