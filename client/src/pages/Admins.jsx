@@ -1,6 +1,7 @@
 import { useState } from "react";
 import DataTable from "../components/DataTable";
 import UserFormModal from "../components/UserFormModal";
+import { useLanguage } from "../context/LanguageContext";
 import {
   useGetUsersQuery,
   useCreateUserMutation,
@@ -16,22 +17,23 @@ export default function AdminsPage() {
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
+  const { t } = useLanguage();
 
   const userColumns = [
-    { key: "name", label: "Name" },
-    { key: "email", label: "Email" },
+    { key: "name", label: t("name") },
+    { key: "email", label: t("email") },
     {
       key: "permissions",
-      label: "Permissions",
+      label: t("permissionsLabel"),
       render: (v) => (
         <span style={{ color: "#9ca3af", fontSize: 12 }}>
-          {Array.isArray(v) ? v.length : 0} permissions
+          {Array.isArray(v) ? v.length : 0} {t("permissionsSelected")}
         </span>
       ),
     },
     {
       key: "createdAt",
-      label: "Created",
+      label: t("status"),
       render: (v) => (v ? new Date(v).toLocaleDateString() : "-"),
     },
   ];
@@ -55,37 +57,55 @@ export default function AdminsPage() {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm("Are you sure you want to delete this admin?")) {
+    if (window.confirm(t("areYouSureDeleteAdmin"))) {
       await deleteUser(id);
     }
   };
 
   if (isLoading)
-    return <div className="p-6 text-center">Loading admins...</div>;
+    return <div className="p-6 text-center">{t("loadingAdmins")}</div>;
   if (error)
     return (
-      <div className="p-6 text-center text-red-500">Error loading admins</div>
+      <div className="p-6 text-center text-red-500">
+        {t("errorLoadingAdmins")}
+      </div>
     );
 
   const usersArray = Array.isArray(users) ? users : [];
   const admins = usersArray.filter((u) => u.role === "admin");
 
   return (
-    <div style={{ padding: 24 }}>
+    <div
+      style={{
+        padding: 24,
+        overflowX: "hidden",
+        maxWidth: "100%",
+        boxSizing: "border-box",
+      }}
+    >
       <div
         style={{
           display: "flex",
           justifyContent: "space-between",
-          alignItems: "center",
+          alignItems: "flex-start",
+          flexWrap: "wrap",
+          gap: 12,
           marginBottom: 24,
         }}
       >
-        <div>
+        <div style={{ flex: 1, minWidth: 0 }}>
           <h1 style={{ fontSize: 24, fontWeight: 700, margin: 0 }}>
-            Admins Management
+            {t("adminsManagement")}
           </h1>
-          <p style={{ color: "#9ca3af", fontSize: 14, marginTop: 4 }}>
-            Company administrators — manage hotels, restaurants & activities
+          <p
+            style={{
+              color: "#9ca3af",
+              fontSize: 14,
+              marginTop: 4,
+              wordBreak: "break-word",
+            }}
+          >
+            {t("adminsSubtitle")}
           </p>
         </div>
         <button
@@ -101,9 +121,11 @@ export default function AdminsPage() {
             display: "flex",
             alignItems: "center",
             gap: 8,
+            flexShrink: 0,
+            whiteSpace: "nowrap",
           }}
         >
-          <span style={{ fontSize: 18 }}>+</span> Add Admin
+          <span style={{ fontSize: 18 }}>+</span> {t("addAdmin")}
         </button>
       </div>
 
@@ -111,7 +133,7 @@ export default function AdminsPage() {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(3, 1fr)",
+          gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
           gap: 16,
           marginBottom: 24,
         }}
@@ -128,7 +150,9 @@ export default function AdminsPage() {
           <div style={{ fontSize: 28, fontWeight: 700, color: "#60a5fa" }}>
             {admins.length}
           </div>
-          <div style={{ fontSize: 12, color: "#64748b" }}>Total Admins</div>
+          <div style={{ fontSize: 12, color: "#64748b" }}>
+            {t("totalAdmins")}
+          </div>
         </div>
         <div
           style={{
@@ -142,7 +166,9 @@ export default function AdminsPage() {
           <div style={{ fontSize: 28, fontWeight: 700, color: "#22c55e" }}>
             {admins.filter((u) => u.permissions?.length > 0).length}
           </div>
-          <div style={{ fontSize: 12, color: "#64748b" }}>With Permissions</div>
+          <div style={{ fontSize: 12, color: "#64748b" }}>
+            {t("withPermissions")}
+          </div>
         </div>
         <div
           style={{
@@ -163,7 +189,9 @@ export default function AdminsPage() {
               ).length
             }
           </div>
-          <div style={{ fontSize: 12, color: "#64748b" }}>Managed Accounts</div>
+          <div style={{ fontSize: 12, color: "#64748b" }}>
+            {t("managedAccounts")}
+          </div>
         </div>
       </div>
 
@@ -171,7 +199,7 @@ export default function AdminsPage() {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
+          gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
           gap: 16,
           marginBottom: 32,
         }}
@@ -220,7 +248,14 @@ export default function AdminsPage() {
                   >
                     {user.name}
                   </h3>
-                  <p style={{ margin: 0, fontSize: 13, color: "#9ca3af" }}>
+                  <p
+                    style={{
+                      margin: 0,
+                      fontSize: 13,
+                      color: "#9ca3af",
+                      wordBreak: "break-all",
+                    }}
+                  >
                     {user.email}
                   </p>
                 </div>
@@ -241,7 +276,7 @@ export default function AdminsPage() {
 
             <div style={{ marginBottom: 16 }}>
               <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 4 }}>
-                Permissions
+                {t("permissionsLabel")}
               </div>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
                 {(user.permissions || []).slice(0, 5).map((p) => (
@@ -268,7 +303,7 @@ export default function AdminsPage() {
                       color: "#60a5fa",
                     }}
                   >
-                    +{(user.permissions || []).length - 5} more
+                    +{(user.permissions || []).length - 5} {t("moreLabel")}
                   </span>
                 )}
               </div>
@@ -289,7 +324,7 @@ export default function AdminsPage() {
                   fontWeight: 500,
                 }}
               >
-                Edit Admin
+                {t("editAdmin")}
               </button>
               <button
                 onClick={() => handleDelete(user._id)}
@@ -304,7 +339,7 @@ export default function AdminsPage() {
                   fontWeight: 500,
                 }}
               >
-                Delete
+                {t("delete")}
               </button>
             </div>
           </div>
@@ -312,16 +347,18 @@ export default function AdminsPage() {
       </div>
 
       {/* Table View */}
-      <div className="card" style={{ marginTop: 32 }}>
+      <div className="card" style={{ marginTop: 32, overflowX: "auto" }}>
         <h3 style={{ marginBottom: 16, fontWeight: 600 }}>
-          All Admins (Table View)
+          {t("adminsManagement")} — {t("allBookings").replace("جميع ", "")}
         </h3>
-        <DataTable
-          columns={userColumns}
-          data={admins}
-          editable={false}
-          exportFilename="admins"
-        />
+        <div style={{ overflowX: "auto" }}>
+          <DataTable
+            columns={userColumns}
+            data={admins}
+            editable={false}
+            exportFilename="admins"
+          />
+        </div>
       </div>
 
       <UserFormModal

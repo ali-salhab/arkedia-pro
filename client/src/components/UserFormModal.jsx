@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useLanguage } from "../context/LanguageContext";
 
 // All available permissions matrix
 const permissionMatrix = [
@@ -199,6 +200,8 @@ export default function UserFormModal({
   const [activeTab, setActiveTab] = useState("basic");
   const [loading, setLoading] = useState(false);
   const [useCustomPermissions, setUseCustomPermissions] = useState(false);
+  const { t, dir } = useLanguage();
+  const logoInputRef = useRef(null);
 
   useEffect(() => {
     if (user) {
@@ -286,17 +289,49 @@ export default function UserFormModal({
     }));
   };
 
+  const handleLogoUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const img = new Image();
+      img.onload = () => {
+        const MAX = 300;
+        let w = img.width,
+          h = img.height;
+        if (w > h) {
+          if (w > MAX) {
+            h = Math.round((h * MAX) / w);
+            w = MAX;
+          }
+        } else {
+          if (h > MAX) {
+            w = Math.round((w * MAX) / h);
+            h = MAX;
+          }
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = w;
+        canvas.height = h;
+        canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+        handleChange("logo", canvas.toDataURL("image/jpeg", 0.75));
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleSubmit = async () => {
     if (!form.name || !form.email) {
-      alert("Please fill in name and email");
+      alert(t("fullName") + " & " + t("emailAddress") + " required");
       return;
     }
     if (!user && !form.password) {
-      alert("Please enter a password for new user");
+      alert(t("password") + " required");
       return;
     }
     if (adminsList.length > 0 && !form.adminId) {
-      alert("Please select a linked Admin for this account");
+      alert(t("adminRequired"));
       return;
     }
 
@@ -368,7 +403,7 @@ export default function UserFormModal({
           }}
         >
           <h2 style={{ margin: 0, color: "#1e293b" }}>
-            {user ? "Edit User" : "Create New User"}
+            {user ? t("editUser") : t("createNewUser")}
           </h2>
           <button
             className="btn"
@@ -401,7 +436,7 @@ export default function UserFormModal({
               fontWeight: 500,
             }}
           >
-            👤 Basic Info
+            👤 {t("basicInfoTab")}
           </button>
           <button
             onClick={() => setActiveTab("permissions")}
@@ -415,13 +450,20 @@ export default function UserFormModal({
               fontWeight: 500,
             }}
           >
-            🔐 Permissions ({(form.permissions || []).length})
+            🔐 {t("permissionsTab")} ({(form.permissions || []).length})
           </button>
         </div>
 
         {/* Basic Info Tab */}
         {activeTab === "basic" && (
-          <div style={{ padding: 16, background: "#1e293b", borderRadius: 12 }}>
+          <div
+            style={{
+              padding: 16,
+              background: "#f8fafc",
+              borderRadius: 12,
+              border: "1px solid #e2e8f0",
+            }}
+          >
             <div
               style={{
                 display: "grid",
@@ -430,7 +472,7 @@ export default function UserFormModal({
               }}
             >
               <div>
-                <label style={labelStyle}>Full Name *</label>
+                <label style={labelStyle}>{t("fullName")} *</label>
                 <input
                   style={inputStyle}
                   value={form.name}
@@ -439,7 +481,7 @@ export default function UserFormModal({
                 />
               </div>
               <div>
-                <label style={labelStyle}>Email Address *</label>
+                <label style={labelStyle}>{t("emailAddress")} *</label>
                 <input
                   style={inputStyle}
                   type="email"
@@ -460,48 +502,56 @@ export default function UserFormModal({
             >
               <div>
                 <label style={labelStyle}>
-                  Password {user ? "(leave empty to keep current)" : "*"}
+                  {t("password")} {user ? t("leaveEmptyPassword") : "*"}
                 </label>
                 <input
                   style={inputStyle}
                   type="password"
                   value={form.password}
                   onChange={(e) => handleChange("password", e.target.value)}
-                  placeholder={user ? "••••••••" : "Enter password"}
+                  placeholder={user ? "••••••••" : t("password")}
                 />
               </div>
               {fixedRole ? (
                 <div>
-                  <label style={labelStyle}>Role</label>
+                  <label style={labelStyle}>{t("role")}</label>
                   <div
                     style={{
                       ...inputStyle,
-                      background: "#0f172a",
-                      color: "#94a3b8",
+                      background: "#f1f5f9",
+                      color: "#475569",
                       display: "flex",
                       alignItems: "center",
+                      fontWeight: 600,
                     }}
                   >
-                    {fixedRole === "super_admin" && "🔑 Super Admin"}
-                    {fixedRole === "admin" && "👔 Admin (Company)"}
-                    {fixedRole === "hotel" && "🏨 Hotel Account"}
-                    {fixedRole === "restaurant" && "🍽️ Restaurant Account"}
-                    {fixedRole === "activity" && "🎯 Activity Account"}
+                    {fixedRole === "super_admin" &&
+                      "🔑 " + t("role_super_admin")}
+                    {fixedRole === "admin" && "👔 " + t("role_admin")}
+                    {fixedRole === "hotel" && "🏨 " + t("role_hotel")}
+                    {fixedRole === "restaurant" && "🍽️ " + t("role_restaurant")}
+                    {fixedRole === "activity" && "🎯 " + t("role_activity")}
                   </div>
                 </div>
               ) : (
                 <div>
-                  <label style={labelStyle}>Role *</label>
+                  <label style={labelStyle}>{t("role")} *</label>
                   <select
                     style={inputStyle}
                     value={form.role}
                     onChange={(e) => handleChange("role", e.target.value)}
                   >
-                    <option value="super_admin">🔑 Super Admin</option>
-                    <option value="admin">👔 Admin (Company)</option>
-                    <option value="hotel">🏨 Hotel Manager</option>
-                    <option value="restaurant">🍽️ Restaurant Manager</option>
-                    <option value="activity">🎯 Activity Manager</option>
+                    <option value="super_admin">
+                      🔑 {t("role_super_admin")}
+                    </option>
+                    <option value="admin">👔 {t("role_admin")}</option>
+                    <option value="hotel">🏨 {t("role_hotel_manager")}</option>
+                    <option value="restaurant">
+                      🍽️ {t("role_restaurant_manager")}
+                    </option>
+                    <option value="activity">
+                      🎯 {t("role_activity_manager")}
+                    </option>
                   </select>
                 </div>
               )}
@@ -511,7 +561,7 @@ export default function UserFormModal({
             {adminsList.length > 0 && (
               <div style={{ marginTop: 16 }}>
                 <label style={{ ...labelStyle, color: "#f59e0b" }}>
-                  🔗 Linked Admin (Company) *
+                  🔗 {t("linkedAdmin")} *
                 </label>
                 <select
                   style={{
@@ -521,7 +571,7 @@ export default function UserFormModal({
                   value={form.adminId}
                   onChange={(e) => handleChange("adminId", e.target.value)}
                 >
-                  <option value="">-- Select Admin --</option>
+                  <option value="">{t("selectAdmin")}</option>
                   {adminsList.map((admin) => (
                     <option key={admin._id} value={admin._id}>
                       {admin.name} ({admin.email})
@@ -530,7 +580,7 @@ export default function UserFormModal({
                 </select>
                 {!form.adminId && (
                   <p style={{ color: "#ef4444", fontSize: 12, marginTop: 4 }}>
-                    ⚠️ Admin is required for this account type
+                    ⚠️ {t("adminRequired")}
                   </p>
                 )}
               </div>
@@ -541,41 +591,52 @@ export default function UserFormModal({
               fixedRole !== "super_admin" &&
               fixedRole !== "admin" && (
                 <div style={{ marginTop: 16 }}>
-                  <label style={labelStyle}>🖼️ Logo URL (optional)</label>
-                  <input
-                    style={inputStyle}
-                    value={form.logo || ""}
-                    onChange={(e) => handleChange("logo", e.target.value)}
-                    placeholder="https://example.com/logo.png"
-                  />
-                  {form.logo && (
-                    <div
-                      style={{
-                        marginTop: 8,
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 8,
-                      }}
-                    >
+                  <label style={labelStyle}>🖼️ {t("logoUpload")}</label>
+                  <div
+                    style={{ display: "flex", alignItems: "center", gap: 12 }}
+                  >
+                    {form.logo && (
                       <img
                         src={form.logo}
-                        alt="logo preview"
+                        alt="logo"
                         style={{
-                          width: 40,
-                          height: 40,
+                          width: 52,
+                          height: 52,
                           borderRadius: "50%",
                           objectFit: "cover",
-                          border: "2px solid #334155",
-                        }}
-                        onError={(e) => {
-                          e.target.style.display = "none";
+                          border: "2px solid #e2e8f0",
                         }}
                       />
-                      <span style={{ color: "#9ca3af", fontSize: 12 }}>
-                        Logo preview
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => logoInputRef.current?.click()}
+                      style={{
+                        padding: "10px 18px",
+                        background: "#f1f5f9",
+                        border: "1px dashed #94a3b8",
+                        borderRadius: 8,
+                        color: "#475569",
+                        cursor: "pointer",
+                        fontSize: 13,
+                        fontWeight: 500,
+                      }}
+                    >
+                      📂 {t("logoUpload")}
+                    </button>
+                    {form.logo && (
+                      <span style={{ color: "#22c55e", fontSize: 12 }}>
+                        {t("logoPreview")}
                       </span>
-                    </div>
-                  )}
+                    )}
+                  </div>
+                  <input
+                    ref={logoInputRef}
+                    type="file"
+                    accept="image/*"
+                    style={{ display: "none" }}
+                    onChange={handleLogoUpload}
+                  />
                 </div>
               )}
 
@@ -584,27 +645,18 @@ export default function UserFormModal({
               style={{
                 marginTop: 20,
                 padding: 16,
-                background: "#0f172a",
+                background: "#eff6ff",
                 borderRadius: 8,
                 borderLeft: "4px solid #3b82f6",
               }}
             >
               <h4
-                style={{ margin: "0 0 8px 0", color: "#60a5fa", fontSize: 14 }}
+                style={{ margin: "0 0 8px 0", color: "#2563eb", fontSize: 14 }}
               >
-                Role Description
+                {t("roleDescription")}
               </h4>
-              <p style={{ margin: 0, color: "#9ca3af", fontSize: 13 }}>
-                {form.role === "super_admin" &&
-                  "Full access to all system features. Can manage all users, hotels, restaurants, activities, and system settings."}
-                {form.role === "admin" &&
-                  "Company administrator. Can manage hotels, restaurants, and activities under their company."}
-                {form.role === "hotel" &&
-                  "Hotel manager. Can manage rooms, bookings, and view reports for their hotel."}
-                {form.role === "restaurant" &&
-                  "Restaurant manager. Can manage tables, reservations, and view reports for their restaurant."}
-                {form.role === "activity" &&
-                  "Activity manager. Can manage activities and bookings for their activities."}
+              <p style={{ margin: 0, color: "#475569", fontSize: 13 }}>
+                {t("roleDesc_" + form.role)}
               </p>
             </div>
 
@@ -628,8 +680,8 @@ export default function UserFormModal({
                   }
                 }}
               />
-              <label htmlFor="customPerms" style={{ color: "#e5e7eb" }}>
-                Use custom permissions (override role defaults)
+              <label htmlFor="customPerms" style={{ color: "#374151" }}>
+                {t("useCustomPerms")}
               </label>
             </div>
           </div>
@@ -659,7 +711,7 @@ export default function UserFormModal({
                   fontSize: 13,
                 }}
               >
-                ✅ Select All
+                ✅ {t("selectAll")}
               </button>
               <button
                 onClick={clearAllPermissions}
@@ -673,7 +725,7 @@ export default function UserFormModal({
                   fontSize: 13,
                 }}
               >
-                ❌ Clear All
+                ❌ {t("clearAll")}
               </button>
               <button
                 onClick={applyRolePreset}
@@ -687,7 +739,7 @@ export default function UserFormModal({
                   fontSize: 13,
                 }}
               >
-                🔄 Apply Role Preset
+                🔄 {t("applyRolePreset")}
               </button>
               <span
                 style={{
@@ -697,7 +749,7 @@ export default function UserFormModal({
                   marginLeft: "auto",
                 }}
               >
-                {(form.permissions || []).length} permissions selected
+                {(form.permissions || []).length} {t("permissionsSelected")}
               </span>
             </div>
 
@@ -713,14 +765,14 @@ export default function UserFormModal({
                 <div
                   key={module.module}
                   style={{
-                    background: "#1e293b",
+                    background: "#f8fafc",
                     borderRadius: 12,
                     padding: 16,
                     border: isModuleFullySelected(module.module)
                       ? "2px solid #22c55e"
                       : isModulePartiallySelected(module.module)
                         ? "2px solid #f59e0b"
-                        : "2px solid transparent",
+                        : "2px solid #e2e8f0",
                   }}
                 >
                   {/* Module Header */}
@@ -731,13 +783,13 @@ export default function UserFormModal({
                       gap: 10,
                       marginBottom: 12,
                       paddingBottom: 10,
-                      borderBottom: "1px solid #334155",
+                      borderBottom: "1px solid #e2e8f0",
                     }}
                   >
                     <span style={{ fontSize: 24 }}>{module.icon}</span>
                     <div style={{ flex: 1 }}>
-                      <h4 style={{ margin: 0, color: "#f1f5f9", fontSize: 15 }}>
-                        {module.label}
+                      <h4 style={{ margin: 0, color: "#1e293b", fontSize: 15 }}>
+                        {t(`module_${module.module}`)}
                       </h4>
                     </div>
                     <label
@@ -756,8 +808,8 @@ export default function UserFormModal({
                         }
                         style={{ width: 18, height: 18 }}
                       />
-                      <span style={{ color: "#9ca3af", fontSize: 12 }}>
-                        All
+                      <span style={{ color: "#475569", fontSize: 12 }}>
+                        {t("allLabel")}
                       </span>
                     </label>
                   </div>
@@ -779,12 +831,12 @@ export default function UserFormModal({
                             alignItems: "center",
                             gap: 10,
                             padding: "8px 12px",
-                            background: isSelected ? "#22c55e20" : "#0f172a",
+                            background: isSelected ? "#dcfce7" : "#ffffff",
                             borderRadius: 6,
                             cursor: "pointer",
                             border: isSelected
-                              ? "1px solid #22c55e40"
-                              : "1px solid transparent",
+                              ? "1px solid #86efac"
+                              : "1px solid #e2e8f0",
                             transition: "all 0.15s",
                           }}
                         >
@@ -796,24 +848,24 @@ export default function UserFormModal({
                           />
                           <span
                             style={{
-                              color: isSelected ? "#22c55e" : "#9ca3af",
+                              color: isSelected ? "#16a34a" : "#4b5563",
                               fontSize: 13,
                             }}
                           >
-                            {action.label}
+                            {t(`action_${action.key}_${module.module}`)}
                           </span>
                           {action.key === "delete" && (
                             <span
                               style={{
                                 marginLeft: "auto",
                                 fontSize: 10,
-                                background: "#ef444430",
+                                background: "#fee2e2",
                                 color: "#ef4444",
                                 padding: "2px 6px",
                                 borderRadius: 4,
                               }}
                             >
-                              DANGER
+                              {t("dangerLabel")}
                             </span>
                           )}
                         </label>
@@ -829,19 +881,20 @@ export default function UserFormModal({
               style={{
                 marginTop: 20,
                 padding: 16,
-                background: "#1e293b",
+                background: "#f8fafc",
                 borderRadius: 12,
+                border: "1px solid #e2e8f0",
               }}
             >
               <h4
-                style={{ margin: "0 0 12px 0", color: "#f1f5f9", fontSize: 14 }}
+                style={{ margin: "0 0 12px 0", color: "#1e293b", fontSize: 14 }}
               >
-                📋 Permission Summary
+                📋 {t("permSummary")}
               </h4>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                 {(form.permissions || []).length === 0 ? (
-                  <span style={{ color: "#6b7280", fontSize: 13 }}>
-                    No permissions selected
+                  <span style={{ color: "#9ca3af", fontSize: 13 }}>
+                    {t("noPermsSelected")}
                   </span>
                 ) : (
                   (form.permissions || []).map((p) => (
@@ -849,10 +902,10 @@ export default function UserFormModal({
                       key={p}
                       style={{
                         padding: "4px 10px",
-                        background: "#334155",
+                        background: "#e2e8f0",
                         borderRadius: 20,
                         fontSize: 11,
-                        color: "#94a3b8",
+                        color: "#475569",
                       }}
                     >
                       {p}
@@ -872,7 +925,7 @@ export default function UserFormModal({
             gap: 12,
             marginTop: 20,
             paddingTop: 16,
-            borderTop: "1px solid #334155",
+            borderTop: "1px solid #e2e8f0",
           }}
         >
           <button
@@ -880,7 +933,7 @@ export default function UserFormModal({
             onClick={onClose}
             style={{ background: "#475569" }}
           >
-            Cancel
+            {t("cancel")}
           </button>
           <button
             className="btn btn-primary"
@@ -891,7 +944,7 @@ export default function UserFormModal({
               opacity: !form.name || !form.email ? 0.5 : 1,
             }}
           >
-            {loading ? "Saving..." : user ? "Update User" : "Create User"}
+            {loading ? t("saving") : user ? t("updateUser") : t("createUser")}
           </button>
         </div>
       </div>

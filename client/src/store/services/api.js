@@ -1,17 +1,60 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { setCredentials, logout } from "../slices/authSlice";
 
 const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
 
+const rawBaseQuery = fetchBaseQuery({
+  baseUrl,
+  prepareHeaders: (headers, { getState }) => {
+    const token = getState().auth.accessToken;
+    if (token) headers.set("authorization", `Bearer ${token}`);
+    return headers;
+  },
+});
+
+// Automatically refresh the access token on 401 and retry the original request.
+let isRefreshing = false;
+const baseQueryWithReauth = async (args, api, extraOptions) => {
+  let result = await rawBaseQuery(args, api, extraOptions);
+
+  if (result?.error?.status === 401 && !isRefreshing) {
+    isRefreshing = true;
+    const refreshToken = api.getState().auth.refreshToken;
+
+    if (refreshToken) {
+      const refreshResult = await rawBaseQuery(
+        { url: "/auth/refresh", method: "POST", body: { refreshToken } },
+        api,
+        extraOptions,
+      );
+
+      if (refreshResult?.data) {
+        const {
+          user,
+          accessToken,
+          refreshToken: newRefreshToken,
+        } = refreshResult.data;
+        api.dispatch(
+          setCredentials({ user, accessToken, refreshToken: newRefreshToken }),
+        );
+        // Retry the original request with the new token
+        result = await rawBaseQuery(args, api, extraOptions);
+      } else {
+        // Refresh failed — log user out
+        api.dispatch(logout());
+      }
+    } else {
+      api.dispatch(logout());
+    }
+    isRefreshing = false;
+  }
+
+  return result;
+};
+
 export const api = createApi({
   reducerPath: "api",
-  baseQuery: fetchBaseQuery({
-    baseUrl,
-    prepareHeaders: (headers, { getState }) => {
-      const token = getState().auth.accessToken;
-      if (token) headers.set("authorization", `Bearer ${token}`);
-      return headers;
-    },
-  }),
+  baseQuery: baseQueryWithReauth,
   tagTypes: [
     "User",
     "Hotel",

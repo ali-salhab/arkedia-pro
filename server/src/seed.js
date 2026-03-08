@@ -1,5 +1,8 @@
 require("dotenv").config({
-  path: require("path").resolve(__dirname, "../.env"),
+  path: require("path").resolve(
+    __dirname,
+    `../.env.${process.env.NODE_ENV || "development"}`,
+  ),
 });
 const connectDb = require("./config/db");
 const User = require("./models/User");
@@ -100,7 +103,7 @@ async function upsertRole(name, permissions) {
   await Role.findOneAndUpdate(
     { name },
     { name, permissions },
-    { upsert: true, new: true, setDefaultsOnInsert: true }
+    { upsert: true, new: true, setDefaultsOnInsert: true },
   );
 }
 

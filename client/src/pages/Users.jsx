@@ -249,7 +249,7 @@ export default function UsersPage() {
                         margin: 0,
                         fontSize: 16,
                         fontWeight: 600,
-                        color: "#f1f5f9",
+                        color: "#000111",
                       }}
                     >
                       {user.name}

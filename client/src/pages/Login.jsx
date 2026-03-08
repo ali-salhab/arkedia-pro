@@ -95,14 +95,40 @@ export default function LoginPage() {
               onChange={(e) => setEmail(e.target.value)}
               autoComplete="email"
             />
-            <input
-              className="input"
-              placeholder={t("passwordPlaceholder")}
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoComplete="current-password"
-            />
+            <div style={{ position: "relative" }}>
+              <input
+                className="input"
+                placeholder={t("passwordPlaceholder")}
+                type={showpassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="current-password"
+                style={{
+                  paddingRight: dir === "rtl" ? "14px" : "44px",
+                  paddingLeft: dir === "rtl" ? "44px" : "14px",
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowpassword((v) => !v)}
+                style={{
+                  position: "absolute",
+                  top: "50%",
+                  [dir === "rtl" ? "left" : "right"]: "12px",
+                  transform: "translateY(-50%)",
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  padding: 0,
+                  color: "#94a3b8",
+                  fontSize: 18,
+                  lineHeight: 1,
+                }}
+                tabIndex={-1}
+              >
+                {showpassword ? "🙈" : "👁️"}
+              </button>
+            </div>
             {error && (
               <div className="input-error">
                 {error.data?.message || t("loginFailed")}
