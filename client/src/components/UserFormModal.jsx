@@ -339,6 +339,16 @@ export default function UserFormModal({
     try {
       const data = { ...form };
       if (!data.password) delete data.password; // Don't send empty password on edit
+
+      // Remove empty relationship IDs so Mongoose doesn't throw CastError
+      ["adminId", "companyId", "hotelId", "restaurantId", "activityId"].forEach(
+        (field) => {
+          if (data[field] === "") {
+            delete data[field];
+          }
+        },
+      );
+
       await onSave(data);
       onClose();
     } catch (error) {
