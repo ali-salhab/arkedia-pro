@@ -1,4 +1,9 @@
-require("dotenv").config();
+require("dotenv").config({
+  path: require("path").resolve(
+    __dirname,
+    `../.env.${process.env.NODE_ENV || "development"}`,
+  ),
+});
 const express = require("express");
 const cookieParser = require("cookie-parser");
 const morgan = require("morgan");

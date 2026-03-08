@@ -89,6 +89,7 @@ const translations = {
     noPermissions: "No explicit permissions (inherited from role)",
     // Sidebar items
     users: "Users",
+    admins: "Admins",
     allHotels: "All Hotels",
     allRestaurants: "All Restaurants",
     allActivities: "All Activities",
@@ -206,6 +207,7 @@ const translations = {
     noPermissions: "لا توجد صلاحيات محددة (موروثة من الدور)",
     // Sidebar items
     users: "المستخدمون",
+    admins: "المدراء",
     allHotels: "جميع الفنادق",
     allRestaurants: "جميع المطاعم",
     allActivities: "جميع الأنشطة",

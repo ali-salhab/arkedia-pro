@@ -3,6 +3,7 @@ import { useDispatch } from "react-redux";
 import { useLoginMutation } from "../store/services/api";
 import { setCredentials } from "../store/slices/authSlice";
 import { useNavigate } from "react-router-dom";
+import { useLanguage } from "../context/LanguageContext";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -11,6 +12,7 @@ export default function LoginPage() {
   const [login, { isLoading, error }] = useLoginMutation();
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { t, lang, dir } = useLanguage();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -32,40 +34,36 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="login-page">
+    <div className="login-page" dir={dir}>
       <div className="w-full max-w-5xl grid gap-8 lg:grid-cols-2 items-center">
         <div className="hidden lg:block space-y-6">
           <div className="inline-flex items-center gap-3 rounded-full border border-slate-200 px-4 py-2 bg-white shadow-sm">
             <img
               src="/logo.png"
               alt="Travky.com"
-              className="w-20 h-20 rounded-full object-cover"
+              className="w-28 h-28 rounded-full object-cover"
               onError={(e) => {
                 e.target.src = "/logo.svg";
               }}
             />
             <div>
               <div className="logo-title">Travky.com</div>
-              <div className="logo-subtitle">Unified Booking Platform</div>
+              <div className="logo-subtitle">{t("unifiedBookingPlatform")}</div>
             </div>
           </div>
           <h1 className="text-4xl font-bold text-slate-800 leading-tight">
-            Control every booking
-            <span className="text-brand-primary"> in one place</span>.
+            {t("controlBooking")}
+            <span className="text-brand-primary">{t("inOnePlace")}</span>.
           </h1>
-          <p className="text-slate-500 text-lg max-w-xl">
-            Five dashboards for super admin, admin company, hotels, restaurants,
-            and activities. Role-based access, permissions-aware sidebar, and
-            real-time data.
-          </p>
+          <p className="text-slate-500 text-lg max-w-xl">{t("fiveDesc")}</p>
           <div className="grid grid-cols-2 gap-4">
             <div className="card">
-              <div className="text-sm text-slate-400">Security</div>
+              <div className="text-sm text-slate-400">{t("security")}</div>
               <div className="text-lg font-semibold">JWT + RBAC</div>
             </div>
             <div className="card">
-              <div className="text-sm text-slate-400">Dashboards</div>
-              <div className="text-lg font-semibold">5 tailored views</div>
+              <div className="text-sm text-slate-400">{t("dashboards")}</div>
+              <div className="text-lg font-semibold">{t("tailoredViews")}</div>
             </div>
           </div>
         </div>
@@ -75,33 +73,31 @@ export default function LoginPage() {
             <img
               src="/logo.png"
               alt="Travky.com"
-              className="w-24 h-24    object-cover"
+              className="w-32 h-32 object-cover"
               onError={(e) => {
                 e.target.src = "/logo.svg";
               }}
             />
             <div>
               <div className="logo-title">Travky.com</div>
-              <div className="logo-subtitle">Sign in to continue</div>
+              <div className="logo-subtitle">{t("signInToContinue")}</div>
             </div>
           </div>
 
-          <h2 className="login-title">Welcome back</h2>
-          <p className="login-subtext">
-            Manage bookings across hotels, restaurants, and activities.
-          </p>
+          <h2 className="login-title">{t("welcomeBack")}</h2>
+          <p className="login-subtext">{t("loginSubtext")}</p>
 
           <form onSubmit={handleSubmit} className="login-form">
             <input
               className="input"
-              placeholder="Email"
+              placeholder={t("emailPlaceholder")}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               autoComplete="email"
             />
             <input
               className="input"
-              placeholder="Password"
+              placeholder={t("passwordPlaceholder")}
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -109,7 +105,7 @@ export default function LoginPage() {
             />
             {error && (
               <div className="input-error">
-                {error.data?.message || "Login failed"}
+                {error.data?.message || t("loginFailed")}
               </div>
             )}
             <button
@@ -117,12 +113,12 @@ export default function LoginPage() {
               type="submit"
               disabled={isLoading}
             >
-              {isLoading ? "Signing in..." : "Login"}
+              {isLoading ? t("signingIn") : t("loginBtn")}
             </button>
           </form>
 
           <div className="login-accounts">
-            <div className="login-accounts-title">Sample accounts</div>
+            <div className="login-accounts-title">{t("sampleAccounts")}</div>
             <ul>
               <li>Super Admin — super@arkedia.com / Password123!</li>
               <li>Admin Company — admin@arkedia.com / Password123!</li>

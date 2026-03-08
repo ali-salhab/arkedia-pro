@@ -6,6 +6,7 @@ import NotFound from "./pages/NotFound";
 import SettingsPage from "./pages/Settings";
 import DashboardPage from "./pages/Dashboard";
 import UsersPage from "./pages/Users";
+import AdminsPage from "./pages/Admins";
 import HotelsPage from "./pages/Hotels";
 import RestaurantsPage from "./pages/Restaurants";
 import ActivitiesPage from "./pages/Activities";
@@ -72,6 +73,10 @@ export default function App() {
         <Route
           path="/users"
           element={<DashboardRoute element={<UsersPage />} />}
+        />
+        <Route
+          path="/admins"
+          element={<DashboardRoute element={<AdminsPage />} />}
         />
         <Route
           path="/hotels"

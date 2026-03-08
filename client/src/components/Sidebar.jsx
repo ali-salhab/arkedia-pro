@@ -5,6 +5,7 @@ import { useLanguage } from "../context/LanguageContext";
 const SIDEBAR_NAME_MAP = {
   Dashboard: "dashboard",
   Users: "users",
+  Admins: "admins",
   "All Hotels": "allHotels",
   "All Restaurants": "allRestaurants",
   "All Activities": "allActivities",

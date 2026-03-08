@@ -180,13 +180,21 @@ const labelStyle = {
   fontSize: 13,
 };
 
-export default function UserFormModal({ open, onClose, onSave, user = null }) {
+export default function UserFormModal({
+  open,
+  onClose,
+  onSave,
+  user = null,
+  fixedRole = null,
+  adminsList = [],
+}) {
   const [form, setForm] = useState({
     name: "",
     email: "",
     password: "",
-    role: "admin",
+    role: fixedRole || "admin",
     permissions: [],
+    adminId: "",
   });
   const [activeTab, setActiveTab] = useState("basic");
   const [loading, setLoading] = useState(false);
@@ -197,9 +205,11 @@ export default function UserFormModal({ open, onClose, onSave, user = null }) {
       setForm({
         ...user,
         password: "", // Don't show existing password
+        role: fixedRole || user.role,
+        adminId: user.adminId || "",
       });
       // Check if user has custom permissions (different from preset)
-      const presetPerms = rolePresets[user.role] || [];
+      const presetPerms = rolePresets[fixedRole || user.role] || [];
       const hasCustom =
         user.permissions?.length > 0 &&
         JSON.stringify([...user.permissions].sort()) !==
@@ -210,8 +220,9 @@ export default function UserFormModal({ open, onClose, onSave, user = null }) {
         name: "",
         email: "",
         password: "",
-        role: "admin",
-        permissions: rolePresets.admin,
+        role: fixedRole || "admin",
+        permissions: rolePresets[fixedRole || "admin"],
+        adminId: "",
       });
       setUseCustomPermissions(false);
     }
@@ -282,6 +293,10 @@ export default function UserFormModal({ open, onClose, onSave, user = null }) {
     }
     if (!user && !form.password) {
       alert("Please enter a password for new user");
+      return;
+    }
+    if (adminsList.length > 0 && !form.adminId) {
+      alert("Please select a linked Admin for this account");
       return;
     }
 
@@ -455,21 +470,114 @@ export default function UserFormModal({ open, onClose, onSave, user = null }) {
                   placeholder={user ? "••••••••" : "Enter password"}
                 />
               </div>
-              <div>
-                <label style={labelStyle}>Role *</label>
-                <select
-                  style={inputStyle}
-                  value={form.role}
-                  onChange={(e) => handleChange("role", e.target.value)}
-                >
-                  <option value="super_admin">🔑 Super Admin</option>
-                  <option value="admin">👔 Admin (Company)</option>
-                  <option value="hotel">🏨 Hotel Manager</option>
-                  <option value="restaurant">🍽️ Restaurant Manager</option>
-                  <option value="activity">🎯 Activity Manager</option>
-                </select>
-              </div>
+              {fixedRole ? (
+                <div>
+                  <label style={labelStyle}>Role</label>
+                  <div
+                    style={{
+                      ...inputStyle,
+                      background: "#0f172a",
+                      color: "#94a3b8",
+                      display: "flex",
+                      alignItems: "center",
+                    }}
+                  >
+                    {fixedRole === "super_admin" && "🔑 Super Admin"}
+                    {fixedRole === "admin" && "👔 Admin (Company)"}
+                    {fixedRole === "hotel" && "🏨 Hotel Account"}
+                    {fixedRole === "restaurant" && "🍽️ Restaurant Account"}
+                    {fixedRole === "activity" && "🎯 Activity Account"}
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <label style={labelStyle}>Role *</label>
+                  <select
+                    style={inputStyle}
+                    value={form.role}
+                    onChange={(e) => handleChange("role", e.target.value)}
+                  >
+                    <option value="super_admin">🔑 Super Admin</option>
+                    <option value="admin">👔 Admin (Company)</option>
+                    <option value="hotel">🏨 Hotel Manager</option>
+                    <option value="restaurant">🍽️ Restaurant Manager</option>
+                    <option value="activity">🎯 Activity Manager</option>
+                  </select>
+                </div>
+              )}
             </div>
+
+            {/* Admin Selector for hotel/restaurant/activity */}
+            {adminsList.length > 0 && (
+              <div style={{ marginTop: 16 }}>
+                <label style={{ ...labelStyle, color: "#f59e0b" }}>
+                  🔗 Linked Admin (Company) *
+                </label>
+                <select
+                  style={{
+                    ...inputStyle,
+                    borderColor: form.adminId ? "#22c55e" : "#ef4444",
+                  }}
+                  value={form.adminId}
+                  onChange={(e) => handleChange("adminId", e.target.value)}
+                >
+                  <option value="">-- Select Admin --</option>
+                  {adminsList.map((admin) => (
+                    <option key={admin._id} value={admin._id}>
+                      {admin.name} ({admin.email})
+                    </option>
+                  ))}
+                </select>
+                {!form.adminId && (
+                  <p style={{ color: "#ef4444", fontSize: 12, marginTop: 4 }}>
+                    ⚠️ Admin is required for this account type
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Logo URL for hotel/restaurant/activity */}
+            {fixedRole &&
+              fixedRole !== "super_admin" &&
+              fixedRole !== "admin" && (
+                <div style={{ marginTop: 16 }}>
+                  <label style={labelStyle}>🖼️ Logo URL (optional)</label>
+                  <input
+                    style={inputStyle}
+                    value={form.logo || ""}
+                    onChange={(e) => handleChange("logo", e.target.value)}
+                    placeholder="https://example.com/logo.png"
+                  />
+                  {form.logo && (
+                    <div
+                      style={{
+                        marginTop: 8,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 8,
+                      }}
+                    >
+                      <img
+                        src={form.logo}
+                        alt="logo preview"
+                        style={{
+                          width: 40,
+                          height: 40,
+                          borderRadius: "50%",
+                          objectFit: "cover",
+                          border: "2px solid #334155",
+                        }}
+                        onError={(e) => {
+                          e.target.style.display = "none";
+                        }}
+                      />
+                      <span style={{ color: "#9ca3af", fontSize: 12 }}>
+                        Logo preview
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
 
             {/* Role Description */}
             <div

@@ -13,7 +13,7 @@ const permissionMatrix = [
 
 function flattenPermissions() {
   return permissionMatrix.flatMap((entry) =>
-    entry.actions.map((action) => `${entry.module}:${action}`)
+    entry.actions.map((action) => `${entry.module}:${action}`),
   );
 }
 
@@ -31,6 +31,12 @@ function defaultSidebar(userRole) {
         name: "Users",
         icon: "users",
         route: "/users",
+        required_permission: "users:view",
+      },
+      {
+        name: "Admins",
+        icon: "admins",
+        route: "/admins",
         required_permission: "users:view",
       },
       {

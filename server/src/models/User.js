@@ -10,12 +10,14 @@ const UserSchema = new mongoose.Schema(
     password: { type: String, required: true, select: false },
     role: { type: String, enum: roles, required: true },
     permissions: [{ type: String }],
+    logo: { type: String },
+    adminId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     companyId: { type: mongoose.Schema.Types.ObjectId, ref: "AdminCompany" },
     hotelId: { type: mongoose.Schema.Types.ObjectId, ref: "Hotel" },
     restaurantId: { type: mongoose.Schema.Types.ObjectId, ref: "Restaurant" },
     activityId: { type: mongoose.Schema.Types.ObjectId, ref: "Activity" },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 UserSchema.pre("save", async function hash(next) {

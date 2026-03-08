@@ -101,6 +101,7 @@ export default function UsersPage() {
     );
 
   const usersArray = Array.isArray(users) ? users : [];
+  const filteredUsers = usersArray.filter((u) => u.role === "super_admin");
 
   return (
     <div style={{ padding: 24 }}>
@@ -114,10 +115,10 @@ export default function UsersPage() {
       >
         <div>
           <h1 style={{ fontSize: 24, fontWeight: 700, margin: 0 }}>
-            Users Management
+            Super Admin Users
           </h1>
           <p style={{ color: "#9ca3af", fontSize: 14, marginTop: 4 }}>
-            Create and manage users with custom permissions
+            Platform employees with full system access
           </p>
         </div>
         <button
@@ -135,49 +136,63 @@ export default function UsersPage() {
             gap: 8,
           }}
         >
-          <span style={{ fontSize: 18 }}>+</span> Add User
+          <span style={{ fontSize: 18 }}>+</span> Add Super Admin
         </button>
       </div>
 
-      {/* Stats Cards */}
+      {/* Stats Card */}
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(5, 1fr)",
+          gridTemplateColumns: "repeat(3, 1fr)",
           gap: 16,
           marginBottom: 24,
         }}
       >
-        {Object.entries(roleColors).map(([role, info]) => {
-          const count = usersArray.filter((u) => u.role === role).length;
-          return (
-            <div
-              key={role}
-              style={{
-                background: "#f8fafc",
-                borderRadius: 12,
-                padding: 16,
-                borderLeft: `4px solid ${info.color}`,
-              }}
-            >
-              <div style={{ fontSize: 24, marginBottom: 8 }}>
-                {info.label.split(" ")[0]}
-              </div>
-              <div style={{ fontSize: 28, fontWeight: 700, color: info.color }}>
-                {count}
-              </div>
-              <div
-                style={{
-                  fontSize: 12,
-                  color: "#64748b",
-                  textTransform: "capitalize",
-                }}
-              >
-                {role.replace("_", " ")}s
-              </div>
-            </div>
-          );
-        })}
+        <div
+          style={{
+            background: "#f8fafc",
+            borderRadius: 12,
+            padding: 16,
+            borderLeft: "4px solid #a78bfa",
+          }}
+        >
+          <div style={{ fontSize: 24, marginBottom: 8 }}>🔑</div>
+          <div style={{ fontSize: 28, fontWeight: 700, color: "#a78bfa" }}>
+            {filteredUsers.length}
+          </div>
+          <div style={{ fontSize: 12, color: "#64748b" }}>Super Admins</div>
+        </div>
+        <div
+          style={{
+            background: "#f8fafc",
+            borderRadius: 12,
+            padding: 16,
+            borderLeft: "4px solid #22c55e",
+          }}
+        >
+          <div style={{ fontSize: 24, marginBottom: 8 }}>✅</div>
+          <div style={{ fontSize: 28, fontWeight: 700, color: "#22c55e" }}>
+            {filteredUsers.filter((u) => u.permissions?.length > 0).length}
+          </div>
+          <div style={{ fontSize: 12, color: "#64748b" }}>With Permissions</div>
+        </div>
+        <div
+          style={{
+            background: "#f8fafc",
+            borderRadius: 12,
+            padding: 16,
+            borderLeft: "4px solid #3b82f6",
+          }}
+        >
+          <div style={{ fontSize: 24, marginBottom: 8 }}>📊</div>
+          <div style={{ fontSize: 28, fontWeight: 700, color: "#3b82f6" }}>
+            {usersArray.length}
+          </div>
+          <div style={{ fontSize: 12, color: "#64748b" }}>
+            Total Platform Users
+          </div>
+        </div>
       </div>
 
       {/* Users Grid */}
@@ -189,7 +204,7 @@ export default function UsersPage() {
           marginBottom: 32,
         }}
       >
-        {usersArray.map((user) => {
+        {filteredUsers.map((user) => {
           const role = roleColors[user.role] || {
             bg: "#33415520",
             color: "#94a3b8",
@@ -336,13 +351,13 @@ export default function UsersPage() {
       {/* Table View */}
       <div className="card" style={{ marginTop: 32 }}>
         <h3 style={{ marginBottom: 16, fontWeight: 600 }}>
-          All Users (Table View)
+          Super Admin Users (Table View)
         </h3>
         <DataTable
           columns={userColumns}
-          data={usersArray}
+          data={filteredUsers}
           editable={false}
-          exportFilename="users"
+          exportFilename="super_admin_users"
         />
       </div>
 
@@ -352,6 +367,7 @@ export default function UsersPage() {
         onClose={() => setModalOpen(false)}
         onSave={handleSave}
         user={editingUser}
+        fixedRole="super_admin"
       />
     </div>
   );
