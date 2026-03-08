@@ -78,16 +78,15 @@ export default function Navbar() {
       {/* ── Left: Logo ── */}
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
         <img
-          src="/logo.png"
+          src="/logo.png?v=2"
           alt="Travky.com"
           style={{
             height: 44,
             width: "auto",
-            objectFit: "contain",
-            display: "block",
+            objectFit: "fill",
           }}
           onError={(e) => {
-            e.target.src = "/logo.svg";
+            e.target.src = "/logo.svg?v=2";
           }}
         />
         <div
@@ -105,15 +104,6 @@ export default function Navbar() {
             }}
           >
             Travky.com
-          </span>
-          <span
-            style={{
-              fontSize: 10,
-              color: isDark ? "#94a3b8" : "#64748b",
-              letterSpacing: 0.2,
-            }}
-          >
-            {t("unifiedBookingPlatform")}
           </span>
         </div>
       </div>

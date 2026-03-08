@@ -39,11 +39,11 @@ export default function LoginPage() {
         <div className="hidden lg:block space-y-6">
           <div className="inline-flex items-center gap-3 rounded-full border border-slate-200 px-4 py-2 bg-white shadow-sm">
             <img
-              src="/logo.png"
+              src="/logo.png?v=2"
               alt="Travky.com"
               className="w-28 h-28 rounded-full object-cover"
               onError={(e) => {
-                e.target.src = "/logo.svg";
+                e.target.src = "/logo.svg?v=2";
               }}
             />
             <div>
@@ -69,13 +69,13 @@ export default function LoginPage() {
         </div>
 
         <div className="login-card">
-          <div className="login-header mb-4">
+          <div className="login-header mb-2">
             <img
-              src="/logo.png"
+              src="/logo.png?v=2"
               alt="Travky.com"
               className="w-32 h-32 object-cover"
               onError={(e) => {
-                e.target.src = "/logo.svg";
+                e.target.src = "/logo.svg?v=2";
               }}
             />
             <div>
