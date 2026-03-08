@@ -453,7 +453,7 @@ const translations = {
     hotelAccounts: "حسابات الفنادق",
     hotelAccountsSubtitle:
       "إدارة حسابات مستخدمي الفنادق — يجب ربط كل حساب بمدير",
-    addHotelAccount: "+ إضافة حساب فندق",
+    addHotelAccount: " إضافة حساب فندق",
     linkedToAdmin: "مرتبط بمدير",
     noAdminLinked: "بلا مدير",
     noAdminWarning: "بلا مدير",

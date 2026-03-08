@@ -6,12 +6,12 @@ export default function MainLayout({ children }) {
   const { dir } = useLanguage();
 
   return (
-    <div className="layout" dir={dir}>
-      <Sidebar />
-      <div className="content">
-        <Navbar />
-        <div style={{ marginTop: 16 }}>{children}</div>
+    <>
+      <Navbar />
+      <div className="layout" dir={dir} style={{ paddingTop: 56 }}>
+        <Sidebar />
+        <div className="content">{children}</div>
       </div>
-    </div>
+    </>
   );
 }
