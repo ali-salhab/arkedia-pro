@@ -86,14 +86,20 @@ export default function DataTable({
   };
 
   const thStyle = {
-    textAlign: "left",
-    padding: 8,
+    textAlign: "center",
+    padding: "10px 8px",
     borderBottom: "1px solid #e2e8f0",
     color: "#475569",
     fontSize: 13,
     fontWeight: 600,
+    whiteSpace: "nowrap",
   };
-  const tdStyle = { padding: 8, color: "#334155" };
+  const tdStyle = {
+    padding: "10px 8px",
+    color: "#334155",
+    textAlign: "center",
+    verticalAlign: "middle",
+  };
   const inputStyle = {
     background: "#ffffff",
     border: "1px solid #cbd5e1",
