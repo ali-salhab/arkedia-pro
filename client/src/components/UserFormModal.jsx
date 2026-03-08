@@ -199,6 +199,7 @@ export default function UserFormModal({
   });
   const [activeTab, setActiveTab] = useState("basic");
   const [loading, setLoading] = useState(false);
+  const [saveError, setSaveError] = useState("");
   const [useCustomPermissions, setUseCustomPermissions] = useState(false);
   const { t, dir } = useLanguage();
   const logoInputRef = useRef(null);
@@ -335,6 +336,7 @@ export default function UserFormModal({
       return;
     }
 
+    setSaveError("");
     setLoading(true);
     try {
       const data = { ...form };
@@ -353,7 +355,11 @@ export default function UserFormModal({
       onClose();
     } catch (error) {
       console.error("Error saving user:", error);
-      alert(error?.data?.message || error?.message || "An error occurred while saving.");
+      alert(
+        error?.data?.message ||
+          error?.message ||
+          "An error occurred while saving.",
+      );
     } finally {
       setLoading(false);
     }
@@ -925,6 +931,27 @@ export default function UserFormModal({
                 )}
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Error Banner */}
+        {saveError && (
+          <div
+            style={{
+              marginTop: 16,
+              padding: "12px 16px",
+              background: "#fef2f2",
+              border: "1px solid #fca5a5",
+              borderRadius: 8,
+              color: "#dc2626",
+              fontSize: 13,
+              fontWeight: 500,
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+            }}
+          >
+            ⚠️ {saveError}
           </div>
         )}
 

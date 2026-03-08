@@ -51,9 +51,9 @@ export default function HotelsPage() {
             src={v}
             alt="logo"
             style={{
-              width: 32,
-              height: 32,
-              borderRadius: "50%",
+              width: 48,
+              height: 36,
+              borderRadius: 6,
               objectFit: "cover",
             }}
           />
