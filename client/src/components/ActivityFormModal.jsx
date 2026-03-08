@@ -190,7 +190,7 @@ export default function ActivityFormModal({
     { id: "location", label: "📍 Location" },
     { id: "details", label: "📋 Details" },
     { id: "features", label: "✅ Features" },
-    { id: "schedule", label: "🗓 Schedule" },
+    { id: "schedule", label: "� Schedule" },
   ];
 
   const renderTabContent = () => {
