@@ -197,6 +197,8 @@ export default function DataTable({
                           setEditRow({ ...editRow, [col.key]: e.target.value })
                         }
                       />
+                    ) : col.render ? (
+                      col.render(row[col.key], row)
                     ) : (
                       row[col.key]
                     )}

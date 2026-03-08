@@ -353,6 +353,7 @@ export default function UserFormModal({
       onClose();
     } catch (error) {
       console.error("Error saving user:", error);
+      alert(error?.data?.message || error?.message || "An error occurred while saving.");
     } finally {
       setLoading(false);
     }

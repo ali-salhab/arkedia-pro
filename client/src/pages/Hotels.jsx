@@ -263,29 +263,16 @@ export default function HotelsPage() {
               <div
                 style={{
                   height: 120,
-                  background:
-                    "linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)",
+                  background: hotel.logo
+                    ? `url(${hotel.logo}) center/cover no-repeat`
+                    : "linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   position: "relative",
                 }}
               >
-                {hotel.logo ? (
-                  <img
-                    src={hotel.logo}
-                    alt={hotel.name}
-                    style={{
-                      width: 80,
-                      height: 80,
-                      borderRadius: "50%",
-                      objectFit: "cover",
-                      border: "3px solid #fff",
-                    }}
-                  />
-                ) : (
-                  <span style={{ fontSize: 56 }}>🏨</span>
-                )}
+                {!hotel.logo && <span style={{ fontSize: 56 }}>🏨</span>}
                 {!linkedAdmin && (
                   <span
                     style={{
