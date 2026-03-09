@@ -21,6 +21,7 @@ const BookingSchema = new mongoose.Schema(
     restaurantId: { type: mongoose.Schema.Types.ObjectId, ref: "Restaurant" },
     activityId: { type: mongoose.Schema.Types.ObjectId, ref: "Activity" },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    adminId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   },
   { timestamps: true }
 );

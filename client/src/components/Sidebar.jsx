@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useGetSidebarQuery } from "../store/services/api";
 import { useLanguage } from "../context/LanguageContext";
 import { logout } from "../store/slices/authSlice";
@@ -68,6 +68,14 @@ const ICON_MAP = {
   Settings: <Settings size={18} />,
 };
 
+const ROLE_BADGE = {
+  super_admin: { label: "Super Admin", color: "#a78bfa", bg: "#8b5cf620" },
+  admin: { label: "Admin", color: "#60a5fa", bg: "#3b82f620" },
+  hotel: { label: "Hotel", color: "#4ade80", bg: "#22c55e20" },
+  restaurant: { label: "Restaurant", color: "#fbbf24", bg: "#f59e0b20" },
+  activity: { label: "Activity", color: "#f472b6", bg: "#ec489920" },
+};
+
 const LogoutIcon = () => <LogOut size={18} />;
 
 const ChevronLeftIcon = () => <ChevronLeft size={16} strokeWidth={2.5} />;
@@ -79,6 +87,8 @@ export default function Sidebar() {
   const { t, theme, dir } = useLanguage();
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const currentUser = useSelector((s) => s.auth.user);
+  const userPerms = currentUser?.permissions || [];
   const [collapsed, setCollapsed] = useState(false);
   const isDark = theme === "dark";
   const isRtl = dir === "rtl";
@@ -88,7 +98,13 @@ export default function Sidebar() {
     navigate("/login");
   };
 
-  const menu = isLoading ? [] : data?.menu || [];
+  // Filter menu both server-side (via API) and client-side from Redux permissions
+  const rawMenu = isLoading ? [] : data?.menu || [];
+  const menu = rawMenu.filter(
+    (item) => !item.required_permission || userPerms.includes(item.required_permission)
+  );
+
+  const roleBadge = ROLE_BADGE[currentUser?.role];
 
   return (
     <div
@@ -214,6 +230,71 @@ export default function Sidebar() {
       </div>
 
       {/* ── Navigation Menu ── */}
+      {/* User profile card */}
+      {!collapsed && currentUser && (
+        <div
+          style={{
+            padding: "12px 16px",
+            borderBottom: `1px solid ${isDark ? "#1e293b" : "#f1f5f9"}`,
+            flexShrink: 0,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div
+              style={{
+                width: 34,
+                height: 34,
+                borderRadius: "50%",
+                background: roleBadge?.bg || "#3b82f620",
+                border: `2px solid ${roleBadge?.color || "#3b82f6"}`,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontWeight: 700,
+                fontSize: 14,
+                color: roleBadge?.color || "#3b82f6",
+                flexShrink: 0,
+              }}
+            >
+              {currentUser.name?.charAt(0).toUpperCase() || "?"}
+            </div>
+            <div style={{ overflow: "hidden", flex: 1, minWidth: 0 }}>
+              <div
+                style={{
+                  fontWeight: 600,
+                  fontSize: 13,
+                  color: isDark ? "#f1f5f9" : "#1e293b",
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}
+              >
+                {currentUser.name}
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 2 }}>
+                <span
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 600,
+                    padding: "1px 7px",
+                    borderRadius: 10,
+                    background: roleBadge?.bg || "#3b82f620",
+                    color: roleBadge?.color || "#3b82f6",
+                    textTransform: "capitalize",
+                    letterSpacing: 0.3,
+                  }}
+                >
+                  {roleBadge?.label || currentUser.role}
+                </span>
+                <span style={{ fontSize: 10, color: isDark ? "#64748b" : "#9ca3af" }}>
+                  {userPerms.length} perms
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <nav
         style={{
           flex: 1,

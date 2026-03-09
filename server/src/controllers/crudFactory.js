@@ -2,7 +2,10 @@ const asyncHandler = require("../middleware/asyncHandler");
 
 function buildCrudControllers(Model, name) {
   const list = asyncHandler(async (req, res) => {
-    const data = await Model.find();
+    const { role, _id } = req.user;
+    // super_admin sees everything; all others see only records they own (adminId)
+    const filter = role === "super_admin" ? {} : { adminId: _id };
+    const data = await Model.find(filter);
     res.json(data);
   });
 

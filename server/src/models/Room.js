@@ -8,6 +8,7 @@ const RoomSchema = new mongoose.Schema(
     hotelId: { type: mongoose.Schema.Types.ObjectId, ref: "Hotel" },
     restaurantId: { type: mongoose.Schema.Types.ObjectId, ref: "Restaurant" },
     activityId: { type: mongoose.Schema.Types.ObjectId, ref: "Activity" },
+    adminId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   },
   { timestamps: true }
 );
