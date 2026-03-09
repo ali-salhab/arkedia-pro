@@ -25,8 +25,8 @@ import {
 } from "../../store/services/api";
 
 export default function AdminDashboard() {
-  // Users
-  const { data: usersData, isLoading: usersLoading } = useGetUsersQuery();
+  // Fetch only adminuser accounts for the team section
+  const { data: usersData, isLoading: usersLoading } = useGetUsersQuery({ role: "adminuser" });
   const [createUser] = useCreateUserMutation();
   const [updateUser] = useUpdateUserMutation();
   const [deleteUser] = useDeleteUserMutation();
@@ -54,8 +54,7 @@ export default function AdminDashboard() {
   const { data: reportsData, isLoading: reportsLoading } = useGetReportsQuery();
 
   const toArr = (d) => (Array.isArray(d) ? d : d?.items || []);
-  // Only show adminuser role — hotel/restaurant/activity managers appear in their own pages
-  const adminTeam = toArr(usersData).filter((u) => u.role === "adminuser");
+  const adminTeam = toArr(usersData);
 
   const [userModal, setUserModal] = useState({ open: false, user: null });
 

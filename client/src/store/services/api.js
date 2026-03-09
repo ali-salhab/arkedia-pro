@@ -79,7 +79,10 @@ export const api = createApi({
     }),
     // Users CRUD
     getUsers: builder.query({
-      query: () => "/users",
+      query: (params) => ({
+        url: "/users",
+        params: params || undefined,
+      }),
       providesTags: ["User"],
     }),
     createUser: builder.mutation({

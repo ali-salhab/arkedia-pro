@@ -13,10 +13,21 @@ const MANAGER_ROLES = new Set([
   "activity",
 ]);
 
+// Which roles each manager is allowed to create
+const CREATABLE_ROLES = {
+  super_admin: ["super_admin", "superadminuser", "admin", "adminuser", "hotel", "hoteluser", "restaurant", "restaurantuser", "activity", "activityuser"],
+  admin:       ["adminuser", "hotel", "restaurant", "activity"],
+  hotel:       ["hoteluser"],
+  restaurant:  ["restaurantuser"],
+  activity:    ["activityuser"],
+};
+
 // List: super_admin sees all users; managers see their team; sub-users see nothing
+// Optional ?role= query param to filter by role
 const list = asyncHandler(async (req, res) => {
   const { role, _id } = req.user;
   const filter = role === "super_admin" ? {} : { adminId: _id };
+  if (req.query.role) filter.role = req.query.role;
   const users = await User.find(filter).select("-password");
   res.json(users);
 });
@@ -27,10 +38,18 @@ const getOne = asyncHandler(async (req, res) => {
   res.json(user);
 });
 
-// Create: non-super_admin automatically becomes the adminId of the new user
+// Create: enforce role creation rules so managers can't escalate privileges
 const create = asyncHandler(async (req, res) => {
   const { role, _id } = req.user;
   const body = { ...req.body };
+
+  const allowed = CREATABLE_ROLES[role];
+  if (allowed && !allowed.includes(body.role)) {
+    return res.status(403).json({
+      message: `Role '${role}' cannot create users with role '${body.role}'`,
+    });
+  }
+
   if (role !== "super_admin" && !body.adminId) {
     body.adminId = _id;
   }
