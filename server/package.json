@@ -9,7 +9,8 @@
   "scripts": {
     "dev": "cross-env NODE_ENV=development nodemon src/index.js",
     "start": "node src/index.js",
-    "seed": "node src/seed.js"
+    "seed": "node src/seed.js",
+    "migrate:permissions": "node src/migrate-permissions.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
