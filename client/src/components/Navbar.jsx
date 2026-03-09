@@ -105,6 +105,25 @@ export default function Navbar() {
           >
             Travky.com
           </span>
+          {/* Dashboard-type badge */}
+          {user?.role && (
+            <span
+              style={{
+                marginTop: 2,
+                fontSize: 10,
+                fontWeight: 700,
+                padding: "2px 8px",
+                borderRadius: 999,
+                background: ROLE_BADGE[user.role]?.bg || "#f1f5f9",
+                color: ROLE_BADGE[user.role]?.color || "#475569",
+                letterSpacing: "0.3px",
+                textTransform: "uppercase",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {ROLE_LABELS[user.role] || user.role} Dashboard
+            </span>
+          )}
         </div>
       </div>
 

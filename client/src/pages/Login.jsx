@@ -1,9 +1,17 @@
 import { useState } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useLoginMutation } from "../store/services/api";
 import { setCredentials } from "../store/slices/authSlice";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Navigate } from "react-router-dom";
 import { useLanguage } from "../context/LanguageContext";
+
+const ROLE_PATH = {
+  super_admin: "/super-admin",
+  admin: "/admin",
+  hotel: "/hotel",
+  restaurant: "/restaurant",
+  activity: "/activity",
+};
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -13,6 +21,12 @@ export default function LoginPage() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { t, lang, dir } = useLanguage();
+  const currentUser = useSelector((s) => s.auth.user);
+
+  // Already authenticated → redirect to own dashboard
+  if (currentUser) {
+    return <Navigate to={ROLE_PATH[currentUser.role] || "/"} replace />;
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -20,14 +34,7 @@ export default function LoginPage() {
       const res = await login({ email, password }).unwrap();
       dispatch(setCredentials(res));
       const role = res.user.role;
-      const pathMap = {
-        super_admin: "/super-admin",
-        admin: "/admin",
-        hotel: "/hotel",
-        restaurant: "/restaurant",
-        activity: "/activity",
-      };
-      navigate(pathMap[role] || "/");
+      navigate(ROLE_PATH[role] || "/");
     } catch (err) {
       // error is already captured in the `error` state from useLoginMutation
     }

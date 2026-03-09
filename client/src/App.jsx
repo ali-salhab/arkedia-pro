@@ -112,7 +112,8 @@ export default function App() {
         />
       </Route>
 
-      <Route path="/" element={<Navigate to="/login" replace />} />
+      {/* Root → smart redirect based on auth state */}
+      <Route path="/" element={<Navigate to="/dashboard" replace />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
