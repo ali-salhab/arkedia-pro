@@ -114,6 +114,10 @@ const rolePresets = {
     "reports:view",
   ],
   admin: [
+    "users:view",
+    "users:add",
+    "users:edit",
+    "users:delete",
     "hotels:view",
     "hotels:add",
     "hotels:edit",
@@ -148,6 +152,10 @@ const rolePresets = {
     "reports:view",
   ],
   hotel: [
+    "users:view",
+    "users:add",
+    "users:edit",
+    "users:delete",
     "rooms:view",
     "rooms:add",
     "rooms:edit",
@@ -162,6 +170,10 @@ const rolePresets = {
   // hotel staff — only room & booking operations by default
   hoteluser: ["rooms:view", "bookings:view", "bookings:add", "bookings:edit"],
   restaurant: [
+    "users:view",
+    "users:add",
+    "users:edit",
+    "users:delete",
     "rooms:view",
     "rooms:add",
     "rooms:edit",
@@ -181,6 +193,10 @@ const rolePresets = {
     "bookings:edit",
   ],
   activity: [
+    "users:view",
+    "users:add",
+    "users:edit",
+    "users:delete",
     "activities:view",
     "activities:edit",
     "bookings:view",

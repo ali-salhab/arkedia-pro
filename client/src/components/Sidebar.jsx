@@ -125,6 +125,7 @@ const ICON_MAP = {
   Users: <Users size={18} />,
   Admins: <UserCheck size={18} />,
   "My Team": <Users size={18} />,
+  المستخدمون: <Users size={18} />,
   "All Hotels": <Building2 size={18} />,
   "My Hotels": <Building2 size={18} />,
   "All Restaurants": <UtensilsCrossed size={18} />,
@@ -145,10 +146,15 @@ const ICON_MAP = {
 
 const ROLE_BADGE = {
   super_admin: { label: "Super Admin", color: "#a78bfa", bg: "#8b5cf620" },
+  superadminuser: { label: "SA Staff", color: "#a78bfa", bg: "#8b5cf620" },
   admin: { label: "Admin", color: "#60a5fa", bg: "#3b82f620" },
+  adminuser: { label: "Admin Staff", color: "#60a5fa", bg: "#3b82f620" },
   hotel: { label: "Hotel", color: "#4ade80", bg: "#22c55e20" },
+  hoteluser: { label: "Hotel Staff", color: "#4ade80", bg: "#22c55e20" },
   restaurant: { label: "Restaurant", color: "#fbbf24", bg: "#f59e0b20" },
+  restaurantuser: { label: "Rest. Staff", color: "#fbbf24", bg: "#f59e0b20" },
   activity: { label: "Activity", color: "#f472b6", bg: "#ec489920" },
+  activityuser: { label: "Act. Staff", color: "#f472b6", bg: "#ec489920" },
 };
 
 const LogoutIcon = () => <LogOut size={18} />;
