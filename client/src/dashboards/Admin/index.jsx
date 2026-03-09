@@ -56,7 +56,8 @@ export default function AdminDashboard() {
   const { data: reportsData, isLoading: reportsLoading } = useGetReportsQuery();
 
   const toArr = (d) => (Array.isArray(d) ? d : d?.items || []);
-  const adminTeam = toArr(usersData);
+  // Filter client-side too as safety net — only adminuser staff belong in this panel
+  const adminTeam = toArr(usersData).filter((u) => u.role === "adminuser");
 
   const [userModal, setUserModal] = useState({ open: false, user: null });
 

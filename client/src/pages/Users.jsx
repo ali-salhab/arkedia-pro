@@ -21,16 +21,16 @@ const ROLE_CONFIG = {
     statLabel: "Super Admins",
   },
   admin: {
-    teamRole: "admin",
+    teamRole: "adminuser",
     title: "Company Team",
     subtitle: "Admin employees of your management company",
     addLabel: "Add Team Member",
     icon: "👔",
     color: "#60a5fa",
-    statLabel: "Admins",
+    statLabel: "Staff",
   },
   hotel: {
-    teamRole: "hotel",
+    teamRole: "hoteluser",
     title: "Hotel Team",
     subtitle: "Hotel staff members",
     addLabel: "Add Staff Member",
@@ -39,7 +39,7 @@ const ROLE_CONFIG = {
     statLabel: "Hotel Staff",
   },
   restaurant: {
-    teamRole: "restaurant",
+    teamRole: "restaurantuser",
     title: "Restaurant Team",
     subtitle: "Restaurant staff members",
     addLabel: "Add Staff Member",
@@ -48,7 +48,7 @@ const ROLE_CONFIG = {
     statLabel: "Restaurant Staff",
   },
   activity: {
-    teamRole: "activity",
+    teamRole: "activityuser",
     title: "Activity Team",
     subtitle: "Activity staff members",
     addLabel: "Add Staff Member",
