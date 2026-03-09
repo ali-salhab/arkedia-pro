@@ -199,7 +199,7 @@ export default function UserFormModal({
     password: "",
     role: fixedRole || "admin",
     permissions: [],
-    adminId: isSuperAdmin ? "" : (currentUser?._id || ""),
+    adminId: isSuperAdmin ? "" : currentUser?._id || "",
   });
   const [activeTab, setActiveTab] = useState("basic");
   const [loading, setLoading] = useState(false);
@@ -230,7 +230,7 @@ export default function UserFormModal({
         password: "",
         role: fixedRole || "admin",
         permissions: rolePresets[fixedRole || "admin"],
-        adminId: isSuperAdmin ? "" : (currentUser?._id || ""),
+        adminId: isSuperAdmin ? "" : currentUser?._id || "",
       });
       setUseCustomPermissions(false);
     }

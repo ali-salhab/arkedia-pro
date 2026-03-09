@@ -8,7 +8,7 @@ const ActivitySchema = new mongoose.Schema(
     manager: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     adminId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 module.exports = mongoose.model("Activity", ActivitySchema);
