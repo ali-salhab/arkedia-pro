@@ -6,6 +6,7 @@ const ActivitySchema = new mongoose.Schema(
     category: String,
     location: String,
     manager: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    adminId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   },
   { timestamps: true }
 );

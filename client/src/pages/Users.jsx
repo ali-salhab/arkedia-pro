@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useSelector } from "react-redux";
 import DataTable from "../components/DataTable";
 import UserFormModal from "../components/UserFormModal";
 import {
@@ -8,7 +9,59 @@ import {
   useDeleteUserMutation,
 } from "../store/services/api";
 
+// Config per dashboard type
+const ROLE_CONFIG = {
+  super_admin: {
+    teamRole: "super_admin",
+    title: "Platform Team",
+    subtitle: "Super Admin employees with full system access",
+    addLabel: "Add Platform Member",
+    icon: "🔑",
+    color: "#a78bfa",
+    statLabel: "Super Admins",
+  },
+  admin: {
+    teamRole: "admin",
+    title: "Company Team",
+    subtitle: "Admin employees of your management company",
+    addLabel: "Add Team Member",
+    icon: "👔",
+    color: "#60a5fa",
+    statLabel: "Admins",
+  },
+  hotel: {
+    teamRole: "hotel",
+    title: "Hotel Team",
+    subtitle: "Hotel staff members",
+    addLabel: "Add Staff Member",
+    icon: "🏨",
+    color: "#4ade80",
+    statLabel: "Hotel Staff",
+  },
+  restaurant: {
+    teamRole: "restaurant",
+    title: "Restaurant Team",
+    subtitle: "Restaurant staff members",
+    addLabel: "Add Staff Member",
+    icon: "🍽️",
+    color: "#fbbf24",
+    statLabel: "Restaurant Staff",
+  },
+  activity: {
+    teamRole: "activity",
+    title: "Activity Team",
+    subtitle: "Activity staff members",
+    addLabel: "Add Staff Member",
+    icon: "🎯",
+    color: "#f472b6",
+    statLabel: "Activity Staff",
+  },
+};
+
 export default function UsersPage() {
+  const currentUser = useSelector((s) => s.auth.user);
+  const config = ROLE_CONFIG[currentUser?.role] || ROLE_CONFIG.super_admin;
+
   const { data: users = [], isLoading, error } = useGetUsersQuery();
   const [createUser] = useCreateUserMutation();
   const [updateUser] = useUpdateUserMutation();
@@ -106,7 +159,7 @@ export default function UsersPage() {
     );
 
   const usersArray = Array.isArray(users) ? users : [];
-  const filteredUsers = usersArray.filter((u) => u.role === "super_admin");
+  const filteredUsers = usersArray.filter((u) => u.role === config.teamRole);
 
   return (
     <div style={{ padding: 24 }}>
@@ -120,10 +173,10 @@ export default function UsersPage() {
       >
         <div>
           <h1 style={{ fontSize: 24, fontWeight: 700, margin: 0 }}>
-            Super Admin Users
+            {config.title}
           </h1>
           <p style={{ color: "#9ca3af", fontSize: 14, marginTop: 4 }}>
-            Platform employees with full system access
+            {config.subtitle}
           </p>
         </div>
         <button
@@ -141,7 +194,7 @@ export default function UsersPage() {
             gap: 8,
           }}
         >
-          <span style={{ fontSize: 18 }}>+</span> Add Super Admin
+          <span style={{ fontSize: 18 }}>+</span> {config.addLabel}
         </button>
       </div>
 
@@ -159,14 +212,16 @@ export default function UsersPage() {
             background: "#f8fafc",
             borderRadius: 12,
             padding: 16,
-            borderLeft: "4px solid #a78bfa",
+            borderLeft: `4px solid ${config.color}`,
           }}
         >
-          <div style={{ fontSize: 24, marginBottom: 8 }}>🔑</div>
-          <div style={{ fontSize: 28, fontWeight: 700, color: "#a78bfa" }}>
+          <div style={{ fontSize: 24, marginBottom: 8 }}>{config.icon}</div>
+          <div style={{ fontSize: 28, fontWeight: 700, color: config.color }}>
             {filteredUsers.length}
           </div>
-          <div style={{ fontSize: 12, color: "#64748b" }}>Super Admins</div>
+          <div style={{ fontSize: 12, color: "#64748b" }}>
+            {config.statLabel}
+          </div>
         </div>
         <div
           style={{
@@ -356,13 +411,13 @@ export default function UsersPage() {
       {/* Table View */}
       <div className="card" style={{ marginTop: 32 }}>
         <h3 style={{ marginBottom: 16, fontWeight: 600 }}>
-          Super Admin Users (Table View)
+          {config.title} (Table View)
         </h3>
         <DataTable
           columns={userColumns}
           data={filteredUsers}
           editable={false}
-          exportFilename="super_admin_users"
+          exportFilename="team_users"
         />
       </div>
 
@@ -372,7 +427,7 @@ export default function UsersPage() {
         onClose={() => setModalOpen(false)}
         onSave={handleSave}
         user={editingUser}
-        fixedRole="super_admin"
+        fixedRole={config.teamRole}
       />
     </div>
   );

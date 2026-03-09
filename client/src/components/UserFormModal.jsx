@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useSelector } from "react-redux";
 import { useLanguage } from "../context/LanguageContext";
 
 // All available permissions matrix
@@ -189,13 +190,16 @@ export default function UserFormModal({
   fixedRole = null,
   adminsList = [],
 }) {
+  const currentUser = useSelector((s) => s.auth.user);
+  const isSuperAdmin = currentUser?.role === "super_admin";
+
   const [form, setForm] = useState({
     name: "",
     email: "",
     password: "",
     role: fixedRole || "admin",
     permissions: [],
-    adminId: "",
+    adminId: isSuperAdmin ? "" : (currentUser?._id || ""),
   });
   const [activeTab, setActiveTab] = useState("basic");
   const [loading, setLoading] = useState(false);
@@ -226,7 +230,7 @@ export default function UserFormModal({
         password: "",
         role: fixedRole || "admin",
         permissions: rolePresets[fixedRole || "admin"],
-        adminId: "",
+        adminId: isSuperAdmin ? "" : (currentUser?._id || ""),
       });
       setUseCustomPermissions(false);
     }
@@ -331,7 +335,7 @@ export default function UserFormModal({
       alert(t("password") + " required");
       return;
     }
-    if (adminsList.length > 0 && !form.adminId) {
+    if (isSuperAdmin && adminsList.length > 0 && !form.adminId) {
       alert(t("adminRequired"));
       return;
     }
@@ -574,8 +578,8 @@ export default function UserFormModal({
               )}
             </div>
 
-            {/* Admin Selector for hotel/restaurant/activity */}
-            {adminsList.length > 0 && (
+            {/* Admin Selector for hotel/restaurant/activity — only shown to super_admin */}
+            {isSuperAdmin && adminsList.length > 0 && (
               <div style={{ marginTop: 16 }}>
                 <label style={{ ...labelStyle, color: "#f59e0b" }}>
                   🔗 {t("linkedAdmin")} *

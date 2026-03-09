@@ -13,7 +13,11 @@ function buildCrudControllers(Model, name) {
   });
 
   const create = asyncHandler(async (req, res) => {
-    const item = await Model.create(req.body);
+    const body = { ...req.body };
+    if (req.user && req.user.role !== "super_admin") {
+      body.adminId = req.user._id;
+    }
+    const item = await Model.create(body);
     res.status(201).json(item);
   });
 
