@@ -10,7 +10,7 @@ const RoomSchema = new mongoose.Schema(
     activityId: { type: mongoose.Schema.Types.ObjectId, ref: "Activity" },
     adminId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 module.exports = mongoose.model("Room", RoomSchema);

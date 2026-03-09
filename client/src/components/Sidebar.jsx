@@ -101,7 +101,8 @@ export default function Sidebar() {
   // Filter menu both server-side (via API) and client-side from Redux permissions
   const rawMenu = isLoading ? [] : data?.menu || [];
   const menu = rawMenu.filter(
-    (item) => !item.required_permission || userPerms.includes(item.required_permission)
+    (item) =>
+      !item.required_permission || userPerms.includes(item.required_permission),
   );
 
   const roleBadge = ROLE_BADGE[currentUser?.role];
@@ -271,7 +272,14 @@ export default function Sidebar() {
               >
                 {currentUser.name}
               </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 2 }}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  marginTop: 2,
+                }}
+              >
                 <span
                   style={{
                     fontSize: 10,
@@ -286,7 +294,12 @@ export default function Sidebar() {
                 >
                   {roleBadge?.label || currentUser.role}
                 </span>
-                <span style={{ fontSize: 10, color: isDark ? "#64748b" : "#9ca3af" }}>
+                <span
+                  style={{
+                    fontSize: 10,
+                    color: isDark ? "#64748b" : "#9ca3af",
+                  }}
+                >
                   {userPerms.length} perms
                 </span>
               </div>

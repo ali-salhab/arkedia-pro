@@ -2,11 +2,41 @@ import { useSelector } from "react-redux";
 import { useLanguage } from "../context/LanguageContext";
 
 const ROLE_BADGE = {
-  super_admin: { label: "Super Admin", icon: "🔑", color: "#a78bfa", bg: "#8b5cf620", border: "#a78bfa40" },
-  admin: { label: "Admin", icon: "👔", color: "#60a5fa", bg: "#3b82f620", border: "#60a5fa40" },
-  hotel: { label: "Hotel Manager", icon: "🏨", color: "#4ade80", bg: "#22c55e20", border: "#4ade8040" },
-  restaurant: { label: "Restaurant Manager", icon: "🍽️", color: "#fbbf24", bg: "#f59e0b20", border: "#fbbf2440" },
-  activity: { label: "Activity Manager", icon: "🎯", color: "#f472b6", bg: "#ec489920", border: "#f472b640" },
+  super_admin: {
+    label: "Super Admin",
+    icon: "🔑",
+    color: "#a78bfa",
+    bg: "#8b5cf620",
+    border: "#a78bfa40",
+  },
+  admin: {
+    label: "Admin",
+    icon: "👔",
+    color: "#60a5fa",
+    bg: "#3b82f620",
+    border: "#60a5fa40",
+  },
+  hotel: {
+    label: "Hotel Manager",
+    icon: "🏨",
+    color: "#4ade80",
+    bg: "#22c55e20",
+    border: "#4ade8040",
+  },
+  restaurant: {
+    label: "Restaurant Manager",
+    icon: "🍽️",
+    color: "#fbbf24",
+    bg: "#f59e0b20",
+    border: "#fbbf2440",
+  },
+  activity: {
+    label: "Activity Manager",
+    icon: "🎯",
+    color: "#f472b6",
+    bg: "#ec489920",
+    border: "#f472b640",
+  },
 };
 
 const MODULE_LABELS = {
@@ -23,10 +53,30 @@ const MODULE_LABELS = {
 };
 
 const ACTION_COLORS = {
-  view: { bg: "#dbeafe", color: "#2563eb", dark_bg: "#1d4ed820", dark_color: "#93c5fd" },
-  add: { bg: "#dcfce7", color: "#16a34a", dark_bg: "#16a34a20", dark_color: "#86efac" },
-  edit: { bg: "#fef9c3", color: "#ca8a04", dark_bg: "#ca8a0420", dark_color: "#fde047" },
-  delete: { bg: "#fee2e2", color: "#dc2626", dark_bg: "#dc262620", dark_color: "#fca5a5" },
+  view: {
+    bg: "#dbeafe",
+    color: "#2563eb",
+    dark_bg: "#1d4ed820",
+    dark_color: "#93c5fd",
+  },
+  add: {
+    bg: "#dcfce7",
+    color: "#16a34a",
+    dark_bg: "#16a34a20",
+    dark_color: "#86efac",
+  },
+  edit: {
+    bg: "#fef9c3",
+    color: "#ca8a04",
+    dark_bg: "#ca8a0420",
+    dark_color: "#fde047",
+  },
+  delete: {
+    bg: "#fee2e2",
+    color: "#dc2626",
+    dark_bg: "#dc262620",
+    dark_color: "#fca5a5",
+  },
 };
 
 export default function SettingsPage() {
@@ -213,7 +263,9 @@ export default function SettingsPage() {
             >
               <span style={{ fontSize: 22 }}>{badge.icon}</span>
               <div>
-                <div style={{ fontWeight: 700, fontSize: 15, color: badge.color }}>
+                <div
+                  style={{ fontWeight: 700, fontSize: 15, color: badge.color }}
+                >
                   {badge.label}
                 </div>
                 <div style={{ fontSize: 12, color: mutedColor }}>
@@ -253,9 +305,12 @@ export default function SettingsPage() {
                 if (!acc[module]) acc[module] = [];
                 acc[module].push(action);
                 return acc;
-              }, {})
+              }, {}),
             ).map(([module, actions]) => {
-              const mod = MODULE_LABELS[module] || { label: module, icon: "🔧" };
+              const mod = MODULE_LABELS[module] || {
+                label: module,
+                icon: "🔧",
+              };
               return (
                 <div
                   key={module}
