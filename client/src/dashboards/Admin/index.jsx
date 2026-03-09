@@ -54,8 +54,8 @@ export default function AdminDashboard() {
   const { data: reportsData, isLoading: reportsLoading } = useGetReportsQuery();
 
   const toArr = (d) => (Array.isArray(d) ? d : d?.items || []);
-  // API already scopes users by adminId, so all returned users belong to this admin
-  const adminTeam = toArr(usersData);
+  // Only show adminuser role — hotel/restaurant/activity managers appear in their own pages
+  const adminTeam = toArr(usersData).filter((u) => u.role === "adminuser");
 
   const [userModal, setUserModal] = useState({ open: false, user: null });
 
@@ -315,7 +315,7 @@ export default function AdminDashboard() {
           else await createUser(data).unwrap();
         }}
         user={userModal.user}
-        allowedRoles={["hotel", "restaurant", "activity", "adminuser"]}
+        allowedRoles={["adminuser"]}
       />
 
       <PermissionWrapper permission="hotels:view">
