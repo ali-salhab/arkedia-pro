@@ -225,9 +225,6 @@ export default function RestaurantsPage() {
   );
 }
 
-
-export default function RestaurantsPage() {
-  const { data: restaurants = [], isLoading, error } = useGetRestaurantsQuery();
   const [createRestaurant] = useCreateRestaurantMutation();
   const [updateRestaurant] = useUpdateRestaurantMutation();
   const [deleteRestaurant] = useDeleteRestaurantMutation();
