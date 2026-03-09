@@ -54,6 +54,7 @@ export default function AdminDashboard() {
   const { data: reportsData, isLoading: reportsLoading } = useGetReportsQuery();
 
   const toArr = (d) => (Array.isArray(d) ? d : d?.items || []);
+  const adminTeam = toArr(usersData).filter((u) => u.role === "admin");
 
   const [userModal, setUserModal] = useState({ open: false, user: null });
 
@@ -131,7 +132,7 @@ export default function AdminDashboard() {
           </div>
           {usersLoading ? (
             <div>Loading...</div>
-          ) : toArr(usersData).length === 0 ? (
+          ) : adminTeam.length === 0 ? (
             <p
               style={{
                 color: "#9ca3af",
@@ -193,7 +194,7 @@ export default function AdminDashboard() {
                 </tr>
               </thead>
               <tbody>
-                {toArr(usersData).map((member) => (
+                {adminTeam.map((member) => (
                   <tr
                     key={member._id}
                     style={{ borderBottom: "1px solid #f1f5f9" }}

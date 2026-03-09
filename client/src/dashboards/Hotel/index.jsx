@@ -41,6 +41,7 @@ export default function HotelDashboard() {
   const { data: reportsData, isLoading: reportsLoading } = useGetReportsQuery();
 
   const toArr = (d) => (Array.isArray(d) ? d : d?.items || []);
+  const hotelTeam = toArr(usersData).filter((u) => u.role === "hotel");
 
   const [userModal, setUserModal] = useState({ open: false, user: null });
 
@@ -107,7 +108,7 @@ export default function HotelDashboard() {
           </div>
           {usersLoading ? (
             <div>Loading...</div>
-          ) : toArr(usersData).length === 0 ? (
+          ) : hotelTeam.length === 0 ? (
             <p
               style={{
                 color: "#9ca3af",
@@ -169,7 +170,7 @@ export default function HotelDashboard() {
                 </tr>
               </thead>
               <tbody>
-                {toArr(usersData).map((member) => (
+                {hotelTeam.map((member) => (
                   <tr
                     key={member._id}
                     style={{ borderBottom: "1px solid #f1f5f9" }}

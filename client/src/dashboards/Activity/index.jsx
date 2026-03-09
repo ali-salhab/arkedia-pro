@@ -42,6 +42,7 @@ export default function ActivityDashboard() {
   const { data: reportsData, isLoading: reportsLoading } = useGetReportsQuery();
 
   const toArr = (d) => (Array.isArray(d) ? d : d?.items || []);
+  const activityTeam = toArr(usersData).filter((u) => u.role === "activity");
 
   const [userModal, setUserModal] = useState({ open: false, user: null });
 
@@ -106,7 +107,7 @@ export default function ActivityDashboard() {
           </div>
           {usersLoading ? (
             <div>Loading...</div>
-          ) : toArr(usersData).length === 0 ? (
+          ) : activityTeam.length === 0 ? (
             <p
               style={{
                 color: "#9ca3af",
@@ -168,7 +169,7 @@ export default function ActivityDashboard() {
                 </tr>
               </thead>
               <tbody>
-                {toArr(usersData).map((member) => (
+                {activityTeam.map((member) => (
                   <tr
                     key={member._id}
                     style={{ borderBottom: "1px solid #f1f5f9" }}
