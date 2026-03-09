@@ -42,9 +42,8 @@ export default function RestaurantDashboard() {
   const { data: reportsData, isLoading: reportsLoading } = useGetReportsQuery();
 
   const toArr = (d) => (Array.isArray(d) ? d : d?.items || []);
-  const restaurantTeam = toArr(usersData).filter(
-    (u) => u.role === "restaurant",
-  );
+  // API scopes by adminId — all returned users are this restaurant's staff (restaurantuser)
+  const restaurantTeam = toArr(usersData);
 
   const [userModal, setUserModal] = useState({ open: false, user: null });
 
@@ -266,7 +265,7 @@ export default function RestaurantDashboard() {
           else await createUser(data).unwrap();
         }}
         user={userModal.user}
-        fixedRole="restaurant"
+        fixedRole="restaurantuser"
       />
 
       <PermissionWrapper permission="rooms:view">

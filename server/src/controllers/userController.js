@@ -1,7 +1,19 @@
 const User = require("../models/User");
 const asyncHandler = require("../middleware/asyncHandler");
 
-// List: super_admin sees all users; others see only their own team (adminId = self)
+// Manager roles that OWN an adminId-scoped team.
+// Super admin sees every user on the platform.
+// All other manager roles see only users with adminId = themselves.
+// Sub-user roles (*user) technically have no team so they see an empty set — that's fine.
+const MANAGER_ROLES = new Set([
+  "super_admin",
+  "admin",
+  "hotel",
+  "restaurant",
+  "activity",
+]);
+
+// List: super_admin sees all users; managers see their team; sub-users see nothing
 const list = asyncHandler(async (req, res) => {
   const { role, _id } = req.user;
   const filter = role === "super_admin" ? {} : { adminId: _id };

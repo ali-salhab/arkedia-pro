@@ -42,7 +42,7 @@ const ROLE_MENUS = {
   ],
   admin: [
     { name: "Dashboard", route: "/admin", perm: null },
-    { name: "My Team", route: "/users", perm: "users:view" },
+    { name: "المستخدمون", route: "/users", perm: "users:view" },
     { name: "My Hotels", route: "/hotels", perm: "hotels:view" },
     { name: "My Restaurants", route: "/restaurants", perm: "restaurants:view" },
     { name: "My Activities", route: "/activities", perm: "activities:view" },
@@ -53,7 +53,7 @@ const ROLE_MENUS = {
   ],
   hotel: [
     { name: "Dashboard", route: "/hotel", perm: null },
-    { name: "My Team", route: "/users", perm: "users:view" },
+    { name: "المستخدمون", route: "/users", perm: "users:view" },
     { name: "Rooms", route: "/rooms", perm: "rooms:view" },
     { name: "Bookings", route: "/bookings", perm: "bookings:view" },
     { name: "Finance", route: "/finance", perm: "finance:view" },
@@ -62,7 +62,7 @@ const ROLE_MENUS = {
   ],
   restaurant: [
     { name: "Dashboard", route: "/restaurant", perm: null },
-    { name: "My Team", route: "/users", perm: "users:view" },
+    { name: "المستخدمون", route: "/users", perm: "users:view" },
     { name: "Tables", route: "/rooms", perm: "rooms:view" },
     { name: "Reservations", route: "/bookings", perm: "bookings:view" },
     { name: "Finance", route: "/finance", perm: "finance:view" },
@@ -71,7 +71,7 @@ const ROLE_MENUS = {
   ],
   activity: [
     { name: "Dashboard", route: "/activity", perm: null },
-    { name: "My Team", route: "/users", perm: "users:view" },
+    { name: "المستخدمون", route: "/users", perm: "users:view" },
     { name: "Activities", route: "/activities", perm: "activities:view" },
     { name: "Bookings", route: "/bookings", perm: "bookings:view" },
     { name: "Finance", route: "/finance", perm: "finance:view" },
@@ -80,9 +80,20 @@ const ROLE_MENUS = {
   ],
 };
 
+// Sub-user roles share the same menu as their parent role.
+// Permissions filtering in buildMenu() limits what they actually see.
+const ROLE_MENU_ALIASES = {
+  superadminuser: "super_admin",
+  adminuser: "admin",
+  hoteluser: "hotel",
+  restaurantuser: "restaurant",
+  activityuser: "activity",
+};
+
 /** Returns the filtered menu for the current user — no network call needed. */
 function buildMenu(role, permissions) {
-  const items = ROLE_MENUS[role] || ROLE_MENUS.admin;
+  const resolvedRole = ROLE_MENU_ALIASES[role] || role;
+  const items = ROLE_MENUS[resolvedRole] || ROLE_MENUS.admin;
   return items.filter((item) => !item.perm || permissions.includes(item.perm));
 }
 

@@ -3,10 +3,15 @@ import { useSelector } from "react-redux";
 
 const ROLE_PATH = {
   super_admin: "/super-admin",
+  superadminuser: "/super-admin",
   admin: "/admin",
+  adminuser: "/admin",
   hotel: "/hotel",
+  hoteluser: "/hotel",
   restaurant: "/restaurant",
+  restaurantuser: "/restaurant",
   activity: "/activity",
+  activityuser: "/activity",
 };
 
 export default function ProtectedRoute({ roles }) {

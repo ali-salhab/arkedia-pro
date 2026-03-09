@@ -103,6 +103,16 @@ const rolePresets = {
   super_admin: permissionMatrix.flatMap((m) =>
     m.actions.map((a) => `${m.module}:${a.key}`),
   ),
+  // super_admin's staff — limited read-only access by default
+  superadminuser: [
+    "users:view",
+    "hotels:view",
+    "restaurants:view",
+    "activities:view",
+    "bookings:view",
+    "finance:view",
+    "reports:view",
+  ],
   admin: [
     "hotels:view",
     "hotels:add",
@@ -128,6 +138,15 @@ const rolePresets = {
     "settings:view",
     "settings:edit",
   ],
+  // admin's staff — limited by default
+  adminuser: [
+    "hotels:view",
+    "restaurants:view",
+    "activities:view",
+    "bookings:view",
+    "finance:view",
+    "reports:view",
+  ],
   hotel: [
     "rooms:view",
     "rooms:add",
@@ -140,6 +159,8 @@ const rolePresets = {
     "reports:view",
     "settings:view",
   ],
+  // hotel staff — only room & booking operations by default
+  hoteluser: ["rooms:view", "bookings:view", "bookings:add", "bookings:edit"],
   restaurant: [
     "rooms:view",
     "rooms:add",
@@ -152,6 +173,13 @@ const rolePresets = {
     "reports:view",
     "settings:view",
   ],
+  // restaurant staff — only tables & reservations by default
+  restaurantuser: [
+    "rooms:view",
+    "bookings:view",
+    "bookings:add",
+    "bookings:edit",
+  ],
   activity: [
     "activities:view",
     "activities:edit",
@@ -161,6 +189,13 @@ const rolePresets = {
     "finance:view",
     "reports:view",
     "settings:view",
+  ],
+  // activity staff — only activities & bookings by default
+  activityuser: [
+    "activities:view",
+    "bookings:view",
+    "bookings:add",
+    "bookings:edit",
   ],
 };
 
@@ -189,15 +224,25 @@ export default function UserFormModal({
   user = null,
   fixedRole = null,
   adminsList = [],
+  allowedRoles = null, // if set, restricts which roles appear in the dropdown
 }) {
   const currentUser = useSelector((s) => s.auth.user);
   const isSuperAdmin = currentUser?.role === "super_admin";
+
+  // Determine available role options for the dropdown
+  const roleOptions =
+    allowedRoles ||
+    (isSuperAdmin
+      ? ["super_admin", "admin", "hotel", "restaurant", "activity"]
+      : ["hotel", "restaurant", "activity"]);
+
+  const defaultRole = fixedRole || roleOptions[0] || "hotel";
 
   const [form, setForm] = useState({
     name: "",
     email: "",
     password: "",
-    role: fixedRole || "admin",
+    role: defaultRole,
     permissions: [],
     adminId: isSuperAdmin ? "" : currentUser?._id || "",
   });
@@ -228,8 +273,8 @@ export default function UserFormModal({
         name: "",
         email: "",
         password: "",
-        role: fixedRole || "admin",
-        permissions: rolePresets[fixedRole || "admin"],
+        role: defaultRole,
+        permissions: rolePresets[defaultRole] || [],
         adminId: isSuperAdmin ? "" : currentUser?._id || "",
       });
       setUseCustomPermissions(false);
@@ -548,10 +593,15 @@ export default function UserFormModal({
                   >
                     {fixedRole === "super_admin" &&
                       "🔑 " + t("role_super_admin")}
+                    {fixedRole === "superadminuser" && "👤 Super Admin User"}
                     {fixedRole === "admin" && "👔 " + t("role_admin")}
+                    {fixedRole === "adminuser" && "👤 Admin User"}
                     {fixedRole === "hotel" && "🏨 " + t("role_hotel")}
+                    {fixedRole === "hoteluser" && "👤 Hotel User"}
                     {fixedRole === "restaurant" && "🍽️ " + t("role_restaurant")}
+                    {fixedRole === "restaurantuser" && "👤 Restaurant User"}
                     {fixedRole === "activity" && "🎯 " + t("role_activity")}
+                    {fixedRole === "activityuser" && "👤 Activity User"}
                   </div>
                 </div>
               ) : (
@@ -562,17 +612,46 @@ export default function UserFormModal({
                     value={form.role}
                     onChange={(e) => handleChange("role", e.target.value)}
                   >
-                    <option value="super_admin">
-                      🔑 {t("role_super_admin")}
-                    </option>
-                    <option value="admin">👔 {t("role_admin")}</option>
-                    <option value="hotel">🏨 {t("role_hotel_manager")}</option>
-                    <option value="restaurant">
-                      🍽️ {t("role_restaurant_manager")}
-                    </option>
-                    <option value="activity">
-                      🎯 {t("role_activity_manager")}
-                    </option>
+                    {roleOptions.includes("super_admin") && (
+                      <option value="super_admin">
+                        🔑 {t("role_super_admin")}
+                      </option>
+                    )}
+                    {roleOptions.includes("superadminuser") && (
+                      <option value="superadminuser">
+                        👤 Super Admin User
+                      </option>
+                    )}
+                    {roleOptions.includes("admin") && (
+                      <option value="admin">👔 {t("role_admin")}</option>
+                    )}
+                    {roleOptions.includes("adminuser") && (
+                      <option value="adminuser">👤 Admin User</option>
+                    )}
+                    {roleOptions.includes("hotel") && (
+                      <option value="hotel">
+                        🏨 {t("role_hotel_manager")}
+                      </option>
+                    )}
+                    {roleOptions.includes("hoteluser") && (
+                      <option value="hoteluser">👤 Hotel User</option>
+                    )}
+                    {roleOptions.includes("restaurant") && (
+                      <option value="restaurant">
+                        🍽️ {t("role_restaurant_manager")}
+                      </option>
+                    )}
+                    {roleOptions.includes("restaurantuser") && (
+                      <option value="restaurantuser">👤 Restaurant User</option>
+                    )}
+                    {roleOptions.includes("activity") && (
+                      <option value="activity">
+                        🎯 {t("role_activity_manager")}
+                      </option>
+                    )}
+                    {roleOptions.includes("activityuser") && (
+                      <option value="activityuser">👤 Activity User</option>
+                    )}
                   </select>
                 </div>
               )}

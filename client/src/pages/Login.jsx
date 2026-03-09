@@ -7,10 +7,15 @@ import { useLanguage } from "../context/LanguageContext";
 
 const ROLE_PATH = {
   super_admin: "/super-admin",
+  superadminuser: "/super-admin",
   admin: "/admin",
+  adminuser: "/admin",
   hotel: "/hotel",
+  hoteluser: "/hotel",
   restaurant: "/restaurant",
+  restaurantuser: "/restaurant",
   activity: "/activity",
+  activityuser: "/activity",
 };
 
 export default function LoginPage() {

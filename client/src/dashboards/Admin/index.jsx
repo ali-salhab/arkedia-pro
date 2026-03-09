@@ -54,7 +54,8 @@ export default function AdminDashboard() {
   const { data: reportsData, isLoading: reportsLoading } = useGetReportsQuery();
 
   const toArr = (d) => (Array.isArray(d) ? d : d?.items || []);
-  const adminTeam = toArr(usersData).filter((u) => u.role === "admin");
+  // API already scopes users by adminId, so all returned users belong to this admin
+  const adminTeam = toArr(usersData);
 
   const [userModal, setUserModal] = useState({ open: false, user: null });
 
@@ -119,7 +120,7 @@ export default function AdminDashboard() {
               marginBottom: 16,
             }}
           >
-            <h2 style={{ fontWeight: 600, margin: 0 }}>👥 My Team</h2>
+            <h2 style={{ fontWeight: 600, margin: 0 }}>👥 المستخدمون</h2>
             <PermissionWrapper permission="users:add">
               <button
                 className="btn btn-primary"
@@ -178,6 +179,17 @@ export default function AdminDashboard() {
                       fontWeight: 600,
                     }}
                   >
+                    ROLE
+                  </th>
+                  <th
+                    style={{
+                      textAlign: "left",
+                      padding: "8px 12px",
+                      fontSize: 12,
+                      color: "#64748b",
+                      fontWeight: 600,
+                    }}
+                  >
                     PERMISSIONS
                   </th>
                   <th
@@ -216,6 +228,21 @@ export default function AdminDashboard() {
                       }}
                     >
                       {member.email}
+                    </td>
+                    <td style={{ padding: "10px 12px" }}>
+                      <span
+                        style={{
+                          fontSize: 12,
+                          background: "#f0fdf4",
+                          color: "#16a34a",
+                          padding: "3px 10px",
+                          borderRadius: 12,
+                          fontWeight: 500,
+                          textTransform: "capitalize",
+                        }}
+                      >
+                        {member.role}
+                      </span>
                     </td>
                     <td style={{ padding: "10px 12px" }}>
                       <span
@@ -288,7 +315,7 @@ export default function AdminDashboard() {
           else await createUser(data).unwrap();
         }}
         user={userModal.user}
-        fixedRole="admin"
+        allowedRoles={["hotel", "restaurant", "activity", "adminuser"]}
       />
 
       <PermissionWrapper permission="hotels:view">

@@ -42,7 +42,8 @@ export default function ActivityDashboard() {
   const { data: reportsData, isLoading: reportsLoading } = useGetReportsQuery();
 
   const toArr = (d) => (Array.isArray(d) ? d : d?.items || []);
-  const activityTeam = toArr(usersData).filter((u) => u.role === "activity");
+  // API scopes by adminId — all returned users are this activity's staff (activityuser)
+  const activityTeam = toArr(usersData);
 
   const [userModal, setUserModal] = useState({ open: false, user: null });
 
@@ -263,7 +264,7 @@ export default function ActivityDashboard() {
           else await createUser(data).unwrap();
         }}
         user={userModal.user}
-        fixedRole="activity"
+        fixedRole="activityuser"
       />
 
       <PermissionWrapper permission="activities:view">

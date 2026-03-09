@@ -41,7 +41,8 @@ export default function HotelDashboard() {
   const { data: reportsData, isLoading: reportsLoading } = useGetReportsQuery();
 
   const toArr = (d) => (Array.isArray(d) ? d : d?.items || []);
-  const hotelTeam = toArr(usersData).filter((u) => u.role === "hotel");
+  // API scopes by adminId — all returned users are this hotel's staff (hoteluser)
+  const hotelTeam = toArr(usersData);
 
   const [userModal, setUserModal] = useState({ open: false, user: null });
 
@@ -264,7 +265,7 @@ export default function HotelDashboard() {
           else await createUser(data).unwrap();
         }}
         user={userModal.user}
-        fixedRole="hotel"
+        fixedRole="hoteluser"
       />
 
       <PermissionWrapper permission="rooms:view">

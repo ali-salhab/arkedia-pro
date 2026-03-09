@@ -78,7 +78,10 @@ export default function SuperAdminDashboard() {
   const { data: reportsData, isLoading: reportsLoading } = useGetReportsQuery();
 
   const toArr = (d) => (Array.isArray(d) ? d : d?.items || []);
-  const platformTeam = toArr(usersData).filter((u) => u.role === "super_admin");
+  // super_admin's direct staff are superadminuser type
+  const platformTeam = toArr(usersData).filter(
+    (u) => u.role === "superadminuser",
+  );
 
   const [userModal, setUserModal] = useState({ open: false, user: null });
 
@@ -316,7 +319,7 @@ export default function SuperAdminDashboard() {
           else await createUser(data).unwrap();
         }}
         user={userModal.user}
-        fixedRole="super_admin"
+        allowedRoles={["admin", "superadminuser"]}
       />
 
       <PermissionWrapper permission="hotels:view">
