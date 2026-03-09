@@ -15,11 +15,22 @@ const MANAGER_ROLES = new Set([
 
 // Which roles each manager is allowed to create
 const CREATABLE_ROLES = {
-  super_admin: ["super_admin", "superadminuser", "admin", "adminuser", "hotel", "hoteluser", "restaurant", "restaurantuser", "activity", "activityuser"],
-  admin:       ["adminuser", "hotel", "restaurant", "activity"],
-  hotel:       ["hoteluser"],
-  restaurant:  ["restaurantuser"],
-  activity:    ["activityuser"],
+  super_admin: [
+    "super_admin",
+    "superadminuser",
+    "admin",
+    "adminuser",
+    "hotel",
+    "hoteluser",
+    "restaurant",
+    "restaurantuser",
+    "activity",
+    "activityuser",
+  ],
+  admin: ["adminuser", "hotel", "restaurant", "activity"],
+  hotel: ["hoteluser"],
+  restaurant: ["restaurantuser"],
+  activity: ["activityuser"],
 };
 
 // List: super_admin sees all users; managers see their team; sub-users see nothing

@@ -26,7 +26,9 @@ import {
 
 export default function AdminDashboard() {
   // Fetch only adminuser accounts for the team section
-  const { data: usersData, isLoading: usersLoading } = useGetUsersQuery({ role: "adminuser" });
+  const { data: usersData, isLoading: usersLoading } = useGetUsersQuery({
+    role: "adminuser",
+  });
   const [createUser] = useCreateUserMutation();
   const [updateUser] = useUpdateUserMutation();
   const [deleteUser] = useDeleteUserMutation();
