@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { useGetSidebarQuery } from "../store/services/api";
 import { useLanguage } from "../context/LanguageContext";
 import { logout } from "../store/slices/authSlice";
 import {
@@ -21,6 +20,71 @@ import {
   ChevronRight,
   Circle,
 } from "lucide-react";
+
+// ── Full menu definition per role ─────────────────────────────────────────────
+const ROLE_MENUS = {
+  super_admin: [
+    { name: "Dashboard", route: "/super-admin", perm: null },
+    { name: "Users", route: "/users", perm: "users:view" },
+    { name: "Admins", route: "/admins", perm: "users:view" },
+    { name: "All Hotels", route: "/hotels", perm: "hotels:view" },
+    {
+      name: "All Restaurants",
+      route: "/restaurants",
+      perm: "restaurants:view",
+    },
+    { name: "All Activities", route: "/activities", perm: "activities:view" },
+    { name: "All Bookings", route: "/bookings", perm: "bookings:view" },
+    { name: "Rooms/Tables", route: "/rooms", perm: "rooms:view" },
+    { name: "Finance", route: "/finance", perm: "finance:view" },
+    { name: "Reports", route: "/reports", perm: "reports:view" },
+    { name: "Settings", route: "/settings", perm: null },
+  ],
+  admin: [
+    { name: "Dashboard", route: "/admin", perm: null },
+    { name: "My Team", route: "/users", perm: "users:view" },
+    { name: "My Hotels", route: "/hotels", perm: "hotels:view" },
+    { name: "My Restaurants", route: "/restaurants", perm: "restaurants:view" },
+    { name: "My Activities", route: "/activities", perm: "activities:view" },
+    { name: "Bookings", route: "/bookings", perm: "bookings:view" },
+    { name: "Finance", route: "/finance", perm: "finance:view" },
+    { name: "Reports", route: "/reports", perm: "reports:view" },
+    { name: "Settings", route: "/settings", perm: null },
+  ],
+  hotel: [
+    { name: "Dashboard", route: "/hotel", perm: null },
+    { name: "My Team", route: "/users", perm: "users:view" },
+    { name: "Rooms", route: "/rooms", perm: "rooms:view" },
+    { name: "Bookings", route: "/bookings", perm: "bookings:view" },
+    { name: "Finance", route: "/finance", perm: "finance:view" },
+    { name: "Reports", route: "/reports", perm: "reports:view" },
+    { name: "Settings", route: "/settings", perm: null },
+  ],
+  restaurant: [
+    { name: "Dashboard", route: "/restaurant", perm: null },
+    { name: "My Team", route: "/users", perm: "users:view" },
+    { name: "Tables", route: "/rooms", perm: "rooms:view" },
+    { name: "Reservations", route: "/bookings", perm: "bookings:view" },
+    { name: "Finance", route: "/finance", perm: "finance:view" },
+    { name: "Reports", route: "/reports", perm: "reports:view" },
+    { name: "Settings", route: "/settings", perm: null },
+  ],
+  activity: [
+    { name: "Dashboard", route: "/activity", perm: null },
+    { name: "My Team", route: "/users", perm: "users:view" },
+    { name: "Activities", route: "/activities", perm: "activities:view" },
+    { name: "Bookings", route: "/bookings", perm: "bookings:view" },
+    { name: "Finance", route: "/finance", perm: "finance:view" },
+    { name: "Reports", route: "/reports", perm: "reports:view" },
+    { name: "Settings", route: "/settings", perm: null },
+  ],
+};
+
+/** Returns the filtered menu for the current user — no network call needed. */
+function buildMenu(role, permissions) {
+  const items = ROLE_MENUS[role] || ROLE_MENUS.admin;
+  return items.filter((item) => !item.perm || permissions.includes(item.perm));
+}
 
 const SIDEBAR_NAME_MAP = {
   Dashboard: "dashboard",
@@ -77,13 +141,10 @@ const ROLE_BADGE = {
 };
 
 const LogoutIcon = () => <LogOut size={18} />;
-
 const ChevronLeftIcon = () => <ChevronLeft size={16} strokeWidth={2.5} />;
-
 const ChevronRightIcon = () => <ChevronRight size={16} strokeWidth={2.5} />;
 
 export default function Sidebar() {
-  const { data, isLoading } = useGetSidebarQuery();
   const { t, theme, dir } = useLanguage();
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -98,13 +159,8 @@ export default function Sidebar() {
     navigate("/login");
   };
 
-  // Filter menu both server-side (via API) and client-side from Redux permissions
-  const rawMenu = isLoading ? [] : data?.menu || [];
-  const menu = rawMenu.filter(
-    (item) =>
-      !item.required_permission || userPerms.includes(item.required_permission),
-  );
-
+  // Build menu entirely from Redux state — no API call, no stale cache
+  const menu = buildMenu(currentUser?.role, userPerms);
   const roleBadge = ROLE_BADGE[currentUser?.role];
 
   return (
