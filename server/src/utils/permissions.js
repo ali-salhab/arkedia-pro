@@ -100,6 +100,12 @@ function defaultSidebar(userRole) {
         required_permission: null,
       },
       {
+        name: "My Team",
+        icon: "users",
+        route: "/users",
+        required_permission: "users:view",
+      },
+      {
         name: "My Hotels",
         icon: "hotel",
         route: "/hotels",
@@ -154,6 +160,12 @@ function defaultSidebar(userRole) {
         required_permission: null,
       },
       {
+        name: "My Team",
+        icon: "users",
+        route: "/users",
+        required_permission: "users:view",
+      },
+      {
         name: "Rooms",
         icon: "room",
         route: "/rooms",
@@ -196,6 +208,12 @@ function defaultSidebar(userRole) {
         required_permission: null,
       },
       {
+        name: "My Team",
+        icon: "users",
+        route: "/users",
+        required_permission: "users:view",
+      },
+      {
         name: "Tables",
         icon: "room",
         route: "/rooms",
@@ -236,6 +254,12 @@ function defaultSidebar(userRole) {
         icon: "dashboard",
         route: "/activity",
         required_permission: null,
+      },
+      {
+        name: "My Team",
+        icon: "users",
+        route: "/users",
+        required_permission: "users:view",
       },
       {
         name: "Activities",
