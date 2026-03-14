@@ -233,6 +233,9 @@ const labelStyle = {
   fontSize: 13,
 };
 
+// Roles that must be owned by an admin (set adminId)
+const ADMIN_OWNED_ROLES = new Set(["hotel", "hoteluser", "restaurant", "restaurantuser", "activity", "activityuser"]);
+
 export default function UserFormModal({
   open,
   onClose,
@@ -244,6 +247,7 @@ export default function UserFormModal({
 }) {
   const currentUser = useSelector((s) => s.auth.user);
   const isSuperAdmin = currentUser?.role === "super_admin";
+  const isAdmin = currentUser?.role === "admin";
 
   // Determine available role options for the dropdown
   const roleOptions =
@@ -260,7 +264,7 @@ export default function UserFormModal({
     password: "",
     role: defaultRole,
     permissions: [],
-    adminId: isSuperAdmin ? "" : currentUser?._id || "",
+    adminId: isAdmin ? (currentUser?._id || "") : "",
   });
   const [activeTab, setActiveTab] = useState("basic");
   const [loading, setLoading] = useState(false);
@@ -291,7 +295,8 @@ export default function UserFormModal({
         password: "",
         role: defaultRole,
         permissions: rolePresets[defaultRole] || [],
-        adminId: isSuperAdmin ? "" : currentUser?._id || "",
+        // Admin auto-links to themselves; super_admin must pick via selector
+        adminId: isAdmin ? (currentUser?._id || "") : "",
       });
       setUseCustomPermissions(false);
     }
@@ -396,7 +401,9 @@ export default function UserFormModal({
       alert(t("password") + " required");
       return;
     }
-    if (isSuperAdmin && adminsList.length > 0 && !form.adminId) {
+    const effectiveRole = fixedRole || form.role;
+    const needsAdmin = ADMIN_OWNED_ROLES.has(effectiveRole);
+    if (isSuperAdmin && needsAdmin && !form.adminId) {
       alert(t("adminRequired"));
       return;
     }
@@ -673,31 +680,39 @@ export default function UserFormModal({
               )}
             </div>
 
-            {/* Admin Selector for hotel/restaurant/activity — only shown to super_admin */}
-            {isSuperAdmin && adminsList.length > 0 && (
+            {/* Admin Selector — required for super_admin when creating hotel/restaurant/activity accounts */}
+            {isSuperAdmin && ADMIN_OWNED_ROLES.has(fixedRole || form.role) && (
               <div style={{ marginTop: 16 }}>
                 <label style={{ ...labelStyle, color: "#f59e0b" }}>
                   🔗 {t("linkedAdmin")} *
                 </label>
-                <select
-                  style={{
-                    ...inputStyle,
-                    borderColor: form.adminId ? "#22c55e" : "#ef4444",
-                  }}
-                  value={form.adminId}
-                  onChange={(e) => handleChange("adminId", e.target.value)}
-                >
-                  <option value="">{t("selectAdmin")}</option>
-                  {adminsList.map((admin) => (
-                    <option key={admin._id} value={admin._id}>
-                      {admin.name} ({admin.email})
-                    </option>
-                  ))}
-                </select>
-                {!form.adminId && (
-                  <p style={{ color: "#ef4444", fontSize: 12, marginTop: 4 }}>
-                    ⚠️ {t("adminRequired")}
-                  </p>
+                {adminsList.length === 0 ? (
+                  <div style={{ ...inputStyle, background: "#fef2f2", borderColor: "#ef4444", color: "#ef4444" }}>
+                    ⚠️ No admins found — create an admin account first before adding hotel/restaurant/activity accounts.
+                  </div>
+                ) : (
+                  <>
+                    <select
+                      style={{
+                        ...inputStyle,
+                        borderColor: form.adminId ? "#22c55e" : "#ef4444",
+                      }}
+                      value={form.adminId}
+                      onChange={(e) => handleChange("adminId", e.target.value)}
+                    >
+                      <option value="">{t("selectAdmin")}</option>
+                      {adminsList.map((admin) => (
+                        <option key={admin._id} value={admin._id}>
+                          {admin.name} ({admin.email})
+                        </option>
+                      ))}
+                    </select>
+                    {!form.adminId && (
+                      <p style={{ color: "#ef4444", fontSize: 12, marginTop: 4 }}>
+                        ⚠️ {t("adminRequired")}
+                      </p>
+                    )}
+                  </>
                 )}
               </div>
             )}

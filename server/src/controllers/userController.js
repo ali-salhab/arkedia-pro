@@ -13,6 +13,16 @@ const MANAGER_ROLES = new Set([
   "activity",
 ]);
 
+// Roles that MUST be owned by an admin (have adminId set)
+const ADMIN_OWNED_ROLES = new Set([
+  "hotel",
+  "hoteluser",
+  "restaurant",
+  "restaurantuser",
+  "activity",
+  "activityuser",
+]);
+
 // Which roles each manager is allowed to create
 const CREATABLE_ROLES = {
   super_admin: [
@@ -61,8 +71,16 @@ const create = asyncHandler(async (req, res) => {
     });
   }
 
-  if (role !== "super_admin" && !body.adminId) {
+  // Non-super_admin creators are always the admin owner — auto-assign
+  if (role !== "super_admin") {
     body.adminId = _id;
+  }
+
+  // Super admin must explicitly link hotel/restaurant/activity accounts to an admin
+  if (role === "super_admin" && ADMIN_OWNED_ROLES.has(body.role) && !body.adminId) {
+    return res.status(400).json({
+      message: "adminId is required when creating hotel/restaurant/activity accounts",
+    });
   }
   const item = await User.create(body);
   const doc = item.toObject();
