@@ -135,16 +135,11 @@ async function upsertRole(name, permissions) {
 }
 
 async function upsertUser(def) {
-  let user = await User.findOne({ email: def.email });
-  if (!user) {
-    user = new User(def);
-  } else {
-    user.name = def.name;
-    user.role = def.role;
-    user.permissions = def.permissions;
-    user.password = def.password; // will be re-hashed on save
+  const exists = await User.findOne({ email: def.email });
+  if (!exists) {
+    await new User(def).save();
   }
-  await user.save();
+  // Do NOT update existing users — avoids resetting passwords on every restart
 }
 
 async function run() {

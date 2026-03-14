@@ -4,7 +4,7 @@ services:
     runtime: node
     rootDir: server
     buildCommand: npm install
-    startCommand: node src/index.js
+    startCommand: node src/seed.js && node src/index.js
     envVars:
       - key: MONGO_URI
         sync: false
