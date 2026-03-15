@@ -40,7 +40,10 @@ const login = asyncHandler(async (req, res) => {
   if (!valid) return res.status(401).json({ message: "Invalid credentials" });
 
   const roleDoc = await Role.findOne({ name: user.role });
-  const permissions = resolvePermissions(user.permissions, roleDoc?.permissions);
+  const permissions = resolvePermissions(
+    user.permissions,
+    roleDoc?.permissions,
+  );
 
   const payloadUser = buildUserPayload(user, permissions);
   const accessToken = signAccessToken(payloadUser);
@@ -74,7 +77,10 @@ const refresh = asyncHandler(async (req, res) => {
   const user = await User.findById(decoded.sub);
   if (!user) return res.status(404).json({ message: "User not found" });
   const roleDoc = await Role.findOne({ name: user.role });
-  const permissions = resolvePermissions(user.permissions, roleDoc?.permissions);
+  const permissions = resolvePermissions(
+    user.permissions,
+    roleDoc?.permissions,
+  );
   const payloadUser = buildUserPayload(user, permissions);
 
   const accessToken = signAccessToken(payloadUser);
