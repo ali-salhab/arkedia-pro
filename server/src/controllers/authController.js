@@ -18,6 +18,18 @@ function buildUserPayload(userDoc, mergedPermissions) {
   };
 }
 
+/**
+ * If the user has explicit permissions stored, honour them exactly.
+ * Only fall back to the Role-document baseline when the user has none
+ * (e.g. freshly-seeded accounts whose permissions array is empty).
+ */
+function resolvePermissions(userPermissions, rolePermissions) {
+  if (userPermissions && userPermissions.length > 0) {
+    return userPermissions;
+  }
+  return rolePermissions || [];
+}
+
 const login = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
   const user = await User.findOne({ email }).select("+password");
@@ -28,11 +40,9 @@ const login = asyncHandler(async (req, res) => {
   if (!valid) return res.status(401).json({ message: "Invalid credentials" });
 
   const roleDoc = await Role.findOne({ name: user.role });
-  const mergedPermissions = Array.from(
-    new Set([...(roleDoc?.permissions || []), ...(user.permissions || [])])
-  );
+  const permissions = resolvePermissions(user.permissions, roleDoc?.permissions);
 
-  const payloadUser = buildUserPayload(user, mergedPermissions);
+  const payloadUser = buildUserPayload(user, permissions);
   const accessToken = signAccessToken(payloadUser);
   const { token: refreshToken, tokenId } = signRefreshToken(payloadUser);
 
@@ -64,10 +74,8 @@ const refresh = asyncHandler(async (req, res) => {
   const user = await User.findById(decoded.sub);
   if (!user) return res.status(404).json({ message: "User not found" });
   const roleDoc = await Role.findOne({ name: user.role });
-  const mergedPermissions = Array.from(
-    new Set([...(roleDoc?.permissions || []), ...(user.permissions || [])])
-  );
-  const payloadUser = buildUserPayload(user, mergedPermissions);
+  const permissions = resolvePermissions(user.permissions, roleDoc?.permissions);
+  const payloadUser = buildUserPayload(user, permissions);
 
   const accessToken = signAccessToken(payloadUser);
   const { token: newRefreshToken, tokenId } = signRefreshToken(payloadUser);

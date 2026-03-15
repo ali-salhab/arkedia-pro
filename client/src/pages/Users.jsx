@@ -12,9 +12,9 @@ import {
 // Config per dashboard type
 const ROLE_CONFIG = {
   super_admin: {
-    teamRole: "super_admin",
+    teamRole: "superadminuser",
     title: "Platform Team",
-    subtitle: "Super Admin employees with full system access",
+    subtitle: "Super Admin staff with permission-based access",
     addLabel: "Add Platform Member",
     icon: "🔑",
     color: "#a78bfa",
