@@ -20,6 +20,15 @@ const ROLE_CONFIG = {
     color: "#a78bfa",
     statLabel: "Super Admins",
   },
+  superadminuser: {
+    teamRole: "superadminuser",
+    title: "Platform Team",
+    subtitle: "Your platform colleagues",
+    addLabel: "Add Platform Member",
+    icon: "🔑",
+    color: "#a78bfa",
+    statLabel: "Colleagues",
+  },
   admin: {
     teamRole: "adminuser",
     title: "Company Team",
@@ -28,6 +37,15 @@ const ROLE_CONFIG = {
     icon: "👔",
     color: "#60a5fa",
     statLabel: "Staff",
+  },
+  adminuser: {
+    teamRole: "adminuser",
+    title: "Company Team",
+    subtitle: "Your company colleagues",
+    addLabel: "Add Team Member",
+    icon: "👔",
+    color: "#60a5fa",
+    statLabel: "Colleagues",
   },
   hotel: {
     teamRole: "hoteluser",
@@ -38,6 +56,15 @@ const ROLE_CONFIG = {
     color: "#4ade80",
     statLabel: "Hotel Staff",
   },
+  hoteluser: {
+    teamRole: "hoteluser",
+    title: "Hotel Team",
+    subtitle: "Your hotel colleagues",
+    addLabel: "Add Staff Member",
+    icon: "🏨",
+    color: "#4ade80",
+    statLabel: "Colleagues",
+  },
   restaurant: {
     teamRole: "restaurantuser",
     title: "Restaurant Team",
@@ -47,6 +74,15 @@ const ROLE_CONFIG = {
     color: "#fbbf24",
     statLabel: "Restaurant Staff",
   },
+  restaurantuser: {
+    teamRole: "restaurantuser",
+    title: "Restaurant Team",
+    subtitle: "Your restaurant colleagues",
+    addLabel: "Add Staff Member",
+    icon: "🍽️",
+    color: "#fbbf24",
+    statLabel: "Colleagues",
+  },
   activity: {
     teamRole: "activityuser",
     title: "Activity Team",
@@ -55,6 +91,15 @@ const ROLE_CONFIG = {
     icon: "🎯",
     color: "#f472b6",
     statLabel: "Activity Staff",
+  },
+  activityuser: {
+    teamRole: "activityuser",
+    title: "Activity Team",
+    subtitle: "Your activity colleagues",
+    addLabel: "Add Staff Member",
+    icon: "🎯",
+    color: "#f472b6",
+    statLabel: "Colleagues",
   },
 };
 

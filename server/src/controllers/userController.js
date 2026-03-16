@@ -43,11 +43,20 @@ const CREATABLE_ROLES = {
   activity: ["activityuser"],
 };
 
-// List: super_admin sees all users; managers see their team; sub-users see nothing
-// Optional ?role= query param to filter by role
+// List: super_admin sees all users; managers see their team;
+// sub-users see colleagues (same adminId as themselves)
 const list = asyncHandler(async (req, res) => {
-  const { role, _id } = req.user;
-  const filter = role === "super_admin" ? {} : { adminId: _id };
+  const { role, _id, adminId } = req.user;
+  let filter;
+  if (role === "super_admin") {
+    filter = {};
+  } else if (MANAGER_ROLES.has(role)) {
+    // Manager sees users they created (their team)
+    filter = { adminId: _id };
+  } else {
+    // Sub-user sees colleagues under the same parent manager
+    filter = adminId ? { adminId } : { _id: null };
+  }
   if (req.query.role) filter.role = req.query.role;
   const users = await User.find(filter).select("-password");
   res.json(users);
@@ -77,9 +86,14 @@ const create = asyncHandler(async (req, res) => {
   }
 
   // Super admin must explicitly link hotel/restaurant/activity accounts to an admin
-  if (role === "super_admin" && ADMIN_OWNED_ROLES.has(body.role) && !body.adminId) {
+  if (
+    role === "super_admin" &&
+    ADMIN_OWNED_ROLES.has(body.role) &&
+    !body.adminId
+  ) {
     return res.status(400).json({
-      message: "adminId is required when creating hotel/restaurant/activity accounts",
+      message:
+        "adminId is required when creating hotel/restaurant/activity accounts",
     });
   }
   const item = await User.create(body);

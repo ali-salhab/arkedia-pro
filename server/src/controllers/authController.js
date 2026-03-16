@@ -15,6 +15,7 @@ function buildUserPayload(userDoc, mergedPermissions) {
     name: userDoc.name,
     role: userDoc.role,
     permissions: mergedPermissions,
+    adminId: userDoc.adminId || null,
   };
 }
 
