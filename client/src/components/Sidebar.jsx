@@ -38,7 +38,7 @@ const ROLE_MENUS = {
     { name: "Rooms/Tables", route: "/rooms", perm: "rooms:view" },
     { name: "Finance", route: "/finance", perm: "finance:view" },
     { name: "Reports", route: "/reports", perm: "reports:view" },
-    { name: "Settings", route: "/settings", perm: null },
+    { name: "Settings", route: "/settings", perm: "settings:view" },
   ],
   admin: [
     { name: "Dashboard", route: "/admin", perm: null },
@@ -49,7 +49,7 @@ const ROLE_MENUS = {
     { name: "Bookings", route: "/bookings", perm: "bookings:view" },
     { name: "Finance", route: "/finance", perm: "finance:view" },
     { name: "Reports", route: "/reports", perm: "reports:view" },
-    { name: "Settings", route: "/settings", perm: null },
+    { name: "Settings", route: "/settings", perm: "settings:view" },
   ],
   hotel: [
     { name: "Dashboard", route: "/hotel", perm: null },
@@ -58,7 +58,7 @@ const ROLE_MENUS = {
     { name: "Bookings", route: "/bookings", perm: "bookings:view" },
     { name: "Finance", route: "/finance", perm: "finance:view" },
     { name: "Reports", route: "/reports", perm: "reports:view" },
-    { name: "Settings", route: "/settings", perm: null },
+    { name: "Settings", route: "/settings", perm: "settings:view" },
   ],
   restaurant: [
     { name: "Dashboard", route: "/restaurant", perm: null },
@@ -67,7 +67,7 @@ const ROLE_MENUS = {
     { name: "Reservations", route: "/bookings", perm: "bookings:view" },
     { name: "Finance", route: "/finance", perm: "finance:view" },
     { name: "Reports", route: "/reports", perm: "reports:view" },
-    { name: "Settings", route: "/settings", perm: null },
+    { name: "Settings", route: "/settings", perm: "settings:view" },
   ],
   activity: [
     { name: "Dashboard", route: "/activity", perm: null },
@@ -76,7 +76,7 @@ const ROLE_MENUS = {
     { name: "Bookings", route: "/bookings", perm: "bookings:view" },
     { name: "Finance", route: "/finance", perm: "finance:view" },
     { name: "Reports", route: "/reports", perm: "reports:view" },
-    { name: "Settings", route: "/settings", perm: null },
+    { name: "Settings", route: "/settings", perm: "settings:view" },
   ],
 };
 
