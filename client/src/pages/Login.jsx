@@ -158,13 +158,8 @@ export default function LoginPage() {
           <div className="login-accounts">
             <div className="login-accounts-title">{t("sampleAccounts")}</div>
             <ul>
-              <li>Super Admin — super@arkedia.com / Password123!</li>
-              <li>Admin Company — admin@arkedia.com / Password123!</li>
-              <li>Hotel Manager — hotel@arkedia.com / Password123!</li>
-              <li>
-                Restaurant Manager — restaurant@arkedia.com / Password123!
-              </li>
-              <li>Activity Manager — activity@arkedia.com / Password123!</li>
+              <li>super@arkedia.com </li>
+              <li>Password123! </li>
             </ul>
           </div>
         </div>

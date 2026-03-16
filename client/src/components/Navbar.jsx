@@ -3,25 +3,40 @@ import { useDispatch, useSelector } from "react-redux";
 import { logout } from "../store/slices/authSlice";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "../context/LanguageContext";
-import { MoreVertical, LogOut, User } from "lucide-react";
+import { Menu, MoreVertical, LogOut } from "lucide-react";
+import NotificationPanel from "./NotificationPanel";
 
 const ROLE_LABELS = {
   super_admin: "Super Admin",
+  superadminuser: "SA Staff",
   admin: "Admin",
+  adminuser: "Admin Staff",
   hotel: "Hotel",
+  hoteluser: "Hotel Staff",
   restaurant: "Restaurant",
+  restaurantuser: "Restaurant Staff",
   activity: "Activity",
+  activityuser: "Activity Staff",
 };
 
 const ROLE_BADGE = {
-  super_admin: { bg: "#ede9fe", color: "#7c3aed" },
+  super_admin: { bg: "#e0f2fe", color: "#0369a1" },
+  superadminuser: { bg: "#e0f2fe", color: "#0369a1" },
   admin: { bg: "#dbeafe", color: "#1d4ed8" },
-  hotel: { bg: "#d1fae5", color: "#065f46" },
+  adminuser: { bg: "#dbeafe", color: "#1d4ed8" },
+  hotel: { bg: "#dcfce7", color: "#166534" },
+  hoteluser: { bg: "#dcfce7", color: "#166534" },
   restaurant: { bg: "#fef3c7", color: "#92400e" },
-  activity: { bg: "#ffe4e6", color: "#be123c" },
+  restaurantuser: { bg: "#fef3c7", color: "#92400e" },
+  activity: { bg: "#ccfbf1", color: "#0f766e" },
+  activityuser: { bg: "#ccfbf1", color: "#0f766e" },
 };
 
-export default function Navbar() {
+export default function Navbar({
+  onToggleSidebar,
+  notifications = [],
+  onClearNotifications,
+}) {
   const user = useSelector((s) => s.auth.user);
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -52,236 +67,110 @@ export default function Navbar() {
   const avatar = user?.name?.[0]?.toUpperCase() || "U";
 
   return (
-    <header
-      style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        right: 0,
-        zIndex: 100,
-        height: 60,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        padding: "0 24px",
-        background: isDark
-          ? "linear-gradient(135deg, rgba(15,23,42,0.92) 0%, rgba(30,41,59,0.88) 100%)"
-          : "linear-gradient(135deg, rgba(255,255,255,0.88) 0%, rgba(241,245,249,0.82) 100%)",
-        backdropFilter: "blur(16px)",
-        WebkitBackdropFilter: "blur(16px)",
-        borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.07)"}`,
-        boxShadow: isDark
-          ? "0 2px 20px rgba(0,0,0,0.4)"
-          : "0 2px 20px rgba(99,102,241,0.08), 0 1px 4px rgba(0,0,0,0.06)",
-      }}
-    >
-      {/* ── Left: Logo ── */}
-      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        <img
-          src="/logo.png?v=2"
-          alt="Travky.com"
-          style={{
-            height: 44,
-            width: "auto",
-            objectFit: "fill",
-          }}
-          onError={(e) => {
-            e.target.src = "/logo.svg?v=2";
-          }}
-        />
-        <div
-          style={{ display: "flex", flexDirection: "column", lineHeight: 1.25 }}
+    <header className="navbar">
+      <div className="flex items-center gap-2 sm:gap-3">
+        <button
+          type="button"
+          onClick={onToggleSidebar}
+          className="grid h-9 w-9 place-items-center rounded-lg border border-slate-200 bg-white/80 text-slate-700 lg:hidden"
+          aria-label="Toggle sidebar"
         >
-          <span
-            style={{
-              fontWeight: 800,
-              fontSize: 15,
-              background: "linear-gradient(90deg, #1d4ed8 0%, #7c3aed 100%)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              backgroundClip: "text",
-              letterSpacing: "-0.2px",
+          <Menu size={18} />
+        </button>
+
+        <div className="flex items-center gap-2 sm:gap-3">
+          <img
+            src="/logo.png?v=2"
+            alt="Travky.com"
+            className="h-10 w-auto object-contain sm:h-11"
+            onError={(e) => {
+              e.target.src = "/logo.svg?v=2";
             }}
-          >
-            Travky.com
-          </span>
-          {/* Dashboard-type badge */}
-          {user?.role && (
-            <span
-              style={{
-                marginTop: 2,
-                fontSize: 10,
-                fontWeight: 700,
-                padding: "2px 8px",
-                borderRadius: 999,
-                background: ROLE_BADGE[user.role]?.bg || "#f1f5f9",
-                color: ROLE_BADGE[user.role]?.color || "#475569",
-                letterSpacing: "0.3px",
-                textTransform: "uppercase",
-                whiteSpace: "nowrap",
-              }}
-            >
-              {ROLE_LABELS[user.role] || user.role} Dashboard
+          />
+          <div className="hidden flex-col leading-tight sm:flex">
+            <span className="bg-gradient-to-r from-sky-700 via-blue-600 to-cyan-500 bg-clip-text text-sm font-extrabold tracking-tight text-transparent">
+              Travky.com
             </span>
-          )}
+            {user?.role && (
+              <span
+                className="mt-1 w-fit rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide"
+                style={{
+                  background: ROLE_BADGE[user.role]?.bg || "#f1f5f9",
+                  color: ROLE_BADGE[user.role]?.color || "#475569",
+                }}
+              >
+                {ROLE_LABELS[user.role] || user.role} Dashboard
+              </span>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* ── Right: User info + three-dot menu ── */}
-      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        {/* Avatar + name + role */}
-        <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
-          <div
-            style={{
-              width: 34,
-              height: 34,
-              borderRadius: "50%",
-              background: "linear-gradient(135deg, #1d4ed8 0%, #7c3aed 100%)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "#fff",
-              fontWeight: 700,
-              fontSize: 14,
-              flexShrink: 0,
-            }}
-          >
+      <div className="flex items-center gap-3">
+        <NotificationPanel
+          notifications={notifications}
+          onClear={onClearNotifications}
+        />
+        <div className="hidden items-center gap-2 sm:flex">
+          <div className="grid h-9 w-9 place-items-center rounded-full bg-gradient-to-br from-sky-700 to-cyan-500 text-sm font-bold text-white shadow-sm shadow-sky-900/20">
             {avatar}
           </div>
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              lineHeight: 1.3,
-            }}
-          >
-            <span
-              style={{
-                fontWeight: 600,
-                fontSize: 13,
-                color: isDark ? "#f1f5f9" : "#1e293b",
-                whiteSpace: "nowrap",
-              }}
-            >
+          <div className="flex flex-col leading-tight">
+            <span className="text-sm font-semibold text-slate-800 dark:text-slate-100">
               {user?.name || "User"}
             </span>
             <span
-              style={{
-                fontSize: 10,
-                fontWeight: 600,
-                padding: "1px 6px",
-                borderRadius: 999,
-                background: badge.bg,
-                color: badge.color,
-                width: "fit-content",
-              }}
+              className="mt-1 w-fit rounded-full px-2 py-0.5 text-[10px] font-semibold"
+              style={{ background: badge.bg, color: badge.color }}
             >
               {roleLabel}
             </span>
           </div>
         </div>
 
-        {/* Three-dots menu */}
-        <div style={{ position: "relative" }} ref={menuRef}>
+        <div className="relative" ref={menuRef}>
           <button
             onClick={() => setMenuOpen((v) => !v)}
             title="More options"
-            style={{
-              width: 34,
-              height: 34,
-              borderRadius: "50%",
-              border: "none",
-              background: menuOpen
+            className={`grid h-9 w-9 place-items-center rounded-full transition ${
+              menuOpen
                 ? isDark
-                  ? "#1e293b"
-                  : "#f1f5f9"
-                : "transparent",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              transition: "background 0.15s",
-              color: isDark ? "#94a3b8" : "#64748b",
-            }}
-            onMouseEnter={(e) =>
-              (e.currentTarget.style.background = isDark
-                ? "#1e293b"
-                : "#f1f5f9")
-            }
-            onMouseLeave={(e) => {
-              if (!menuOpen) e.currentTarget.style.background = "transparent";
-            }}
+                  ? "bg-slate-800"
+                  : "bg-slate-100"
+                : "bg-transparent"
+            } ${isDark ? "text-slate-300" : "text-slate-600"}`}
           >
             <MoreVertical size={18} />
           </button>
 
           {menuOpen && (
             <div
-              style={{
-                position: "absolute",
-                right: isRtl ? "auto" : 0,
-                left: isRtl ? 0 : "auto",
-                top: 40,
-                width: 180,
-                background: isDark ? "#1e293b" : "#ffffff",
-                border: `1px solid ${isDark ? "#334155" : "#e2e8f0"}`,
-                borderRadius: 12,
-                boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
-                zIndex: 200,
-                overflow: "hidden",
-              }}
+              className={`absolute top-11 z-[200] w-48 overflow-hidden rounded-xl border shadow-xl backdrop-blur-xl ${
+                isDark
+                  ? "border-slate-700 bg-slate-900/95"
+                  : "border-slate-200 bg-white/95"
+              } ${isRtl ? "left-0" : "right-0"}`}
             >
-              {/* user info header (visible on small screens) */}
               <div
-                style={{
-                  padding: "10px 14px",
-                  borderBottom: `1px solid ${isDark ? "#334155" : "#f1f5f9"}`,
-                }}
+                className={`px-3 py-2.5 ${
+                  isDark
+                    ? "border-b border-slate-700"
+                    : "border-b border-slate-100"
+                }`}
               >
-                <div
-                  style={{
-                    fontSize: 13,
-                    fontWeight: 600,
-                    color: isDark ? "#f1f5f9" : "#1e293b",
-                  }}
-                >
+                <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">
                   {user?.name || "User"}
                 </div>
-                <div
-                  style={{
-                    fontSize: 11,
-                    color: isDark ? "#94a3b8" : "#64748b",
-                    marginTop: 1,
-                  }}
-                >
+                <div className="mt-0.5 text-xs text-slate-500 dark:text-slate-300">
                   {user?.email || ""}
                 </div>
               </div>
 
               <button
                 onClick={handleLogout}
-                style={{
-                  width: "100%",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 9,
-                  padding: "10px 14px",
-                  background: "transparent",
-                  border: "none",
-                  cursor: "pointer",
-                  fontSize: 13,
-                  fontWeight: 500,
-                  color: "#ef4444",
-                  transition: "background 0.15s",
-                }}
-                onMouseEnter={(e) =>
-                  (e.currentTarget.style.background = isDark
-                    ? "rgba(239,68,68,0.1)"
-                    : "#fef2f2")
-                }
-                onMouseLeave={(e) =>
-                  (e.currentTarget.style.background = "transparent")
-                }
+                className={`flex w-full items-center gap-2 px-3 py-2.5 text-sm font-medium text-rose-500 transition ${
+                  isDark ? "hover:bg-rose-500/10" : "hover:bg-rose-50"
+                }`}
               >
                 <LogOut size={15} />
                 {t("logout")}

@@ -1,5 +1,6 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { setCredentials, logout } from "../slices/authSlice";
+import { showGlobalError } from "../slices/uiSlice";
 
 const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
 
@@ -14,7 +15,32 @@ const rawBaseQuery = fetchBaseQuery({
 
 // Automatically refresh the access token on 401 and retry the original request.
 let isRefreshing = false;
+
+function getRequestPath(args) {
+  if (typeof args === "string") return args;
+  if (args && typeof args === "object") return args.url || "";
+  return "";
+}
+
+function getErrorMessage(error) {
+  if (!error) return "";
+  if (typeof error.data === "string") return error.data;
+  if (error.data && typeof error.data === "object" && error.data.message) {
+    return error.data.message;
+  }
+  return error.error || "Request failed";
+}
+
+function shouldSuppressGlobalError(path, status) {
+  return (
+    path.includes("/auth/login") ||
+    path.includes("/auth/refresh") ||
+    status === 401
+  );
+}
+
 const baseQueryWithReauth = async (args, api, extraOptions) => {
+  const path = getRequestPath(args);
   let result = await rawBaseQuery(args, api, extraOptions);
 
   if (result?.error?.status === 401 && !isRefreshing) {
@@ -47,6 +73,15 @@ const baseQueryWithReauth = async (args, api, extraOptions) => {
       api.dispatch(logout());
     }
     isRefreshing = false;
+  }
+
+  if (result?.error && !shouldSuppressGlobalError(path, result.error.status)) {
+    api.dispatch(
+      showGlobalError({
+        message: getErrorMessage(result.error),
+        status: result.error.status,
+      }),
+    );
   }
 
   return result;

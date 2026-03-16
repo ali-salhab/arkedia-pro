@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLanguage } from "../context/LanguageContext";
 
 /**
  * DataTable with inline editing, add row, delete, and CSV export.
@@ -21,6 +22,7 @@ export default function DataTable({
   onDelete,
   exportFilename,
 }) {
+  const { t } = useLanguage();
   const [editingId, setEditingId] = useState(null);
   const [editRow, setEditRow] = useState({});
   const [addingNew, setAddingNew] = useState(false);
@@ -85,197 +87,165 @@ export default function DataTable({
     URL.revokeObjectURL(url);
   };
 
-  const thStyle = {
-    textAlign: "center",
-    padding: "10px 8px",
-    borderBottom: "1px solid #e2e8f0",
-    color: "#475569",
-    fontSize: 13,
-    fontWeight: 600,
-    whiteSpace: "nowrap",
-  };
-  const tdStyle = {
-    padding: "10px 8px",
-    color: "#334155",
-    textAlign: "center",
-    verticalAlign: "middle",
-  };
-  const inputStyle = {
-    background: "#ffffff",
-    border: "1px solid #cbd5e1",
-    borderRadius: 6,
-    padding: "4px 8px",
-    color: "#1e293b",
-    width: "100%",
-  };
-  const btnSmall = {
-    padding: "4px 10px",
-    fontSize: 12,
-    borderRadius: 6,
-    cursor: "pointer",
-    border: "none",
-  };
-
   return (
-    <div>
+    <div className="space-y-3">
       {(editable || exportFilename) && (
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "flex-end",
-            gap: 8,
-            marginBottom: 8,
-          }}
-        >
+        <div className="flex flex-wrap justify-end gap-2">
           {editable && !addingNew && (
             <button
-              style={{ ...btnSmall, background: "#2563eb", color: "#ffffff" }}
+              className="btn btn-primary rounded-lg px-3 py-1.5 text-xs"
               onClick={startAdd}
             >
-              + Add
+              + {t("add")}
             </button>
           )}
           {exportFilename && (
             <button
-              style={{ ...btnSmall, background: "#334155", color: "#e5e7eb" }}
+              className="rounded-lg border border-slate-300 bg-slate-700 px-3 py-1.5 text-xs font-semibold text-slate-100 transition hover:bg-slate-800 dark:border-slate-600 dark:bg-slate-800"
               onClick={exportCSV}
             >
-              Export CSV
+              {t("exportCsv")}
             </button>
           )}
         </div>
       )}
-      <table style={{ width: "100%", borderCollapse: "collapse" }}>
-        <thead>
-          <tr>
-            {columns.map((col) => (
-              <th key={col.key} style={thStyle}>
-                {col.label}
-              </th>
-            ))}
-            {editable && <th style={thStyle}>Actions</th>}
-          </tr>
-        </thead>
-        <tbody>
-          {addingNew && (
-            <tr style={{ borderBottom: "1px solid #e2e8f0" }}>
+      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white/70 backdrop-blur-xl dark:border-slate-700 dark:bg-slate-900/60">
+        <table className="min-w-full table-auto border-collapse">
+          <thead>
+            <tr className="border-b border-slate-200 bg-slate-50/80 dark:border-slate-700 dark:bg-slate-800/60">
               {columns.map((col) => (
-                <td key={col.key} style={tdStyle}>
-                  <input
-                    style={inputStyle}
-                    value={newRow[col.key] || ""}
-                    onChange={(e) =>
-                      setNewRow({ ...newRow, [col.key]: e.target.value })
-                    }
-                  />
-                </td>
+                <th
+                  key={col.key}
+                  className="whitespace-nowrap px-3 py-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-300"
+                >
+                  {col.label}
+                </th>
               ))}
-              <td style={tdStyle}>
-                <button
-                  style={{ ...btnSmall, background: "#22c55e", color: "#fff" }}
-                  onClick={saveNew}
-                >
-                  Save
-                </button>{" "}
-                <button
-                  style={{ ...btnSmall, background: "#64748b", color: "#fff" }}
-                  onClick={cancelAdd}
-                >
-                  Cancel
-                </button>
-              </td>
+              {editable && (
+                <th className="whitespace-nowrap px-3 py-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-300">
+                  {t("actions")}
+                </th>
+              )}
             </tr>
-          )}
-          {data.map((row) => {
-            const isEditing = editingId === row[idKey];
-            return (
-              <tr
-                key={row[idKey]}
-                style={{ borderBottom: "1px solid #e2e8f0" }}
-              >
+          </thead>
+          <tbody>
+            {addingNew && (
+              <tr className="border-b border-slate-200 dark:border-slate-700">
                 {columns.map((col) => (
-                  <td key={col.key} style={tdStyle}>
-                    {isEditing ? (
-                      <input
-                        style={inputStyle}
-                        value={editRow[col.key] ?? ""}
-                        onChange={(e) =>
-                          setEditRow({ ...editRow, [col.key]: e.target.value })
-                        }
-                      />
-                    ) : col.render ? (
-                      col.render(row[col.key], row)
-                    ) : (
-                      row[col.key]
-                    )}
+                  <td key={col.key} className="px-3 py-2 align-middle">
+                    <input
+                      className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-sm text-slate-700 outline-none focus:border-brand-primary dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
+                      value={newRow[col.key] || ""}
+                      onChange={(e) =>
+                        setNewRow({ ...newRow, [col.key]: e.target.value })
+                      }
+                    />
                   </td>
                 ))}
-                {editable && (
-                  <td style={tdStyle}>
-                    {isEditing ? (
-                      <>
-                        <button
-                          style={{
-                            ...btnSmall,
-                            background: "#22c55e",
-                            color: "#fff",
-                          }}
-                          onClick={saveEdit}
-                        >
-                          Save
-                        </button>{" "}
-                        <button
-                          style={{
-                            ...btnSmall,
-                            background: "#64748b",
-                            color: "#fff",
-                          }}
-                          onClick={cancelEdit}
-                        >
-                          Cancel
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <button
-                          style={{
-                            ...btnSmall,
-                            background: "#3b82f6",
-                            color: "#fff",
-                          }}
-                          onClick={() => startEdit(row)}
-                        >
-                          Edit
-                        </button>{" "}
-                        <button
-                          style={{
-                            ...btnSmall,
-                            background: "#ef4444",
-                            color: "#fff",
-                          }}
-                          onClick={() => handleDelete(row[idKey])}
-                        >
-                          Delete
-                        </button>
-                      </>
-                    )}
-                  </td>
-                )}
+                <td className="px-3 py-2 align-middle">
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      className="rounded-md bg-emerald-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-emerald-700"
+                      onClick={saveNew}
+                    >
+                      {t("save")}
+                    </button>
+                    <button
+                      className="rounded-md bg-slate-500 px-2.5 py-1 text-xs font-semibold text-white hover:bg-slate-600"
+                      onClick={cancelAdd}
+                    >
+                      {t("cancel")}
+                    </button>
+                  </div>
+                </td>
               </tr>
-            );
-          })}
-          {data.length === 0 && !addingNew && (
-            <tr>
-              <td
-                style={{ padding: 8 }}
-                colSpan={columns.length + (editable ? 1 : 0)}
-              >
-                No data
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+            )}
+
+            {data.map((row, index) => {
+              const isEditing = editingId === row[idKey];
+              return (
+                <tr
+                  key={row[idKey] || index}
+                  className="border-b border-slate-100 bg-white/70 transition hover:bg-slate-50/80 dark:border-slate-800 dark:bg-slate-900/40 dark:hover:bg-slate-800/50"
+                >
+                  {columns.map((col) => (
+                    <td
+                      key={col.key}
+                      className="px-3 py-2 text-center text-sm text-slate-700 dark:text-slate-200"
+                    >
+                      {isEditing ? (
+                        <input
+                          className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-sm text-slate-700 outline-none focus:border-brand-primary dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
+                          value={editRow[col.key] ?? ""}
+                          onChange={(e) =>
+                            setEditRow({
+                              ...editRow,
+                              [col.key]: e.target.value,
+                            })
+                          }
+                        />
+                      ) : (
+                        <div className="flex min-h-[24px] items-center justify-center">
+                          {col.render
+                            ? col.render(row[col.key], row)
+                            : (row[col.key] ?? "-")}
+                        </div>
+                      )}
+                    </td>
+                  ))}
+
+                  {editable && (
+                    <td className="px-3 py-2 text-center">
+                      {isEditing ? (
+                        <div className="flex flex-wrap justify-center gap-2">
+                          <button
+                            className="rounded-md bg-emerald-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-emerald-700"
+                            onClick={saveEdit}
+                          >
+                            {t("save")}
+                          </button>
+                          <button
+                            className="rounded-md bg-slate-500 px-2.5 py-1 text-xs font-semibold text-white hover:bg-slate-600"
+                            onClick={cancelEdit}
+                          >
+                            {t("cancel")}
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex flex-wrap justify-center gap-2">
+                          <button
+                            className="rounded-md bg-blue-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-blue-700"
+                            onClick={() => startEdit(row)}
+                          >
+                            {t("edit")}
+                          </button>
+                          <button
+                            className="rounded-md bg-rose-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-rose-700"
+                            onClick={() => handleDelete(row[idKey])}
+                          >
+                            {t("delete")}
+                          </button>
+                        </div>
+                      )}
+                    </td>
+                  )}
+                </tr>
+              );
+            })}
+
+            {data.length === 0 && !addingNew && (
+              <tr>
+                <td
+                  className="px-3 py-6 text-center text-sm text-slate-500 dark:text-slate-300"
+                  colSpan={columns.length + (editable ? 1 : 0)}
+                >
+                  {t("noData")}
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

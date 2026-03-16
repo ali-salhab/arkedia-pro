@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { useSelector } from "react-redux";
 import DataTable from "../components/DataTable";
+import LoadingScreen from "../components/LoadingScreen";
 import UserFormModal from "../components/UserFormModal";
+import { useLanguage } from "../context/LanguageContext";
 import {
   useGetUsersQuery,
   useCreateUserMutation,
@@ -13,99 +15,100 @@ import {
 const ROLE_CONFIG = {
   super_admin: {
     teamRole: "superadminuser",
-    title: "Platform Team",
-    subtitle: "Super Admin staff with permission-based access",
-    addLabel: "Add Platform Member",
+    titleKey: "usersTeamPlatform",
+    subtitleKey: "usersSubPlatform",
+    addLabelKey: "addPlatformMember",
     icon: "🔑",
     color: "#a78bfa",
-    statLabel: "Super Admins",
+    statLabelKey: "superAdminsLabel",
   },
   superadminuser: {
     teamRole: "superadminuser",
-    title: "Platform Team",
-    subtitle: "Your platform colleagues",
-    addLabel: "Add Platform Member",
+    titleKey: "usersTeamPlatform",
+    subtitleKey: "usersSubColleaguesPlatform",
+    addLabelKey: "addPlatformMember",
     icon: "🔑",
     color: "#a78bfa",
-    statLabel: "Colleagues",
+    statLabelKey: "colleaguesLabel",
   },
   admin: {
     teamRole: "adminuser",
-    title: "Company Team",
-    subtitle: "Admin employees of your management company",
-    addLabel: "Add Team Member",
+    titleKey: "usersTeamCompany",
+    subtitleKey: "usersSubCompany",
+    addLabelKey: "addTeamMember",
     icon: "👔",
     color: "#60a5fa",
-    statLabel: "Staff",
+    statLabelKey: "staffLabel",
   },
   adminuser: {
     teamRole: "adminuser",
-    title: "Company Team",
-    subtitle: "Your company colleagues",
-    addLabel: "Add Team Member",
+    titleKey: "usersTeamCompany",
+    subtitleKey: "usersSubColleaguesCompany",
+    addLabelKey: "addTeamMember",
     icon: "👔",
     color: "#60a5fa",
-    statLabel: "Colleagues",
+    statLabelKey: "colleaguesLabel",
   },
   hotel: {
     teamRole: "hoteluser",
-    title: "Hotel Team",
-    subtitle: "Hotel staff members",
-    addLabel: "Add Staff Member",
+    titleKey: "usersTeamHotel",
+    subtitleKey: "usersSubHotel",
+    addLabelKey: "addStaffMember",
     icon: "🏨",
     color: "#4ade80",
-    statLabel: "Hotel Staff",
+    statLabelKey: "hotelStaffLabel",
   },
   hoteluser: {
     teamRole: "hoteluser",
-    title: "Hotel Team",
-    subtitle: "Your hotel colleagues",
-    addLabel: "Add Staff Member",
+    titleKey: "usersTeamHotel",
+    subtitleKey: "usersSubColleaguesHotel",
+    addLabelKey: "addStaffMember",
     icon: "🏨",
     color: "#4ade80",
-    statLabel: "Colleagues",
+    statLabelKey: "colleaguesLabel",
   },
   restaurant: {
     teamRole: "restaurantuser",
-    title: "Restaurant Team",
-    subtitle: "Restaurant staff members",
-    addLabel: "Add Staff Member",
+    titleKey: "usersTeamRestaurant",
+    subtitleKey: "usersSubRestaurant",
+    addLabelKey: "addStaffMember",
     icon: "🍽️",
     color: "#fbbf24",
-    statLabel: "Restaurant Staff",
+    statLabelKey: "restaurantStaffLabel",
   },
   restaurantuser: {
     teamRole: "restaurantuser",
-    title: "Restaurant Team",
-    subtitle: "Your restaurant colleagues",
-    addLabel: "Add Staff Member",
+    titleKey: "usersTeamRestaurant",
+    subtitleKey: "usersSubColleaguesRestaurant",
+    addLabelKey: "addStaffMember",
     icon: "🍽️",
     color: "#fbbf24",
-    statLabel: "Colleagues",
+    statLabelKey: "colleaguesLabel",
   },
   activity: {
     teamRole: "activityuser",
-    title: "Activity Team",
-    subtitle: "Activity staff members",
-    addLabel: "Add Staff Member",
+    titleKey: "usersTeamActivity",
+    subtitleKey: "usersSubActivity",
+    addLabelKey: "addStaffMember",
     icon: "🎯",
     color: "#f472b6",
-    statLabel: "Activity Staff",
+    statLabelKey: "activityStaffLabel",
   },
   activityuser: {
     teamRole: "activityuser",
-    title: "Activity Team",
-    subtitle: "Your activity colleagues",
-    addLabel: "Add Staff Member",
+    titleKey: "usersTeamActivity",
+    subtitleKey: "usersSubColleaguesActivity",
+    addLabelKey: "addStaffMember",
     icon: "🎯",
     color: "#f472b6",
-    statLabel: "Colleagues",
+    statLabelKey: "colleaguesLabel",
   },
 };
 
 export default function UsersPage() {
   const currentUser = useSelector((s) => s.auth.user);
   const config = ROLE_CONFIG[currentUser?.role] || ROLE_CONFIG.super_admin;
+  const { t, lang } = useLanguage();
 
   const { data: users = [], isLoading, error } = useGetUsersQuery();
   const [createUser] = useCreateUserMutation();
@@ -115,25 +118,83 @@ export default function UsersPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
 
+  const roleLabels = {
+    super_admin: t("role_super_admin"),
+    superadminuser: t("role_super_admin"),
+    admin: t("role_admin"),
+    adminuser: t("role_admin"),
+    hotel: t("role_hotel"),
+    hoteluser: t("role_hotel"),
+    restaurant: t("role_restaurant"),
+    restaurantuser: t("role_restaurant"),
+    activity: t("role_activity"),
+    activityuser: t("role_activity"),
+  };
+
   const roleColors = {
-    super_admin: { bg: "#8b5cf620", color: "#a78bfa", label: "🔑 Super Admin" },
-    admin: { bg: "#3b82f620", color: "#60a5fa", label: "👔 Admin" },
-    hotel: { bg: "#22c55e20", color: "#4ade80", label: "🏨 Hotel" },
-    restaurant: { bg: "#f59e0b20", color: "#fbbf24", label: "🍽️ Restaurant" },
-    activity: { bg: "#ec489920", color: "#f472b6", label: "🎯 Activity" },
+    super_admin: {
+      bg: "#8b5cf620",
+      color: "#a78bfa",
+      label: `🔑 ${roleLabels.super_admin}`,
+    },
+    superadminuser: {
+      bg: "#8b5cf620",
+      color: "#a78bfa",
+      label: `🔐 ${roleLabels.superadminuser}`,
+    },
+    admin: {
+      bg: "#3b82f620",
+      color: "#60a5fa",
+      label: `👔 ${roleLabels.admin}`,
+    },
+    adminuser: {
+      bg: "#3b82f620",
+      color: "#60a5fa",
+      label: `🧩 ${roleLabels.adminuser}`,
+    },
+    hotel: {
+      bg: "#22c55e20",
+      color: "#4ade80",
+      label: `🏨 ${roleLabels.hotel}`,
+    },
+    hoteluser: {
+      bg: "#22c55e20",
+      color: "#4ade80",
+      label: `🛎️ ${roleLabels.hoteluser}`,
+    },
+    restaurant: {
+      bg: "#f59e0b20",
+      color: "#fbbf24",
+      label: `🍽️ ${roleLabels.restaurant}`,
+    },
+    restaurantuser: {
+      bg: "#f59e0b20",
+      color: "#fbbf24",
+      label: `🍴 ${roleLabels.restaurantuser}`,
+    },
+    activity: {
+      bg: "#ec489920",
+      color: "#f472b6",
+      label: `🎯 ${roleLabels.activity}`,
+    },
+    activityuser: {
+      bg: "#ec489920",
+      color: "#f472b6",
+      label: `🧭 ${roleLabels.activityuser}`,
+    },
   };
 
   const userColumns = [
-    { key: "name", label: "Name" },
-    { key: "email", label: "Email" },
+    { key: "name", label: t("name") },
+    { key: "email", label: t("email") },
     {
       key: "role",
-      label: "Role",
+      label: t("role"),
       render: (v) => {
         const role = roleColors[v] || {
           bg: "#33415520",
           color: "#94a3b8",
-          label: v,
+          label: v || "-",
         };
         return (
           <span
@@ -153,18 +214,21 @@ export default function UsersPage() {
     },
     {
       key: "permissions",
-      label: "Permissions",
+      label: t("permissions"),
       render: (v) => (
         <span style={{ color: "#9ca3af", fontSize: 12 }}>
-          {Array.isArray(v) ? v.length : 0} permissions
+          {Array.isArray(v) ? v.length : 0} {t("permissionsSelected")}
         </span>
       ),
     },
     {
       key: "createdAt",
-      label: "Created",
+      label: t("createdAt"),
       editable: false,
-      render: (v) => (v ? new Date(v).toLocaleDateString() : "-"),
+      render: (v) =>
+        v
+          ? new Date(v).toLocaleDateString(lang === "ar" ? "ar-EG" : "en-US")
+          : "-",
     },
   ];
 
@@ -181,26 +245,37 @@ export default function UsersPage() {
   const handleSave = async (data) => {
     try {
       if (data._id) {
-        await updateUser({ id: data._id, ...data }).unwrap();
+        await updateUser({ _id: data._id, ...data }).unwrap();
       } else {
         await createUser(data).unwrap();
       }
     } catch (err) {
-      alert(err.data?.message || "Failed to save user");
       throw err; // throw so UserFormModal can catch it and not close
     }
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm("Are you sure you want to delete this user?")) {
+    if (window.confirm(t("confirmDeleteUser"))) {
       await deleteUser(id);
     }
   };
 
-  if (isLoading) return <div className="p-6 text-center">Loading users...</div>;
+  if (isLoading) {
+    return (
+      <LoadingScreen
+        label={t("loadingUsers")}
+        statCount={3}
+        tableRows={6}
+        tableCols={5}
+      />
+    );
+  }
+
   if (error)
     return (
-      <div className="p-6 text-center text-red-500">Error loading users</div>
+      <div className="card text-center text-sm font-medium text-rose-500">
+        {error?.data?.message || t("errorLoadingUsers")}
+      </div>
     );
 
   const usersArray = Array.isArray(users) ? users : [];
@@ -218,10 +293,10 @@ export default function UsersPage() {
       >
         <div>
           <h1 style={{ fontSize: 24, fontWeight: 700, margin: 0 }}>
-            {config.title}
+            {t(config.titleKey)}
           </h1>
           <p style={{ color: "#9ca3af", fontSize: 14, marginTop: 4 }}>
-            {config.subtitle}
+            {t(config.subtitleKey)}
           </p>
         </div>
         <button
@@ -239,7 +314,7 @@ export default function UsersPage() {
             gap: 8,
           }}
         >
-          <span style={{ fontSize: 18 }}>+</span> {config.addLabel}
+          <span style={{ fontSize: 18 }}>+</span> {t(config.addLabelKey)}
         </button>
       </div>
 
@@ -265,7 +340,7 @@ export default function UsersPage() {
             {filteredUsers.length}
           </div>
           <div style={{ fontSize: 12, color: "#64748b" }}>
-            {config.statLabel}
+            {t(config.statLabelKey)}
           </div>
         </div>
         <div
@@ -280,7 +355,9 @@ export default function UsersPage() {
           <div style={{ fontSize: 28, fontWeight: 700, color: "#22c55e" }}>
             {filteredUsers.filter((u) => u.permissions?.length > 0).length}
           </div>
-          <div style={{ fontSize: 12, color: "#64748b" }}>With Permissions</div>
+          <div style={{ fontSize: 12, color: "#64748b" }}>
+            {t("withPermissions")}
+          </div>
         </div>
         <div
           style={{
@@ -295,7 +372,7 @@ export default function UsersPage() {
             {usersArray.length}
           </div>
           <div style={{ fontSize: 12, color: "#64748b" }}>
-            Total Platform Users
+            {t("totalPlatformUsers")}
           </div>
         </div>
       </div>
@@ -319,62 +396,120 @@ export default function UsersPage() {
             <div
               key={user._id}
               style={{
-                background: "#ffffff",
-                borderRadius: 12,
+                background: "rgba(255,255,255,0.88)",
+                borderRadius: 18,
                 padding: 20,
-                border: "1px solid #e2e8f0",
+                border: "1px solid rgba(148,163,184,0.18)",
+                boxShadow: "0 18px 36px rgba(15, 23, 42, 0.06)",
+                backdropFilter: "blur(12px)",
               }}
             >
               <div
                 style={{
                   display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "start",
-                  marginBottom: 12,
+                  alignItems: "center",
+                  gap: 12,
+                  marginBottom: 14,
                 }}
               >
-                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 12,
+                    minWidth: 0,
+                    flex: 1,
+                  }}
+                >
                   <div
                     style={{
+                      flexShrink: 0,
                       width: 48,
                       height: 48,
                       borderRadius: "50%",
-                      background: role.bg,
+                      background: `linear-gradient(135deg, ${role.bg}, #ffffff)`,
+                      border: `1px solid ${role.color}22`,
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
                       fontSize: 20,
+                      color: role.color,
                     }}
                   >
                     {user.name?.charAt(0).toUpperCase() || "?"}
                   </div>
-                  <div>
+                  <div style={{ minWidth: 0 }}>
                     <h3
                       style={{
                         margin: 0,
-                        fontSize: 16,
+                        fontSize: 15,
                         fontWeight: 600,
                         color: "#000111",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
                       }}
                     >
                       {user.name}
                     </h3>
-                    <p style={{ margin: 0, fontSize: 13, color: "#9ca3af" }}>
+                    <p
+                      style={{
+                        margin: 0,
+                        fontSize: 12,
+                        color: "#9ca3af",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
                       {user.email}
                     </p>
                   </div>
                 </div>
+              </div>
+
+              <div
+                style={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  alignItems: "center",
+                  gap: 8,
+                  marginBottom: 16,
+                }}
+              >
                 <span
                   style={{
-                    padding: "4px 10px",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    padding: "6px 12px",
                     borderRadius: 20,
                     fontSize: 11,
-                    fontWeight: 500,
+                    fontWeight: 600,
                     background: role.bg,
                     color: role.color,
+                    whiteSpace: "nowrap",
+                    border: `1px solid ${role.color}22`,
                   }}
                 >
                   {role.label}
+                </span>
+                <span
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    padding: "6px 12px",
+                    borderRadius: 20,
+                    fontSize: 11,
+                    fontWeight: 600,
+                    background: "#eef6ff",
+                    color: "#0f4c81",
+                    whiteSpace: "nowrap",
+                    border: "1px solid rgba(14, 116, 144, 0.12)",
+                  }}
+                >
+                  {(user.permissions || []).length} {t("permissionsSelected")}
                 </span>
               </div>
 
@@ -382,18 +517,20 @@ export default function UsersPage() {
                 <div
                   style={{ fontSize: 12, color: "#6b7280", marginBottom: 4 }}
                 >
-                  Permissions
+                  {t("permissions")}
                 </div>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
                   {(user.permissions || []).slice(0, 5).map((p) => (
                     <span
                       key={p}
                       style={{
-                        padding: "2px 8px",
-                        background: "#334155",
-                        borderRadius: 4,
+                        padding: "4px 9px",
+                        background: "#edf4ff",
+                        borderRadius: 999,
                         fontSize: 10,
-                        color: "#94a3b8",
+                        fontWeight: 600,
+                        color: "#355070",
+                        border: "1px solid rgba(59,130,246,0.1)",
                       }}
                     >
                       {p}
@@ -402,14 +539,15 @@ export default function UsersPage() {
                   {(user.permissions || []).length > 5 && (
                     <span
                       style={{
-                        padding: "2px 8px",
-                        background: "#3b82f620",
-                        borderRadius: 4,
+                        padding: "4px 9px",
+                        background: "#dff4ff",
+                        borderRadius: 999,
                         fontSize: 10,
-                        color: "#60a5fa",
+                        fontWeight: 700,
+                        color: "#0f766e",
                       }}
                     >
-                      +{(user.permissions || []).length - 5} more
+                      +{(user.permissions || []).length - 5} {t("moreLabel")}
                     </span>
                   )}
                 </div>
@@ -430,7 +568,7 @@ export default function UsersPage() {
                     fontWeight: 500,
                   }}
                 >
-                  Edit User
+                  {t("editUserBtn")}
                 </button>
                 <button
                   onClick={() => handleDelete(user._id)}
@@ -445,7 +583,7 @@ export default function UsersPage() {
                     fontWeight: 500,
                   }}
                 >
-                  Delete
+                  {t("deleteUserBtn")}
                 </button>
               </div>
             </div>
@@ -456,7 +594,7 @@ export default function UsersPage() {
       {/* Table View */}
       <div className="card" style={{ marginTop: 32 }}>
         <h3 style={{ marginBottom: 16, fontWeight: 600 }}>
-          {config.title} (Table View)
+          {t(config.titleKey)} ({t("tableView")})
         </h3>
         <DataTable
           columns={userColumns}

@@ -22,9 +22,18 @@ const authSlice = createSlice({
   initialState: loadAuth(),
   reducers: {
     setCredentials: (state, action) => {
-      state.user = action.payload.user;
-      state.accessToken = action.payload.accessToken;
-      state.refreshToken = action.payload.refreshToken;
+      state.user = action.payload.user ?? state.user;
+      state.accessToken = action.payload.accessToken ?? state.accessToken;
+      state.refreshToken = action.payload.refreshToken ?? state.refreshToken;
+      saveAuth({
+        user: state.user,
+        accessToken: state.accessToken,
+        refreshToken: state.refreshToken,
+      });
+    },
+    updateUserProfile: (state, action) => {
+      if (!state.user) return;
+      state.user = { ...state.user, ...action.payload };
       saveAuth({
         user: state.user,
         accessToken: state.accessToken,
@@ -40,5 +49,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { setCredentials, logout } = authSlice.actions;
+export const { setCredentials, updateUserProfile, logout } = authSlice.actions;
 export default authSlice.reducer;

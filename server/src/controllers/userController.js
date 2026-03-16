@@ -1,5 +1,6 @@
 const User = require("../models/User");
 const asyncHandler = require("../middleware/asyncHandler");
+const { emitPermissionsUpdated } = require("../utils/socketStore");
 
 // Manager roles that OWN an adminId-scoped team.
 // Super admin sees every user on the platform.
@@ -112,6 +113,10 @@ const update = asyncHandler(async (req, res) => {
   await user.save();
   const doc = user.toObject();
   delete doc.password;
+  // Notify the affected user in real-time if their permissions changed
+  if (rest.permissions !== undefined) {
+    emitPermissionsUpdated(String(user._id), doc.permissions || []);
+  }
   res.json(doc);
 });
 

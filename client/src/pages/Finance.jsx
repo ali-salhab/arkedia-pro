@@ -1,119 +1,161 @@
 import DataTable from "../components/DataTable";
+import { useLanguage } from "../context/LanguageContext";
 import { useGetFinanceQuery } from "../store/services/api";
 
+const BOOKING_TYPE_LABELS = {
+  hotel: "bk_typeHotel",
+  restaurant: "bk_typeRestaurant",
+  activity: "bk_typeActivity",
+};
+
+const PAYMENT_STATUS_LABELS = {
+  unpaid: "bk_psUnpaid",
+  partial: "bk_psPartial",
+  paid: "bk_psPaid",
+  refunded: "bk_psRefunded",
+};
+
 export default function FinancePage() {
-  const { data: finance = [], isLoading, error } = useGetFinanceQuery();
+  const { data, isLoading, error } = useGetFinanceQuery();
+  const { t, lang } = useLanguage();
+  const finance = Array.isArray(data) ? data : [];
+
+  const formatCurrency = (value, currency = "USD") =>
+    new Intl.NumberFormat(lang === "ar" ? "ar-EG" : "en-US", {
+      style: "currency",
+      currency,
+      minimumFractionDigits: 2,
+    }).format(Number(value || 0));
+
+  const formatDate = (value) =>
+    value
+      ? new Date(value).toLocaleDateString(lang === "ar" ? "ar-EG" : "en-US", {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+        })
+      : "-";
+
+  const getTypeLabel = (type) =>
+    type === "expense" ? t("expenses") : t("revenue");
+
+  const getStatusLabel = (status) =>
+    t(PAYMENT_STATUS_LABELS[status] || "status");
+
+  const getDescription = (row) => {
+    const bookingTypeLabel = t(
+      BOOKING_TYPE_LABELS[row.bookingType] || "bookings",
+    );
+    return [bookingTypeLabel, row.reference, row.customerName]
+      .filter(Boolean)
+      .join(" - ");
+  };
 
   const financeColumns = [
-    { key: "type", label: "Type" },
-    { key: "description", label: "Description" },
+    {
+      key: "type",
+      label: t("type"),
+      render: (value) => getTypeLabel(value),
+    },
+    {
+      key: "description",
+      label: t("description"),
+      render: (_value, row) => getDescription(row),
+    },
     {
       key: "amount",
-      label: "Amount",
-      render: (v) => `$${v?.toFixed(2) || "0.00"}`,
+      label: t("amount"),
+      render: (value, row) => formatCurrency(value, row.currency),
     },
     {
       key: "date",
-      label: "Date",
-      render: (v) => (v ? new Date(v).toLocaleDateString() : "-"),
+      label: t("date"),
+      render: (value) => formatDate(value),
     },
-    { key: "status", label: "Status" },
+    {
+      key: "status",
+      label: t("status"),
+      render: (value) => getStatusLabel(value),
+    },
   ];
 
-  // Mock data for demo if no finance data
-  const mockFinance =
-    finance.length > 0
-      ? finance
-      : [
-          {
-            _id: "1",
-            type: "Revenue",
-            description: "Hotel Bookings",
-            amount: 15000,
-            date: new Date(),
-            status: "Completed",
-          },
-          {
-            _id: "2",
-            type: "Revenue",
-            description: "Restaurant Orders",
-            amount: 5500,
-            date: new Date(),
-            status: "Completed",
-          },
-          {
-            _id: "3",
-            type: "Revenue",
-            description: "Activity Bookings",
-            amount: 3200,
-            date: new Date(),
-            status: "Completed",
-          },
-          {
-            _id: "4",
-            type: "Expense",
-            description: "Utilities",
-            amount: -1200,
-            date: new Date(),
-            status: "Paid",
-          },
-          {
-            _id: "5",
-            type: "Expense",
-            description: "Staff Salaries",
-            amount: -8000,
-            date: new Date(),
-            status: "Paid",
-          },
-        ];
-
-  if (isLoading)
-    return <div className="p-6 text-center">Loading finance data...</div>;
-  if (error)
+  if (isLoading) {
     return (
-      <div className="p-6 text-center text-red-500">
-        Error loading finance data
+      <div className="card text-center text-sm text-slate-500">
+        {t("loadingFinanceData")}
       </div>
     );
+  }
 
-  const totalRevenue = mockFinance
-    .filter((f) => f.type === "Revenue")
-    .reduce((sum, f) => sum + f.amount, 0);
-  const totalExpense = mockFinance
-    .filter((f) => f.type === "Expense")
-    .reduce((sum, f) => sum + Math.abs(f.amount), 0);
+  if (error) {
+    return (
+      <div className="card text-center text-sm font-medium text-rose-500">
+        {t("errorLoadingFinance")}
+      </div>
+    );
+  }
+
+  const totalRevenue = finance
+    .filter((entry) => entry.type === "revenue")
+    .reduce((sum, entry) => sum + Number(entry.amount || 0), 0);
+
+  const totalExpense = finance
+    .filter((entry) => entry.type === "expense")
+    .reduce((sum, entry) => sum + Number(entry.amount || 0), 0);
+
+  const primaryCurrency = finance[0]?.currency || "USD";
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-6">Finance Overview</h1>
+    <div className="space-y-6">
+      <section className="card space-y-2">
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-50">
+          {t("financeOverview")}
+        </h1>
+        <p className="text-sm text-slate-500 dark:text-slate-300">
+          {t("financeSubtitle")}
+        </p>
+      </section>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div className="bg-green-100 rounded-lg p-4">
-          <h3 className="text-sm font-medium text-green-800">Total Revenue</h3>
-          <p className="text-2xl font-bold text-green-600">
-            ${totalRevenue.toFixed(2)}
+      <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <div className="rounded-2xl border border-emerald-200 bg-emerald-50/90 p-4 shadow-sm">
+          <h2 className="text-sm font-semibold text-emerald-800">
+            {t("revenue")}
+          </h2>
+          <p className="mt-2 text-2xl font-bold text-emerald-600">
+            {formatCurrency(totalRevenue, primaryCurrency)}
           </p>
         </div>
-        <div className="bg-red-100 rounded-lg p-4">
-          <h3 className="text-sm font-medium text-red-800">Total Expenses</h3>
-          <p className="text-2xl font-bold text-red-600">
-            ${totalExpense.toFixed(2)}
+        <div className="rounded-2xl border border-rose-200 bg-rose-50/90 p-4 shadow-sm">
+          <h2 className="text-sm font-semibold text-rose-800">
+            {t("expenses")}
+          </h2>
+          <p className="mt-2 text-2xl font-bold text-rose-600">
+            {formatCurrency(totalExpense, primaryCurrency)}
           </p>
         </div>
-        <div className="bg-blue-100 rounded-lg p-4">
-          <h3 className="text-sm font-medium text-blue-800">Net Profit</h3>
-          <p className="text-2xl font-bold text-blue-600">
-            ${(totalRevenue - totalExpense).toFixed(2)}
+        <div className="rounded-2xl border border-sky-200 bg-sky-50/90 p-4 shadow-sm">
+          <h2 className="text-sm font-semibold text-sky-800">
+            {t("netProfit")}
+          </h2>
+          <p className="mt-2 text-2xl font-bold text-sky-600">
+            {formatCurrency(totalRevenue - totalExpense, primaryCurrency)}
           </p>
         </div>
-      </div>
+      </section>
 
-      <DataTable
-        columns={financeColumns}
-        data={mockFinance}
-        editable={false}
-        exportFilename="finance"
-      />
+      <section className="card space-y-4">
+        {finance.length === 0 && (
+          <p className="text-sm text-slate-500 dark:text-slate-300">
+            {t("financeNoRecords")}
+          </p>
+        )}
+        <DataTable
+          columns={financeColumns}
+          data={finance}
+          editable={false}
+          exportFilename="finance"
+        />
+      </section>
     </div>
   );
 }

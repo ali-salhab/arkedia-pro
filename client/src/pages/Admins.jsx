@@ -1,5 +1,6 @@
 import { useState } from "react";
 import DataTable from "../components/DataTable";
+import LoadingScreen from "../components/LoadingScreen";
 import UserFormModal from "../components/UserFormModal";
 import { useLanguage } from "../context/LanguageContext";
 import {
@@ -56,7 +57,6 @@ export default function AdminsPage() {
         await createUser({ ...data, role: "admin" }).unwrap();
       }
     } catch (err) {
-      alert(err.data?.message || "Failed to save admin");
       throw err;
     }
   };
@@ -68,7 +68,14 @@ export default function AdminsPage() {
   };
 
   if (isLoading)
-    return <div className="p-6 text-center">{t("loadingAdmins")}</div>;
+    return (
+      <LoadingScreen
+        label={t("loadingAdmins")}
+        statCount={3}
+        tableRows={6}
+        tableCols={4}
+      />
+    );
   if (error)
     return (
       <div className="p-6 text-center text-red-500">
@@ -222,33 +229,46 @@ export default function AdminsPage() {
             <div
               style={{
                 display: "flex",
-                justifyContent: "space-between",
-                alignItems: "start",
-                marginBottom: 12,
+                alignItems: "center",
+                gap: 12,
+                marginBottom: 14,
               }}
             >
-              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 12,
+                  minWidth: 0,
+                  flex: 1,
+                }}
+              >
                 <div
                   style={{
                     width: 48,
                     height: 48,
                     borderRadius: "50%",
-                    background: "#3b82f620",
+                    background: "linear-gradient(135deg, #dbeafe, #eff6ff)",
+                    border: "1px solid rgba(37,99,235,0.14)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
                     fontSize: 20,
+                    color: "#2563eb",
                   }}
                 >
                   {user.name?.charAt(0).toUpperCase() || "?"}
                 </div>
-                <div>
+                <div style={{ minWidth: 0 }}>
                   <h3
                     style={{
                       margin: 0,
-                      fontSize: 16,
+                      fontSize: 15,
                       fontWeight: 600,
                       color: "#1e293b",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
                     }}
                   >
                     {user.name}
@@ -256,26 +276,61 @@ export default function AdminsPage() {
                   <p
                     style={{
                       margin: 0,
-                      fontSize: 13,
+                      fontSize: 12,
                       color: "#9ca3af",
-                      wordBreak: "break-all",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
                     }}
                   >
                     {user.email}
                   </p>
                 </div>
               </div>
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                alignItems: "center",
+                gap: 8,
+                marginBottom: 16,
+              }}
+            >
               <span
                 style={{
-                  padding: "4px 10px",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  padding: "6px 12px",
                   borderRadius: 20,
                   fontSize: 11,
-                  fontWeight: 500,
-                  background: "#3b82f620",
-                  color: "#60a5fa",
+                  fontWeight: 600,
+                  background: "#dbeafe",
+                  color: "#2563eb",
+                  border: "1px solid rgba(37,99,235,0.14)",
+                  whiteSpace: "nowrap",
                 }}
               >
                 👔 Admin
+              </span>
+              <span
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  padding: "6px 12px",
+                  borderRadius: 20,
+                  fontSize: 11,
+                  fontWeight: 600,
+                  background: "#eef6ff",
+                  color: "#0f4c81",
+                  border: "1px solid rgba(14, 116, 144, 0.12)",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {(user.permissions || []).length} {t("permissionsSelected")}
               </span>
             </div>
 
@@ -288,11 +343,13 @@ export default function AdminsPage() {
                   <span
                     key={p}
                     style={{
-                      padding: "2px 8px",
-                      background: "#f1f5f9",
-                      borderRadius: 4,
+                      padding: "4px 9px",
+                      background: "#edf4ff",
+                      borderRadius: 999,
                       fontSize: 10,
-                      color: "#64748b",
+                      fontWeight: 600,
+                      color: "#355070",
+                      border: "1px solid rgba(59,130,246,0.1)",
                     }}
                   >
                     {p}
@@ -301,11 +358,12 @@ export default function AdminsPage() {
                 {(user.permissions || []).length > 5 && (
                   <span
                     style={{
-                      padding: "2px 8px",
-                      background: "#3b82f620",
-                      borderRadius: 4,
+                      padding: "4px 9px",
+                      background: "#dff4ff",
+                      borderRadius: 999,
                       fontSize: 10,
-                      color: "#60a5fa",
+                      fontWeight: 700,
+                      color: "#0f766e",
                     }}
                   >
                     +{(user.permissions || []).length - 5} {t("moreLabel")}

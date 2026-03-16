@@ -1,426 +1,219 @@
-import { useState } from "react";
 import PermissionWrapper from "../../components/PermissionWrapper";
 import DataTable from "../../components/DataTable";
-import UserFormModal from "../../components/UserFormModal";
+import DashboardControlPanelDetails from "../../components/DashboardControlPanelDetails";
+import { useLanguage } from "../../context/LanguageContext";
 import {
   useGetUsersQuery,
-  useCreateUserMutation,
-  useUpdateUserMutation,
-  useDeleteUserMutation,
   useGetHotelsQuery,
-  useCreateHotelMutation,
-  useUpdateHotelMutation,
-  useDeleteHotelMutation,
   useGetRestaurantsQuery,
-  useCreateRestaurantMutation,
-  useUpdateRestaurantMutation,
-  useDeleteRestaurantMutation,
   useGetActivitiesQuery,
-  useCreateActivityMutation,
-  useUpdateActivityMutation,
-  useDeleteActivityMutation,
   useGetBookingsQuery,
   useGetFinanceQuery,
   useGetReportsQuery,
 } from "../../store/services/api";
 
+function toArray(data) {
+  return Array.isArray(data) ? data : data?.items || [];
+}
+
 export default function AdminDashboard() {
-  // Fetch only adminuser accounts for the team section
+  const { t } = useLanguage();
+
   const { data: usersData, isLoading: usersLoading } = useGetUsersQuery({
     role: "adminuser",
   });
-  const [createUser] = useCreateUserMutation();
-  const [updateUser] = useUpdateUserMutation();
-  const [deleteUser] = useDeleteUserMutation();
-
   const { data: hotelsData, isLoading: hotelsLoading } = useGetHotelsQuery();
-  const [createHotel] = useCreateHotelMutation();
-  const [updateHotel] = useUpdateHotelMutation();
-  const [deleteHotel] = useDeleteHotelMutation();
-
   const { data: restaurantsData, isLoading: restaurantsLoading } =
     useGetRestaurantsQuery();
-  const [createRestaurant] = useCreateRestaurantMutation();
-  const [updateRestaurant] = useUpdateRestaurantMutation();
-  const [deleteRestaurant] = useDeleteRestaurantMutation();
-
   const { data: activitiesData, isLoading: activitiesLoading } =
     useGetActivitiesQuery();
-  const [createActivity] = useCreateActivityMutation();
-  const [updateActivity] = useUpdateActivityMutation();
-  const [deleteActivity] = useDeleteActivityMutation();
-
   const { data: bookingsData, isLoading: bookingsLoading } =
     useGetBookingsQuery();
   const { data: financeData, isLoading: financeLoading } = useGetFinanceQuery();
   const { data: reportsData, isLoading: reportsLoading } = useGetReportsQuery();
 
-  const toArr = (d) => (Array.isArray(d) ? d : d?.items || []);
-  // Filter client-side too as safety net — only adminuser staff belong in this panel
-  const adminTeam = toArr(usersData).filter((u) => u.role === "adminuser");
-
-  const [userModal, setUserModal] = useState({ open: false, user: null });
+  const adminTeam = toArray(usersData).filter((u) => u.role === "adminuser");
+  const hotels = toArray(hotelsData);
+  const restaurants = toArray(restaurantsData);
+  const activities = toArray(activitiesData);
+  const bookings = toArray(bookingsData);
+  const finance = toArray(financeData);
+  const reports = toArray(reportsData);
 
   const userColumns = [
-    { key: "name", label: "Name" },
-    { key: "email", label: "Email" },
-    { key: "role", label: "Role" },
+    { key: "name", label: t("name") },
+    { key: "email", label: t("email") },
+    { key: "role", label: t("role") },
+    {
+      key: "permissions",
+      label: t("permissions"),
+      render: (_value, row) =>
+        `${(row.permissions || []).length} ${t("permissions")}`,
+    },
   ];
 
   const hotelColumns = [
-    { key: "name", label: "Name" },
-    { key: "location", label: "Location" },
-    { key: "stars", label: "Stars" },
+    { key: "name", label: t("name") },
+    { key: "location", label: t("location") },
+    { key: "stars", label: t("stars") },
   ];
 
   const restaurantColumns = [
-    { key: "name", label: "Name" },
-    { key: "location", label: "Location" },
-    { key: "capacity", label: "Capacity" },
+    { key: "name", label: t("name") },
+    { key: "location", label: t("location") },
+    { key: "capacity", label: t("capacity") },
   ];
 
   const activityColumns = [
-    { key: "name", label: "Name" },
-    { key: "type", label: "Type" },
-    { key: "price", label: "Price" },
+    { key: "name", label: t("name") },
+    { key: "type", label: t("type") },
+    { key: "price", label: t("price") },
   ];
 
   const bookingColumns = [
-    { key: "guestName", label: "Guest" },
-    { key: "checkIn", label: "Check-in" },
-    { key: "checkOut", label: "Check-out" },
-    { key: "status", label: "Status" },
+    { key: "guestName", label: t("guest") },
+    { key: "checkIn", label: t("checkIn") },
+    { key: "checkOut", label: t("checkOut") },
+    { key: "status", label: t("status") },
   ];
 
   const financeColumns = [
-    { key: "date", label: "Date" },
-    { key: "revenue", label: "Revenue" },
-    { key: "expenses", label: "Expenses" },
+    {
+      key: "type",
+      label: t("type"),
+      render: (value) => (value === "expense" ? t("expenses") : t("revenue")),
+    },
+    { key: "description", label: t("description") },
+    {
+      key: "amount",
+      label: t("amount"),
+      render: (value, row) =>
+        `${row.currency || "USD"} ${Number(value || 0).toFixed(2)}`,
+    },
+    { key: "date", label: t("date") },
   ];
 
   const reportColumns = [
-    { key: "title", label: "Report" },
-    { key: "generatedAt", label: "Generated" },
+    { key: "title", label: t("reportTitle") },
+    { key: "generatedAt", label: t("generatedAt") },
   ];
 
   return (
     <div className="space-y-6">
-      <div className="card">
-        <h2 style={{ fontWeight: 600 }}>Admin Company Dashboard</h2>
-        <p style={{ color: "#9ca3af" }}>
-          Manage hotels, restaurants, and activities for your company.
-        </p>
-      </div>
-
-      <PermissionWrapper permission="users:view">
-        <div className="card">
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: 16,
-            }}
-          >
-            <h2 style={{ fontWeight: 600, margin: 0 }}>👥 المستخدمون</h2>
-            <PermissionWrapper permission="users:add">
-              <button
-                className="btn btn-primary"
-                style={{ fontSize: 13 }}
-                onClick={() => setUserModal({ open: true, user: null })}
-              >
-                + Add Member
-              </button>
-            </PermissionWrapper>
-          </div>
-          {usersLoading ? (
-            <div>Loading...</div>
-          ) : adminTeam.length === 0 ? (
-            <p
-              style={{
-                color: "#9ca3af",
-                textAlign: "center",
-                padding: "20px 0",
-                margin: 0,
-              }}
-            >
-              No team members yet.
-            </p>
-          ) : (
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
-              <thead>
-                <tr style={{ borderBottom: "2px solid #e2e8f0" }}>
-                  <th
-                    style={{
-                      textAlign: "left",
-                      padding: "8px 12px",
-                      fontSize: 12,
-                      color: "#64748b",
-                      fontWeight: 600,
-                    }}
-                  >
-                    NAME
-                  </th>
-                  <th
-                    style={{
-                      textAlign: "left",
-                      padding: "8px 12px",
-                      fontSize: 12,
-                      color: "#64748b",
-                      fontWeight: 600,
-                    }}
-                  >
-                    EMAIL
-                  </th>
-                  <th
-                    style={{
-                      textAlign: "left",
-                      padding: "8px 12px",
-                      fontSize: 12,
-                      color: "#64748b",
-                      fontWeight: 600,
-                    }}
-                  >
-                    ROLE
-                  </th>
-                  <th
-                    style={{
-                      textAlign: "left",
-                      padding: "8px 12px",
-                      fontSize: 12,
-                      color: "#64748b",
-                      fontWeight: 600,
-                    }}
-                  >
-                    PERMISSIONS
-                  </th>
-                  <th
-                    style={{
-                      textAlign: "right",
-                      padding: "8px 12px",
-                      fontSize: 12,
-                      color: "#64748b",
-                      fontWeight: 600,
-                    }}
-                  >
-                    ACTIONS
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {adminTeam.map((member) => (
-                  <tr
-                    key={member._id}
-                    style={{ borderBottom: "1px solid #f1f5f9" }}
-                  >
-                    <td
-                      style={{
-                        padding: "10px 12px",
-                        fontSize: 14,
-                        fontWeight: 500,
-                      }}
-                    >
-                      {member.name}
-                    </td>
-                    <td
-                      style={{
-                        padding: "10px 12px",
-                        fontSize: 13,
-                        color: "#64748b",
-                      }}
-                    >
-                      {member.email}
-                    </td>
-                    <td style={{ padding: "10px 12px" }}>
-                      <span
-                        style={{
-                          fontSize: 12,
-                          background: "#f0fdf4",
-                          color: "#16a34a",
-                          padding: "3px 10px",
-                          borderRadius: 12,
-                          fontWeight: 500,
-                          textTransform: "capitalize",
-                        }}
-                      >
-                        {member.role}
-                      </span>
-                    </td>
-                    <td style={{ padding: "10px 12px" }}>
-                      <span
-                        style={{
-                          fontSize: 12,
-                          background: "#eff6ff",
-                          color: "#3b82f6",
-                          padding: "3px 10px",
-                          borderRadius: 12,
-                          fontWeight: 500,
-                        }}
-                      >
-                        {(member.permissions || []).length} permissions
-                      </span>
-                    </td>
-                    <td style={{ padding: "10px 12px", textAlign: "right" }}>
-                      <PermissionWrapper permission="users:edit">
-                        <button
-                          onClick={() =>
-                            setUserModal({ open: true, user: member })
-                          }
-                          title="Edit"
-                          style={{
-                            background: "none",
-                            border: "none",
-                            cursor: "pointer",
-                            color: "#3b82f6",
-                            marginRight: 8,
-                            fontSize: 15,
-                            padding: "4px 8px",
-                            borderRadius: 6,
-                          }}
-                        >
-                          ✏️
-                        </button>
-                      </PermissionWrapper>
-                      <PermissionWrapper permission="users:delete">
-                        <button
-                          onClick={() => {
-                            if (window.confirm("Delete this team member?"))
-                              deleteUser(member._id);
-                          }}
-                          title="Delete"
-                          style={{
-                            background: "none",
-                            border: "none",
-                            cursor: "pointer",
-                            color: "#ef4444",
-                            fontSize: 15,
-                            padding: "4px 8px",
-                            borderRadius: 6,
-                          }}
-                        >
-                          🗑️
-                        </button>
-                      </PermissionWrapper>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
-      </PermissionWrapper>
-      <UserFormModal
-        open={userModal.open}
-        onClose={() => setUserModal({ open: false, user: null })}
-        onSave={async (data) => {
-          if (data._id) await updateUser(data).unwrap();
-          else await createUser(data).unwrap();
-        }}
-        user={userModal.user}
-        allowedRoles={["adminuser"]}
+      <DashboardControlPanelDetails
+        title={t("adminDashboardTitle")}
+        subtitle={t("adminDashboardSubtitle")}
+        stats={[
+          { label: t("users"), value: adminTeam.length },
+          { label: t("myHotels"), value: hotels.length },
+          { label: t("myRestaurants"), value: restaurants.length },
+          { label: t("bookings"), value: bookings.length },
+        ]}
       />
 
+      <PermissionWrapper permission="users:view">
+        <section className="card">
+          <h2 className="section-heading mb-4">👥 {t("users")}</h2>
+          {usersLoading ? (
+            <p className="section-subheading">{t("loading")}</p>
+          ) : (
+            <DataTable
+              columns={userColumns}
+              data={adminTeam}
+              exportFilename="admin_team.csv"
+            />
+          )}
+        </section>
+      </PermissionWrapper>
+
       <PermissionWrapper permission="hotels:view">
-        <div className="card">
-          <h2 style={{ marginBottom: 12, fontWeight: 600 }}>My Hotels</h2>
+        <section className="card">
+          <h2 className="section-heading mb-4">{t("myHotels")}</h2>
           {hotelsLoading ? (
-            <div>Loading...</div>
+            <p className="section-subheading">{t("loading")}</p>
           ) : (
             <DataTable
               columns={hotelColumns}
-              data={toArr(hotelsData)}
-              editable
-              onSave={(row) => (row._id ? updateHotel(row) : createHotel(row))}
-              onDelete={(id) => deleteHotel(id)}
+              data={hotels}
               exportFilename="my_hotels.csv"
             />
           )}
-        </div>
+        </section>
       </PermissionWrapper>
 
       <PermissionWrapper permission="restaurants:view">
-        <div className="card">
-          <h2 style={{ marginBottom: 12, fontWeight: 600 }}>My Restaurants</h2>
+        <section className="card">
+          <h2 className="section-heading mb-4">{t("myRestaurants")}</h2>
           {restaurantsLoading ? (
-            <div>Loading...</div>
+            <p className="section-subheading">{t("loading")}</p>
           ) : (
             <DataTable
               columns={restaurantColumns}
-              data={toArr(restaurantsData)}
-              editable
-              onSave={(row) =>
-                row._id ? updateRestaurant(row) : createRestaurant(row)
-              }
-              onDelete={(id) => deleteRestaurant(id)}
+              data={restaurants}
               exportFilename="my_restaurants.csv"
             />
           )}
-        </div>
+        </section>
       </PermissionWrapper>
 
       <PermissionWrapper permission="activities:view">
-        <div className="card">
-          <h2 style={{ marginBottom: 12, fontWeight: 600 }}>My Activities</h2>
+        <section className="card">
+          <h2 className="section-heading mb-4">{t("myActivities")}</h2>
           {activitiesLoading ? (
-            <div>Loading...</div>
+            <p className="section-subheading">{t("loading")}</p>
           ) : (
             <DataTable
               columns={activityColumns}
-              data={toArr(activitiesData)}
-              editable
-              onSave={(row) =>
-                row._id ? updateActivity(row) : createActivity(row)
-              }
-              onDelete={(id) => deleteActivity(id)}
+              data={activities}
               exportFilename="my_activities.csv"
             />
           )}
-        </div>
+        </section>
       </PermissionWrapper>
 
       <PermissionWrapper permission="bookings:view">
-        <div className="card">
-          <h2 style={{ marginBottom: 12, fontWeight: 600 }}>Bookings</h2>
+        <section className="card">
+          <h2 className="section-heading mb-4">{t("bookings")}</h2>
           {bookingsLoading ? (
-            <div>Loading...</div>
+            <p className="section-subheading">{t("loading")}</p>
           ) : (
             <DataTable
               columns={bookingColumns}
-              data={toArr(bookingsData)}
+              data={bookings}
               exportFilename="bookings.csv"
             />
           )}
-        </div>
+        </section>
       </PermissionWrapper>
 
       <PermissionWrapper permission="finance:view">
-        <div className="card">
-          <h2 style={{ marginBottom: 12, fontWeight: 600 }}>Finance</h2>
+        <section className="card">
+          <h2 className="section-heading mb-4">{t("finance")}</h2>
           {financeLoading ? (
-            <div>Loading...</div>
+            <p className="section-subheading">{t("loading")}</p>
           ) : (
             <DataTable
               columns={financeColumns}
-              data={toArr(financeData)}
+              data={finance}
               exportFilename="finance.csv"
             />
           )}
-        </div>
+        </section>
       </PermissionWrapper>
 
       <PermissionWrapper permission="reports:view">
-        <div className="card">
-          <h2 style={{ marginBottom: 12, fontWeight: 600 }}>Reports</h2>
+        <section className="card">
+          <h2 className="section-heading mb-4">{t("reports")}</h2>
           {reportsLoading ? (
-            <div>Loading...</div>
+            <p className="section-subheading">{t("loading")}</p>
           ) : (
             <DataTable
               columns={reportColumns}
-              data={toArr(reportsData)}
+              data={reports}
               exportFilename="reports.csv"
             />
           )}
-        </div>
+        </section>
       </PermissionWrapper>
     </div>
   );

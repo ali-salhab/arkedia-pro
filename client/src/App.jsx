@@ -23,6 +23,7 @@ import AdminDashboard from "./dashboards/Admin";
 import HotelDashboard from "./dashboards/Hotel";
 import RestaurantDashboard from "./dashboards/Restaurant";
 import ActivityDashboard from "./dashboards/Activity";
+import GlobalErrorModal from "./components/GlobalErrorModal";
 
 const ALL_ROLES = [
   "super_admin",
@@ -159,6 +160,7 @@ export default function App() {
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
+      <GlobalErrorModal />
     </>
   );
 }

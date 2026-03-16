@@ -1,5 +1,6 @@
 import { useState } from "react";
 import DataTable from "../components/DataTable";
+import { SkeletonTable } from "../components/SkeletonLoader";
 import UserFormModal from "../components/UserFormModal";
 import { useLanguage } from "../context/LanguageContext";
 import {
@@ -44,7 +45,7 @@ export default function RestaurantsPage() {
     },
     {
       key: "logo",
-      label: "Logo",
+      label: t("logo"),
       render: (v) =>
         v ? (
           <img
@@ -63,7 +64,7 @@ export default function RestaurantsPage() {
     },
     {
       key: "createdAt",
-      label: "Created",
+      label: t("createdAt"),
       render: (v) => (v ? new Date(v).toLocaleDateString() : "-"),
     },
   ];
@@ -87,16 +88,16 @@ export default function RestaurantsPage() {
   };
 
   const handleDelete = async (id) => {
-    if (
-      window.confirm("Are you sure you want to delete this restaurant account?")
-    ) {
+    if (window.confirm(t("confirmDeleteRestaurant"))) {
       await deleteUser(id);
     }
   };
 
   if (isLoading)
     return (
-      <div className="p-6 text-center">Loading restaurant accounts...</div>
+      <div style={{ padding: 24 }}>
+        <SkeletonTable rows={5} cols={4} />
+      </div>
     );
 
   return (
@@ -127,10 +128,10 @@ export default function RestaurantsPage() {
       >
         <div>
           <h1 style={{ fontSize: 24, fontWeight: 700, margin: 0 }}>
-            Restaurant Accounts
+            {t("restaurantAccounts")}
           </h1>
           <p style={{ color: "#9ca3af", fontSize: 14, marginTop: 4 }}>
-            Manage restaurant manager accounts linked to admins
+            {t("restaurantAccountsSubtitle")}
           </p>
         </div>
         <button
@@ -164,11 +165,12 @@ export default function RestaurantsPage() {
                   animation: "spin 0.7s linear infinite",
                 }}
               />
-              Saving...
+              {t("saving")}
             </>
           ) : (
             <>
-              <span style={{ fontSize: 18 }}>+</span> Add Restaurant Account
+              <span style={{ fontSize: 18 }}>+</span>{" "}
+              {t("addRestaurantAccount")}
             </>
           )}
         </button>
@@ -196,7 +198,7 @@ export default function RestaurantsPage() {
             {restaurantAccounts.length}
           </div>
           <div style={{ fontSize: 12, color: "#64748b" }}>
-            Restaurant Accounts
+            {t("restaurantAccounts")}
           </div>
         </div>
         <div
@@ -373,7 +375,7 @@ export default function RestaurantsPage() {
             }}
           >
             <div style={{ fontSize: 48, marginBottom: 12 }}>🍽️</div>
-            <p>No restaurant accounts yet. Add one to get started.</p>
+            <p>{t("noRestaurantAccounts")}</p>
           </div>
         )}
       </div>
@@ -381,7 +383,7 @@ export default function RestaurantsPage() {
       {/* Table View */}
       <div className="card" style={{ marginTop: 32 }}>
         <h3 style={{ marginBottom: 16, fontWeight: 600 }}>
-          Restaurant Accounts Table
+          {t("restaurantAccountsTable")}
         </h3>
         <DataTable
           columns={restaurantColumns}

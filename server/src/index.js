@@ -4,7 +4,9 @@ require("dotenv").config({
     `../.env.${process.env.NODE_ENV || "development"}`,
   ),
 });
+const http = require("http");
 const express = require("express");
+const { Server: SocketServer } = require("socket.io");
 const cookieParser = require("cookie-parser");
 const morgan = require("morgan");
 const helmet = require("helmet");
@@ -22,9 +24,25 @@ const roomRoutes = require("./routes/rooms");
 const financeRoutes = require("./routes/finance");
 const reportRoutes = require("./routes/reports");
 const { notFound, errorHandler } = require("./middleware/errorHandler");
+const socketStore = require("./utils/socketStore");
 
 const app = express();
+const server = http.createServer(app);
 const port = process.env.PORT || 5000;
+
+// Socket.IO — allow same origins as CORS
+const io = new SocketServer(server, {
+  cors: { origin: "*", methods: ["GET", "POST"], credentials: true },
+});
+socketStore.init(io);
+
+io.on("connection", (socket) => {
+  // Each authenticated client joins a room named after their userId
+  socket.on("join", (userId) => {
+    if (userId) socket.join(`user:${userId}`);
+  });
+  socket.on("disconnect", () => {});
+});
 
 // ── CORS ── must be the very first middleware, before helmet and everything else
 app.use((req, res, next) => {
@@ -84,7 +102,7 @@ app.use(notFound);
 app.use(errorHandler);
 
 connectDb().then(() => {
-  app.listen(port, () => {
+  server.listen(port, () => {
     console.log(`API listening on port ${port}`);
   });
 });

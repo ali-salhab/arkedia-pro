@@ -1,5 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import DataTable from "../components/DataTable";
+import Modal from "../components/Modal";
+import { SkeletonTable } from "../components/SkeletonLoader";
 import UserFormModal from "../components/UserFormModal";
 import { useLanguage } from "../context/LanguageContext";
 import {
@@ -16,6 +18,9 @@ export default function HotelsPage() {
   const [deleteUser, { isLoading: isDeleting }] = useDeleteUserMutation();
 
   const [modalOpen, setModalOpen] = useState(false);
+  const [adminModalOpen, setAdminModalOpen] = useState(false);
+  const [adminRequiredModalOpen, setAdminRequiredModalOpen] = useState(false);
+  const [resumeHotelCreation, setResumeHotelCreation] = useState(false);
   const [editingHotel, setEditingHotel] = useState(null);
   const { t } = useLanguage();
 
@@ -44,7 +49,7 @@ export default function HotelsPage() {
     },
     {
       key: "logo",
-      label: "Logo",
+      label: t("logo"),
       render: (v) =>
         v ? (
           <img
@@ -63,13 +68,26 @@ export default function HotelsPage() {
     },
     {
       key: "createdAt",
-      label: "Created",
+      label: t("createdAt"),
       render: (v) => (v ? new Date(v).toLocaleDateString() : "-"),
     },
   ];
 
+  useEffect(() => {
+    if (resumeHotelCreation && adminsList.length > 0) {
+      setResumeHotelCreation(false);
+      setAdminModalOpen(false);
+      setEditingHotel(null);
+      setModalOpen(true);
+    }
+  }, [adminsList.length, resumeHotelCreation]);
+
   const handleAddNew = () => {
     setEditingHotel(null);
+    if (adminsList.length === 0) {
+      setAdminRequiredModalOpen(true);
+      return;
+    }
     setModalOpen(true);
   };
 
@@ -86,6 +104,21 @@ export default function HotelsPage() {
     }
   };
 
+  const handleAdminSave = async (data) => {
+    await createUser({ ...data, role: "admin" }).unwrap();
+  };
+
+  const handleOpenAdminCreation = () => {
+    setAdminRequiredModalOpen(false);
+    setResumeHotelCreation(true);
+    setAdminModalOpen(true);
+  };
+
+  const handleCloseAdminModal = () => {
+    setAdminModalOpen(false);
+    setResumeHotelCreation(false);
+  };
+
   const handleDelete = async (id) => {
     if (window.confirm(t("areYouSureDeleteHotelAccount"))) {
       await deleteUser(id);
@@ -93,7 +126,11 @@ export default function HotelsPage() {
   };
 
   if (isLoading)
-    return <div className="p-6 text-center">{t("loadingHotelAccounts")}</div>;
+    return (
+      <div style={{ padding: 24 }}>
+        <SkeletonTable rows={5} cols={4} />
+      </div>
+    );
 
   return (
     <div style={{ padding: 24 }}>
@@ -175,7 +212,7 @@ export default function HotelsPage() {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(3, 1fr)",
+          gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
           gap: 16,
           marginBottom: 24,
         }}
@@ -212,22 +249,6 @@ export default function HotelsPage() {
             {t("linkedToAdmin")}
           </div>
         </div>
-        <div
-          style={{
-            background: "#f8fafc",
-            borderRadius: 12,
-            padding: 16,
-            borderLeft: "4px solid #ef4444",
-          }}
-        >
-          <div style={{ fontSize: 24, marginBottom: 8 }}>⚠️</div>
-          <div style={{ fontSize: 28, fontWeight: 700, color: "#ef4444" }}>
-            {hotelAccounts.filter((h) => !h.adminId).length}
-          </div>
-          <div style={{ fontSize: 12, color: "#64748b" }}>
-            {t("noAdminLinked")}
-          </div>
-        </div>
       </div>
 
       {/* Hotel Accounts Grid */}
@@ -256,7 +277,7 @@ export default function HotelsPage() {
               {/* Header */}
               <div
                 style={{
-                  height: 120,
+                  height: 185,
                   background: hotel.logo
                     ? `url(${hotel.logo}) center/cover no-repeat`
                     : "linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)",
@@ -288,44 +309,65 @@ export default function HotelsPage() {
 
               {/* Info */}
               <div style={{ padding: 16 }}>
-                <h3
+                {/* Row 1: name + admin badge */}
+                <div
                   style={{
-                    margin: "0 0 4px 0",
-                    fontSize: 16,
-                    fontWeight: 600,
-                    color: "#1e293b",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: 8,
+                    marginBottom: 4,
                   }}
                 >
-                  {hotel.name}
-                </h3>
+                  <h3
+                    style={{
+                      margin: 0,
+                      fontSize: 15,
+                      fontWeight: 600,
+                      color: "#1e293b",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                      minWidth: 0,
+                    }}
+                  >
+                    {hotel.name}
+                  </h3>
+                  {linkedAdmin && (
+                    <span
+                      style={{
+                        flexShrink: 0,
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 4,
+                        background: "#eff6ff",
+                        border: "1px solid #bfdbfe",
+                        padding: "3px 8px",
+                        borderRadius: 20,
+                        fontSize: 11,
+                        fontWeight: 600,
+                        color: "#2563eb",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      👔 {linkedAdmin.name}
+                    </span>
+                  )}
+                </div>
+                {/* Row 2: email */}
                 <p
                   style={{
-                    margin: "0 0 8px 0",
-                    fontSize: 13,
+                    margin: "0 0 14px 0",
+                    fontSize: 12,
                     color: "#9ca3af",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
                   }}
                 >
                   {hotel.email}
                 </p>
-                {linkedAdmin && (
-                  <div
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 6,
-                      background: "#eff6ff",
-                      border: "1px solid #bfdbfe",
-                      padding: "4px 10px",
-                      borderRadius: 20,
-                      fontSize: 12,
-                      color: "#2563eb",
-                      marginBottom: 12,
-                    }}
-                  >
-                    👔 {linkedAdmin.name}
-                  </div>
-                )}
-                <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+                <div style={{ display: "flex", gap: 8 }}>
                   <button
                     onClick={() => handleEdit(hotel)}
                     style={{
@@ -398,6 +440,48 @@ export default function HotelsPage() {
         user={editingHotel}
         fixedRole="hotel"
         adminsList={adminsList}
+      />
+
+      <Modal
+        open={adminRequiredModalOpen}
+        onClose={() => setAdminRequiredModalOpen(false)}
+        title={t("adminRequiredForHotelTitle")}
+      >
+        <p
+          style={{
+            margin: "0 0 20px 0",
+            color: "#64748b",
+            lineHeight: 1.7,
+            fontSize: 14,
+          }}
+        >
+          {t("adminRequiredForHotelMessage")}
+        </p>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "flex-end",
+            gap: 10,
+            flexWrap: "wrap",
+          }}
+        >
+          <button
+            className="btn"
+            onClick={() => setAdminRequiredModalOpen(false)}
+          >
+            {t("cancel")}
+          </button>
+          <button className="btn btn-primary" onClick={handleOpenAdminCreation}>
+            {t("createAdminNow")}
+          </button>
+        </div>
+      </Modal>
+
+      <UserFormModal
+        open={adminModalOpen}
+        onClose={handleCloseAdminModal}
+        onSave={handleAdminSave}
+        fixedRole="admin"
       />
     </div>
   );
