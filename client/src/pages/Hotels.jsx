@@ -10,7 +10,7 @@ import {
 } from "../store/services/api";
 
 export default function HotelsPage() {
-  const { data: users = [], isLoading, isFetching, error } = useGetUsersQuery();
+  const { data: users = [], isLoading, isFetching } = useGetUsersQuery();
   const [createUser, { isLoading: isCreating }] = useCreateUserMutation();
   const [updateUser, { isLoading: isUpdating }] = useUpdateUserMutation();
   const [deleteUser, { isLoading: isDeleting }] = useDeleteUserMutation();
@@ -94,12 +94,6 @@ export default function HotelsPage() {
 
   if (isLoading)
     return <div className="p-6 text-center">{t("loadingHotelAccounts")}</div>;
-  if (error)
-    return (
-      <div className="p-6 text-center text-red-500">
-        {t("errorLoadingData")}
-      </div>
-    );
 
   return (
     <div style={{ padding: 24 }}>
