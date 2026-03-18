@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSelector } from "react-redux";
 import DataTable from "../components/DataTable";
 import Modal from "../components/Modal";
 import { SkeletonTable } from "../components/SkeletonLoader";
@@ -12,7 +13,29 @@ import {
 } from "../store/services/api";
 
 export default function HotelsPage() {
-  const { data: users = [], isLoading, isFetching } = useGetUsersQuery();
+  const permissions = useSelector((s) => s.auth.user?.permissions || []);
+  const hasPermission = (permission) => permissions.includes(permission);
+  const canViewHotels = hasPermission("hotels:view");
+  const canAddHotels = hasPermission("hotels:add");
+  const canEditHotels = hasPermission("hotels:edit");
+  const canDeleteHotels = hasPermission("hotels:delete");
+  const canViewAdmins = hasPermission("admins:view");
+  const canAddAdmins = hasPermission("admins:add");
+
+  const {
+    data: hotelsData = [],
+    isLoading: hotelsLoading,
+    isFetching: hotelsFetching,
+    error: hotelsError,
+  } = useGetUsersQuery({ role: "hotel" }, { skip: !canViewHotels });
+
+  const {
+    data: adminsData = [],
+    isLoading: adminsLoading,
+    isFetching: adminsFetching,
+    error: adminsError,
+  } = useGetUsersQuery({ role: "admin" }, { skip: !canViewAdmins });
+
   const [createUser, { isLoading: isCreating }] = useCreateUserMutation();
   const [updateUser, { isLoading: isUpdating }] = useUpdateUserMutation();
   const [deleteUser, { isLoading: isDeleting }] = useDeleteUserMutation();
@@ -25,10 +48,16 @@ export default function HotelsPage() {
   const { t } = useLanguage();
 
   const isMutating = isCreating || isUpdating || isDeleting;
+  const isBusy = isMutating || hotelsFetching || adminsFetching;
+  const disableAddHotel =
+    isBusy ||
+    !canAddHotels ||
+    !canViewAdmins ||
+    adminsLoading ||
+    Boolean(adminsError);
 
-  const usersArray = Array.isArray(users) ? users : [];
-  const hotelAccounts = usersArray.filter((u) => u.role === "hotel");
-  const adminsList = usersArray.filter((u) => u.role === "admin");
+  const hotelAccounts = Array.isArray(hotelsData) ? hotelsData : [];
+  const adminsList = Array.isArray(adminsData) ? adminsData : [];
 
   const hotelColumns = [
     { key: "name", label: t("name") },
@@ -83,6 +112,17 @@ export default function HotelsPage() {
   }, [adminsList.length, resumeHotelCreation]);
 
   const handleAddNew = () => {
+    if (!canAddHotels) return;
+    if (!canViewAdmins) {
+      window.alert(`${t("error")} 403: Missing admins:view permission`);
+      return;
+    }
+    if (adminsLoading || adminsFetching) return;
+    if (adminsError) {
+      window.alert(t("errorLoadingAdmins"));
+      return;
+    }
+
     setEditingHotel(null);
     if (adminsList.length === 0) {
       setAdminRequiredModalOpen(true);
@@ -105,6 +145,9 @@ export default function HotelsPage() {
   };
 
   const handleAdminSave = async (data) => {
+    if (!canAddAdmins) {
+      throw new Error("Missing admins:add permission");
+    }
     await createUser({ ...data, role: "admin" }).unwrap();
   };
 
@@ -125,17 +168,30 @@ export default function HotelsPage() {
     }
   };
 
-  if (isLoading)
+  if (!canViewHotels) {
+    return (
+      <div className="card text-center text-sm font-medium text-rose-500">
+        {t("error")} 403: Missing hotels:view permission
+      </div>
+    );
+  }
+
+  if (hotelsLoading)
     return (
       <div style={{ padding: 24 }}>
         <SkeletonTable rows={5} cols={4} />
       </div>
     );
 
+  if (hotelsError)
+    return (
+      <div className="p-6 text-center text-red-500">{t("errorLoadingData")}</div>
+    );
+
   return (
     <div style={{ padding: 24 }}>
       {/* Loading bar — shows during refetch after create/update/delete */}
-      {(isFetching || isMutating) && (
+      {(isBusy || adminsLoading) && (
         <div
           style={{
             position: "fixed",
@@ -169,23 +225,23 @@ export default function HotelsPage() {
         </div>
         <button
           onClick={handleAddNew}
-          disabled={isMutating || isFetching}
+          disabled={disableAddHotel}
           style={{
-            background: isMutating ? "#93c5fd" : "#3b82f6",
+            background: disableAddHotel ? "#93c5fd" : "#3b82f6",
             padding: "12px 24px",
             borderRadius: 8,
             border: "none",
             color: "#fff",
             fontWeight: 600,
-            cursor: isMutating ? "not-allowed" : "pointer",
+            cursor: disableAddHotel ? "not-allowed" : "pointer",
             display: "flex",
             alignItems: "center",
             gap: 8,
-            opacity: isMutating ? 0.7 : 1,
+            opacity: disableAddHotel ? 0.7 : 1,
             transition: "all 0.2s",
           }}
         >
-          {isMutating ? (
+          {isBusy ? (
             <>
               <span
                 style={{
@@ -208,39 +264,45 @@ export default function HotelsPage() {
         </button>
       </div>
 
-      {/* Stats */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-          gap: 16,
-          marginBottom: 24,
-        }}
-      >
-        <div
-          style={{
-            background: "#f8fafc",
-            borderRadius: 12,
-            padding: 16,
-            borderLeft: "4px solid #22c55e",
-          }}
-        >
-          <div style={{ fontSize: 24, marginBottom: 8 }}>🏨</div>
-          <div style={{ fontSize: 28, fontWeight: 700, color: "#22c55e" }}>
-            {hotelAccounts.length}
-          </div>
-          <div style={{ fontSize: 12, color: "#64748b" }}>
-            {t("hotelAccounts")}
-          </div>
-        </div>
-        <div
-          style={{
-            background: "#f8fafc",
-            borderRadius: 12,
-            padding: 16,
-            borderLeft: "4px solid #60a5fa",
-          }}
-        >
+                {(canEditHotels || canDeleteHotels) && (
+                  <div style={{ display: "flex", gap: 8 }}>
+                    {canEditHotels && (
+                      <button
+                        onClick={() => handleEdit(hotel)}
+                        style={{
+                          flex: 1,
+                          padding: "8px 12px",
+                          background: "#3b82f6",
+                          border: "none",
+                          borderRadius: 6,
+                          color: "#fff",
+                          cursor: "pointer",
+                          fontSize: 13,
+                          fontWeight: 500,
+                        }}
+                      >
+                        {t("edit")}
+                      </button>
+                    )}
+                    {canDeleteHotels && (
+                      <button
+                        onClick={() => handleDelete(hotel._id)}
+                        style={{
+                          padding: "8px 12px",
+                          background: "#ef4444",
+                          border: "none",
+                          borderRadius: 6,
+                          color: "#fff",
+                          cursor: "pointer",
+                          fontSize: 13,
+                          fontWeight: 500,
+                        }}
+                      >
+                        {t("delete")}
+                      </button>
+                    )}
+                  </div>
+                )}
           <div style={{ fontSize: 24, marginBottom: 8 }}>🔗</div>
           <div style={{ fontSize: 28, fontWeight: 700, color: "#60a5fa" }}>
             {hotelAccounts.filter((h) => h.adminId).length}
@@ -471,9 +533,14 @@ export default function HotelsPage() {
           >
             {t("cancel")}
           </button>
-          <button className="btn btn-primary" onClick={handleOpenAdminCreation}>
-            {t("createAdminNow")}
-          </button>
+          {canAddAdmins && (
+            <button
+              className="btn btn-primary"
+              onClick={handleOpenAdminCreation}
+            >
+              {t("createAdminNow")}
+            </button>
+          )}
         </div>
       </Modal>
 

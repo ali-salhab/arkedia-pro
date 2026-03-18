@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useSelector } from "react-redux";
 import DataTable from "../components/DataTable";
 import LoadingScreen from "../components/LoadingScreen";
 import UserFormModal from "../components/UserFormModal";
@@ -11,7 +12,14 @@ import {
 } from "../store/services/api";
 
 export default function AdminsPage() {
-  const { data: users = [], isLoading, error } = useGetUsersQuery();
+  const permissions = useSelector((s) => s.auth.user?.permissions || []);
+  const canViewAdmins = permissions.includes("admins:view");
+
+  const {
+    data: users = [],
+    isLoading,
+    error,
+  } = useGetUsersQuery({ role: "admin" }, { skip: !canViewAdmins });
   const [createUser] = useCreateUserMutation();
   const [updateUser] = useUpdateUserMutation();
   const [deleteUser] = useDeleteUserMutation();
@@ -67,6 +75,14 @@ export default function AdminsPage() {
     }
   };
 
+  if (!canViewAdmins) {
+    return (
+      <div className="card text-center text-sm font-medium text-rose-500">
+        {t("error")} 403: Missing admins:view permission
+      </div>
+    );
+  }
+
   if (isLoading)
     return (
       <LoadingScreen
@@ -84,7 +100,7 @@ export default function AdminsPage() {
     );
 
   const usersArray = Array.isArray(users) ? users : [];
-  const admins = usersArray.filter((u) => u.role === "admin");
+  const admins = usersArray;
 
   return (
     <div

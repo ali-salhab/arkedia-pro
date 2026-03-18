@@ -12,7 +12,11 @@ function auth(req, res, next) {
 
   try {
     const payload = verifyAccessToken(bearer);
-    req.user = payload;
+    req.user = {
+      ...payload,
+      _id: payload?._id || payload?.sub,
+      adminId: payload?.adminId || null,
+    };
     return next();
   } catch (err) {
     return res.status(401).json({ message: "Invalid or expired token" });

@@ -1,6 +1,7 @@
 import PermissionWrapper from "../../components/PermissionWrapper";
 import DataTable from "../../components/DataTable";
 import DashboardControlPanelDetails from "../../components/DashboardControlPanelDetails";
+import { useSelector } from "react-redux";
 import { useLanguage } from "../../context/LanguageContext";
 import {
   useGetUsersQuery,
@@ -18,19 +19,41 @@ function toArray(data) {
 
 export default function AdminDashboard() {
   const { t } = useLanguage();
+  const permissions = useSelector((s) => s.auth.user?.permissions || []);
+  const hasPermission = (permission) => permissions.includes(permission);
 
-  const { data: usersData, isLoading: usersLoading } = useGetUsersQuery({
-    role: "adminuser",
-  });
-  const { data: hotelsData, isLoading: hotelsLoading } = useGetHotelsQuery();
+  const canViewUsers = hasPermission("users:view");
+  const canViewHotels = hasPermission("hotels:view");
+  const canViewRestaurants = hasPermission("restaurants:view");
+  const canViewActivities = hasPermission("activities:view");
+  const canViewBookings = hasPermission("bookings:view");
+  const canViewFinance = hasPermission("finance:view");
+  const canViewReports = hasPermission("reports:view");
+
+  const { data: usersData, isLoading: usersLoading } = useGetUsersQuery(
+    {
+      role: "adminuser",
+    },
+    { skip: !canViewUsers },
+  );
+  const { data: hotelsData, isLoading: hotelsLoading } = useGetHotelsQuery(
+    undefined,
+    { skip: !canViewHotels },
+  );
   const { data: restaurantsData, isLoading: restaurantsLoading } =
-    useGetRestaurantsQuery();
+    useGetRestaurantsQuery(undefined, { skip: !canViewRestaurants });
   const { data: activitiesData, isLoading: activitiesLoading } =
-    useGetActivitiesQuery();
+    useGetActivitiesQuery(undefined, { skip: !canViewActivities });
   const { data: bookingsData, isLoading: bookingsLoading } =
-    useGetBookingsQuery();
-  const { data: financeData, isLoading: financeLoading } = useGetFinanceQuery();
-  const { data: reportsData, isLoading: reportsLoading } = useGetReportsQuery();
+    useGetBookingsQuery(undefined, { skip: !canViewBookings });
+  const { data: financeData, isLoading: financeLoading } = useGetFinanceQuery(
+    undefined,
+    { skip: !canViewFinance },
+  );
+  const { data: reportsData, isLoading: reportsLoading } = useGetReportsQuery(
+    undefined,
+    { skip: !canViewReports },
+  );
 
   const adminTeam = toArray(usersData).filter((u) => u.role === "adminuser");
   const hotels = toArray(hotelsData);

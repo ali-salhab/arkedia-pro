@@ -2,6 +2,7 @@ import PermissionWrapper from "../../components/PermissionWrapper";
 import DataTable from "../../components/DataTable";
 import DashboardControlPanelDetails from "../../components/DashboardControlPanelDetails";
 import { SkeletonTable } from "../../components/SkeletonLoader";
+import { useSelector } from "react-redux";
 import { useLanguage } from "../../context/LanguageContext";
 import {
   useGetUsersQuery,
@@ -17,13 +18,31 @@ function toArray(data) {
 
 export default function ActivityDashboard() {
   const { t } = useLanguage();
-  const { data: usersData, isLoading: usersLoading } = useGetUsersQuery();
+  const permissions = useSelector((s) => s.auth.user?.permissions || []);
+  const hasPermission = (permission) => permissions.includes(permission);
+
+  const canViewUsers = hasPermission("users:view");
+  const canViewActivities = hasPermission("activities:view");
+  const canViewBookings = hasPermission("bookings:view");
+  const canViewFinance = hasPermission("finance:view");
+  const canViewReports = hasPermission("reports:view");
+
+  const { data: usersData, isLoading: usersLoading } = useGetUsersQuery(
+    undefined,
+    { skip: !canViewUsers },
+  );
   const { data: activitiesData, isLoading: activitiesLoading } =
-    useGetActivitiesQuery();
+    useGetActivitiesQuery(undefined, { skip: !canViewActivities });
   const { data: bookingsData, isLoading: bookingsLoading } =
-    useGetBookingsQuery();
-  const { data: financeData, isLoading: financeLoading } = useGetFinanceQuery();
-  const { data: reportsData, isLoading: reportsLoading } = useGetReportsQuery();
+    useGetBookingsQuery(undefined, { skip: !canViewBookings });
+  const { data: financeData, isLoading: financeLoading } = useGetFinanceQuery(
+    undefined,
+    { skip: !canViewFinance },
+  );
+  const { data: reportsData, isLoading: reportsLoading } = useGetReportsQuery(
+    undefined,
+    { skip: !canViewReports },
+  );
 
   const activityTeam = toArray(usersData);
   const activities = toArray(activitiesData);

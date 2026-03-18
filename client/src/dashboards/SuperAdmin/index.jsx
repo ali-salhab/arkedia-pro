@@ -1,6 +1,7 @@
 import PermissionWrapper from "../../components/PermissionWrapper";
 import DataTable from "../../components/DataTable";
 import DashboardControlPanelDetails from "../../components/DashboardControlPanelDetails";
+import { useSelector } from "react-redux";
 import { useLanguage } from "../../context/LanguageContext";
 import {
   useGetUsersQuery,
@@ -19,18 +20,44 @@ function toArray(data) {
 
 export default function SuperAdminDashboard() {
   const { t } = useLanguage();
+  const permissions = useSelector((s) => s.auth.user?.permissions || []);
+  const hasPermission = (permission) => permissions.includes(permission);
 
-  const { data: usersData, isLoading: usersLoading } = useGetUsersQuery();
+  const canViewUsers = hasPermission("users:view");
+  const canViewRestaurants = hasPermission("restaurants:view");
+  const canViewHotels = hasPermission("hotels:view");
+  const canViewActivities = hasPermission("activities:view");
+  const canViewBookings = hasPermission("bookings:view");
+  const canViewRooms = hasPermission("rooms:view");
+  const canViewFinance = hasPermission("finance:view");
+  const canViewReports = hasPermission("reports:view");
+
+  const { data: usersData, isLoading: usersLoading } = useGetUsersQuery(
+    undefined,
+    { skip: !canViewUsers },
+  );
   const { data: restaurantsData, isLoading: restaurantsLoading } =
-    useGetRestaurantsQuery();
-  const { data: hotelsData, isLoading: hotelsLoading } = useGetHotelsQuery();
+    useGetRestaurantsQuery(undefined, { skip: !canViewRestaurants });
+  const { data: hotelsData, isLoading: hotelsLoading } = useGetHotelsQuery(
+    undefined,
+    { skip: !canViewHotels },
+  );
   const { data: activitiesData, isLoading: activitiesLoading } =
-    useGetActivitiesQuery();
+    useGetActivitiesQuery(undefined, { skip: !canViewActivities });
   const { data: bookingsData, isLoading: bookingsLoading } =
-    useGetBookingsQuery();
-  const { data: roomsData, isLoading: roomsLoading } = useGetRoomsQuery();
-  const { data: financeData, isLoading: financeLoading } = useGetFinanceQuery();
-  const { data: reportsData, isLoading: reportsLoading } = useGetReportsQuery();
+    useGetBookingsQuery(undefined, { skip: !canViewBookings });
+  const { data: roomsData, isLoading: roomsLoading } = useGetRoomsQuery(
+    undefined,
+    { skip: !canViewRooms },
+  );
+  const { data: financeData, isLoading: financeLoading } = useGetFinanceQuery(
+    undefined,
+    { skip: !canViewFinance },
+  );
+  const { data: reportsData, isLoading: reportsLoading } = useGetReportsQuery(
+    undefined,
+    { skip: !canViewReports },
+  );
 
   const users = toArray(usersData);
   const platformTeam = users.filter((u) => u.role === "superadminuser");

@@ -16,6 +16,17 @@ const permissionMatrix = [
     ],
   },
   {
+    module: "admins",
+    label: "Admins Management",
+    icon: "🧑‍💼",
+    actions: [
+      { key: "view", label: "View Admins" },
+      { key: "add", label: "Add Admins" },
+      { key: "edit", label: "Edit Admins" },
+      { key: "delete", label: "Delete Admins" },
+    ],
+  },
+  {
     module: "hotels",
     label: "Hotels",
     icon: "🏨",
@@ -106,12 +117,30 @@ const rolePresets = {
   // super_admin's staff — limited read-only access by default
   superadminuser: [
     "users:view",
+    "users:add",
+    "users:edit",
+    "users:delete",
+    "admins:view",
+    "admins:add",
+    "admins:edit",
+    "admins:delete",
     "hotels:view",
+    "hotels:add",
+    "hotels:edit",
+    "hotels:delete",
     "restaurants:view",
+    "restaurants:add",
+    "restaurants:edit",
+    "restaurants:delete",
     "activities:view",
+    "activities:add",
+    "activities:edit",
+    "activities:delete",
     "bookings:view",
+    "rooms:view",
     "finance:view",
     "reports:view",
+    "settings:view",
   ],
   admin: [
     "users:view",
@@ -234,7 +263,14 @@ const labelStyle = {
 };
 
 // Roles that must be owned by an admin (set adminId)
-const ADMIN_OWNED_ROLES = new Set(["hotel", "hoteluser", "restaurant", "restaurantuser", "activity", "activityuser"]);
+const ADMIN_OWNED_ROLES = new Set([
+  "hotel",
+  "hoteluser",
+  "restaurant",
+  "restaurantuser",
+  "activity",
+  "activityuser",
+]);
 
 export default function UserFormModal({
   open,
@@ -246,6 +282,9 @@ export default function UserFormModal({
   allowedRoles = null, // if set, restricts which roles appear in the dropdown
 }) {
   const currentUser = useSelector((s) => s.auth.user);
+  const isPlatformRole = ["super_admin", "superadminuser"].includes(
+    currentUser?.role,
+  );
   const isSuperAdmin = currentUser?.role === "super_admin";
   const isAdmin = currentUser?.role === "admin";
 
@@ -253,8 +292,17 @@ export default function UserFormModal({
   const roleOptions =
     allowedRoles ||
     (isSuperAdmin
-      ? ["super_admin", "admin", "hotel", "restaurant", "activity"]
-      : ["hotel", "restaurant", "activity"]);
+      ? [
+          "super_admin",
+          "superadminuser",
+          "admin",
+          "hotel",
+          "restaurant",
+          "activity",
+        ]
+      : isPlatformRole
+        ? ["superadminuser", "admin", "hotel", "restaurant", "activity"]
+        : ["hotel", "restaurant", "activity"]);
 
   const defaultRole = fixedRole || roleOptions[0] || "hotel";
 
@@ -264,7 +312,7 @@ export default function UserFormModal({
     password: "",
     role: defaultRole,
     permissions: [],
-    adminId: isAdmin ? (currentUser?._id || "") : "",
+    adminId: isAdmin ? currentUser?._id || "" : "",
   });
   const [activeTab, setActiveTab] = useState("basic");
   const [loading, setLoading] = useState(false);
@@ -296,7 +344,7 @@ export default function UserFormModal({
         role: defaultRole,
         permissions: rolePresets[defaultRole] || [],
         // Admin auto-links to themselves; super_admin must pick via selector
-        adminId: isAdmin ? (currentUser?._id || "") : "",
+        adminId: isAdmin ? currentUser?._id || "" : "",
       });
       setUseCustomPermissions(false);
     }
@@ -403,7 +451,7 @@ export default function UserFormModal({
     }
     const effectiveRole = fixedRole || form.role;
     const needsAdmin = ADMIN_OWNED_ROLES.has(effectiveRole);
-    if (isSuperAdmin && needsAdmin && !form.adminId) {
+    if (isPlatformRole && needsAdmin && !form.adminId) {
       alert(t("adminRequired"));
       return;
     }
@@ -680,42 +728,59 @@ export default function UserFormModal({
               )}
             </div>
 
-            {/* Admin Selector — required for super_admin when creating hotel/restaurant/activity accounts */}
-            {isSuperAdmin && ADMIN_OWNED_ROLES.has(fixedRole || form.role) && (
-              <div style={{ marginTop: 16 }}>
-                <label style={{ ...labelStyle, color: "#f59e0b" }}>
-                  🔗 {t("linkedAdmin")} *
-                </label>
-                {adminsList.length === 0 ? (
-                  <div style={{ ...inputStyle, background: "#fef2f2", borderColor: "#ef4444", color: "#ef4444" }}>
-                    ⚠️ No admins found — create an admin account first before adding hotel/restaurant/activity accounts.
-                  </div>
-                ) : (
-                  <>
-                    <select
+            {/* Admin Selector — required for platform roles when creating hotel/restaurant/activity accounts */}
+            {isPlatformRole &&
+              ADMIN_OWNED_ROLES.has(fixedRole || form.role) && (
+                <div style={{ marginTop: 16 }}>
+                  <label style={{ ...labelStyle, color: "#f59e0b" }}>
+                    🔗 {t("linkedAdmin")} *
+                  </label>
+                  {adminsList.length === 0 ? (
+                    <div
                       style={{
                         ...inputStyle,
-                        borderColor: form.adminId ? "#22c55e" : "#ef4444",
+                        background: "#fef2f2",
+                        borderColor: "#ef4444",
+                        color: "#ef4444",
                       }}
-                      value={form.adminId}
-                      onChange={(e) => handleChange("adminId", e.target.value)}
                     >
-                      <option value="">{t("selectAdmin")}</option>
-                      {adminsList.map((admin) => (
-                        <option key={admin._id} value={admin._id}>
-                          {admin.name} ({admin.email})
-                        </option>
-                      ))}
-                    </select>
-                    {!form.adminId && (
-                      <p style={{ color: "#ef4444", fontSize: 12, marginTop: 4 }}>
-                        ⚠️ {t("adminRequired")}
-                      </p>
-                    )}
-                  </>
-                )}
-              </div>
-            )}
+                      ⚠️ No admins found — create an admin account first before
+                      adding hotel/restaurant/activity accounts.
+                    </div>
+                  ) : (
+                    <>
+                      <select
+                        style={{
+                          ...inputStyle,
+                          borderColor: form.adminId ? "#22c55e" : "#ef4444",
+                        }}
+                        value={form.adminId}
+                        onChange={(e) =>
+                          handleChange("adminId", e.target.value)
+                        }
+                      >
+                        <option value="">{t("selectAdmin")}</option>
+                        {adminsList.map((admin) => (
+                          <option key={admin._id} value={admin._id}>
+                            {admin.name} ({admin.email})
+                          </option>
+                        ))}
+                      </select>
+                      {!form.adminId && (
+                        <p
+                          style={{
+                            color: "#ef4444",
+                            fontSize: 12,
+                            marginTop: 4,
+                          }}
+                        >
+                          ⚠️ {t("adminRequired")}
+                        </p>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
 
             {/* Logo URL for hotel/restaurant/activity */}
             {fixedRole &&

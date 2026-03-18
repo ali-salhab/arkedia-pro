@@ -1,10 +1,32 @@
 const asyncHandler = require("../middleware/asyncHandler");
 
+const PLATFORM_ROLES = new Set(["super_admin", "superadminuser"]);
+const MANAGER_ROLES = new Set(["admin", "hotel", "restaurant", "activity"]);
+
+function getScopedOwnerId(user) {
+  if (!user) return null;
+  const requesterId = user._id || user.sub || null;
+
+  if (PLATFORM_ROLES.has(user.role)) {
+    return null;
+  }
+
+  if (MANAGER_ROLES.has(user.role)) {
+    return requesterId;
+  }
+
+  return user.adminId || null;
+}
+
 function buildCrudControllers(Model, name) {
   const list = asyncHandler(async (req, res) => {
-    const { role, _id } = req.user;
-    // super_admin sees everything; all others see only records they own (adminId)
-    const filter = role === "super_admin" ? {} : { adminId: _id };
+    const ownerId = getScopedOwnerId(req.user);
+    // Platform roles see everything; non-platform roles are scoped by admin ownership.
+    const filter = ownerId
+      ? { adminId: ownerId }
+      : PLATFORM_ROLES.has(req.user?.role)
+        ? {}
+        : { _id: null };
     const data = await Model.find(filter);
     res.json(data);
   });
@@ -17,8 +39,9 @@ function buildCrudControllers(Model, name) {
 
   const create = asyncHandler(async (req, res) => {
     const body = { ...req.body };
-    if (req.user && req.user.role !== "super_admin") {
-      body.adminId = req.user._id;
+    const ownerId = getScopedOwnerId(req.user);
+    if (req.user && !PLATFORM_ROLES.has(req.user.role)) {
+      body.adminId = ownerId;
     }
     const item = await Model.create(body);
     res.status(201).json(item);

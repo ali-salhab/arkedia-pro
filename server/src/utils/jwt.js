@@ -5,11 +5,14 @@ const accessSecret = process.env.JWT_SECRET || "secret";
 const refreshSecret = process.env.JWT_REFRESH_SECRET || "refresh-secret";
 
 function buildPayload(user, tokenId) {
+  const id = user._id?.toString?.() || user.id || user.sub;
   return {
-    sub: user._id?.toString?.() || user.id,
+    sub: id,
+    _id: id,
     email: user.email,
     name: user.name,
     role: user.role,
+    adminId: user.adminId || null,
     permissions: user.permissions || [],
     tokenId,
   };

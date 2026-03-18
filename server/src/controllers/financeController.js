@@ -1,17 +1,23 @@
 const Booking = require("../models/Booking");
 const asyncHandler = require("../middleware/asyncHandler");
 
+const MANAGER_ROLES = new Set(["admin", "hotel", "restaurant", "activity"]);
+
 function getFinanceScope(user) {
-  if (user?.role === "super_admin") {
+  if (user?.role === "super_admin" || user?.role === "superadminuser") {
     return {};
   }
 
-  const userId = user?._id || user?.sub;
-  if (!userId) {
+  const requesterId = user?._id || user?.sub;
+  const ownerId = MANAGER_ROLES.has(user?.role)
+    ? requesterId
+    : user?.adminId || null;
+
+  if (!ownerId) {
     return { _id: null };
   }
 
-  return { adminId: userId };
+  return { adminId: ownerId };
 }
 
 function getTransactionAmount(booking) {

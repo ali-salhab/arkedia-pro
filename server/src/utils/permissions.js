@@ -1,5 +1,6 @@
 const permissionMatrix = [
   { module: "users", actions: ["view", "add", "edit", "delete"] },
+  { module: "admins", actions: ["view", "add", "edit", "delete"] },
   { module: "roles", actions: ["view", "add", "edit", "delete"] },
   { module: "hotels", actions: ["view", "add", "edit", "delete"] },
   { module: "restaurants", actions: ["view", "add", "edit", "delete"] },
@@ -19,7 +20,7 @@ function flattenPermissions() {
 
 function defaultSidebar(userRole) {
   // Super Admin sees all resources globally
-  if (userRole === "super_admin") {
+  if (userRole === "super_admin" || userRole === "superadminuser") {
     return [
       {
         name: "Dashboard",
@@ -37,7 +38,7 @@ function defaultSidebar(userRole) {
         name: "Admins",
         icon: "admins",
         route: "/admins",
-        required_permission: "users:view",
+        required_permission: "admins:view",
       },
       {
         name: "All Hotels",

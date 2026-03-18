@@ -6,6 +6,7 @@ import Navbar from "../components/Navbar";
 import { useLanguage } from "../context/LanguageContext";
 import { getSocket } from "../hooks/useSocket";
 import { setCredentials } from "../store/slices/authSlice";
+import { useRefreshMutation } from "../store/services/api";
 
 export default function MainLayout({ children }) {
   const { dir, t } = useLanguage();
@@ -13,7 +14,9 @@ export default function MainLayout({ children }) {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const user = useSelector((s) => s.auth.user);
+  const refreshToken = useSelector((s) => s.auth.refreshToken);
   const dispatch = useDispatch();
+  const [refresh] = useRefreshMutation();
 
   useEffect(() => {
     setMobileSidebarOpen(false);
@@ -28,7 +31,7 @@ export default function MainLayout({ children }) {
     if (!socket.connected) socket.connect();
     socket.emit("join", userId);
 
-    const handlePermissionsUpdated = ({ permissions }) => {
+    const handlePermissionsUpdated = async ({ permissions }) => {
       // Push notification
       setNotifications((prev) => [
         {
@@ -43,17 +46,25 @@ export default function MainLayout({ children }) {
       dispatch(
         setCredentials({
           user: { ...user, permissions },
-          accessToken: undefined,
-          refreshToken: undefined,
         }),
       );
+
+      // Keep backend auth checks aligned by rotating tokens after permission changes.
+      if (refreshToken) {
+        try {
+          const refreshedSession = await refresh({ refreshToken }).unwrap();
+          dispatch(setCredentials(refreshedSession));
+        } catch {
+          // Keep optimistic UI permissions even if token refresh fails.
+        }
+      }
     };
 
     socket.on("permissions:updated", handlePermissionsUpdated);
     return () => {
       socket.off("permissions:updated", handlePermissionsUpdated);
     };
-  }, [user?._id, user?.sub]);
+  }, [dispatch, refresh, refreshToken, t, user]);
 
   const clearNotifications = useCallback(() => setNotifications([]), []);
 

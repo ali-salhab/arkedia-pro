@@ -25,7 +25,7 @@ const ROLE_MENUS = {
   super_admin: [
     { name: "Dashboard", route: "/super-admin", perm: null },
     { name: "Users", route: "/users", perm: "users:view" },
-    { name: "Admins", route: "/admins", perm: "users:view" },
+    { name: "Admins", route: "/admins", perm: "admins:view" },
     { name: "All Hotels", route: "/hotels", perm: "hotels:view" },
     {
       name: "All Restaurants",
