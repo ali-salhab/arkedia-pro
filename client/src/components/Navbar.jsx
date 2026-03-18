@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { api } from "../store/services/api";
 import { logout } from "../store/slices/authSlice";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "../context/LanguageContext";
@@ -48,6 +49,7 @@ export default function Navbar({
 
   const handleLogout = () => {
     setMenuOpen(false);
+    dispatch(api.util.resetApiState());
     dispatch(logout());
     navigate("/login");
   };

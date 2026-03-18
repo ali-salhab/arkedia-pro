@@ -31,6 +31,11 @@ function permissionForRoleAction(targetRole, action) {
   return `${moduleName}:${action}`;
 }
 
+function isValidObjectId(value) {
+  if (!value) return false;
+  return /^[a-fA-F0-9]{24}$/.test(String(value));
+}
+
 function getRequesterIds(reqUser) {
   return {
     requesterId: reqUser?._id || reqUser?.sub || null,
@@ -45,6 +50,62 @@ const PLATFORM_ROLES = new Set(["super_admin", "superadminuser"]);
 // Sub-user roles (*user) technically have no team so they see an empty set — that's fine.
 const MANAGER_ROLES = new Set(["admin", "hotel", "restaurant", "activity"]);
 
+function getOwnerScopeId(reqUser) {
+  const { requesterId, requesterAdminId } = getRequesterIds(reqUser);
+  if (PLATFORM_ROLES.has(reqUser?.role)) return null;
+  if (MANAGER_ROLES.has(reqUser?.role)) return requesterId;
+  return requesterAdminId;
+}
+
+function isInRequesterScope(reqUser, targetUser) {
+  if (PLATFORM_ROLES.has(reqUser?.role)) return true;
+  if (!targetUser) return false;
+
+  const { requesterId } = getRequesterIds(reqUser);
+  if (requesterId && String(targetUser?._id) === String(requesterId)) {
+    return true;
+  }
+
+  const ownerScopeId = getOwnerScopeId(reqUser);
+  const targetOwnerId = targetUser?.adminId?._id || targetUser?.adminId || null;
+  return Boolean(
+    ownerScopeId &&
+    targetOwnerId &&
+    String(ownerScopeId) === String(targetOwnerId),
+  );
+}
+
+function ensureInScope(req, res, targetUser) {
+  if (isInRequesterScope(req.user, targetUser)) return true;
+  res.status(403).json({ message: "Out of scope" });
+  return false;
+}
+
+async function ensureValidOwnerForRole(res, targetRole, ownerId) {
+  const allowedOwnerRoles = OWNER_ROLE_BY_TARGET[targetRole] || null;
+  if (!allowedOwnerRoles) return ownerId;
+
+  if (!ownerId || !isValidObjectId(ownerId)) {
+    res.status(400).json({
+      message: "adminId must be a valid user id for this account role",
+    });
+    return false;
+  }
+
+  const validOwner = await User.findOne({
+    _id: ownerId,
+    role: { $in: allowedOwnerRoles },
+  }).select("_id");
+  if (!validOwner) {
+    res.status(400).json({
+      message: `adminId must reference an existing ${allowedOwnerRoles.join("/")} account`,
+    });
+    return false;
+  }
+
+  return validOwner._id;
+}
+
 // Roles that MUST be owned by an admin (have adminId set)
 const ADMIN_OWNED_ROLES = new Set([
   "hotel",
@@ -54,6 +115,15 @@ const ADMIN_OWNED_ROLES = new Set([
   "activity",
   "activityuser",
 ]);
+
+const OWNER_ROLE_BY_TARGET = {
+  hotel: ["admin"],
+  restaurant: ["admin"],
+  activity: ["admin"],
+  hoteluser: ["hotel"],
+  restaurantuser: ["restaurant"],
+  activityuser: ["activity"],
+};
 
 // Which roles each manager is allowed to create
 const CREATABLE_ROLES = {
@@ -123,6 +193,10 @@ const getOne = asyncHandler(async (req, res) => {
     return;
   }
 
+  if (!ensureInScope(req, res, user)) {
+    return;
+  }
+
   res.json(user);
 });
 
@@ -167,10 +241,20 @@ const create = asyncHandler(async (req, res) => {
     !body.adminId
   ) {
     return res.status(400).json({
-      message:
-        "adminId is required when creating hotel/restaurant/activity accounts",
+      message: "adminId is required for this account role",
     });
   }
+
+  if (ADMIN_OWNED_ROLES.has(body.role)) {
+    const validOwnerId = await ensureValidOwnerForRole(
+      res,
+      body.role,
+      body.adminId,
+    );
+    if (!validOwnerId) return;
+    body.adminId = validOwnerId;
+  }
+
   const item = await User.create(body);
   const doc = item.toObject();
   delete doc.password;
@@ -179,13 +263,49 @@ const create = asyncHandler(async (req, res) => {
 
 // Update: use save() so the bcrypt pre-save hook fires on password changes
 const update = asyncHandler(async (req, res) => {
+  const { role } = req.user;
+  const { requesterId, requesterAdminId } = getRequesterIds(req.user);
   const { password, ...rest } = req.body;
   const user = await User.findById(req.params.id).select("+password");
   if (!user) return res.status(404).json({ message: "User not found" });
 
+  if (!ensureInScope(req, res, user)) {
+    return;
+  }
+
   const updatePermission = permissionForRoleAction(user.role, "edit");
   if (!ensurePermission(req, res, updatePermission)) {
     return;
+  }
+
+  const effectiveRole = rest.role || user.role;
+  const hasAdminIdInPayload = Object.prototype.hasOwnProperty.call(
+    rest,
+    "adminId",
+  );
+  let nextAdminId = hasAdminIdInPayload ? rest.adminId : user.adminId;
+
+  // Non-platform users are always scoped to their own admin tree.
+  if (!PLATFORM_ROLES.has(role)) {
+    nextAdminId = MANAGER_ROLES.has(role) ? requesterId : requesterAdminId;
+  }
+
+  if (ADMIN_OWNED_ROLES.has(effectiveRole)) {
+    if (!nextAdminId) {
+      return res.status(400).json({
+        message: "adminId is required for this account role",
+      });
+    }
+    const validOwnerId = await ensureValidOwnerForRole(
+      res,
+      effectiveRole,
+      nextAdminId,
+    );
+    if (!validOwnerId) return;
+    rest.adminId = validOwnerId;
+  } else if (effectiveRole === "admin") {
+    // Admin manager accounts should not be owned by another admin.
+    rest.adminId = undefined;
   }
 
   Object.assign(user, rest);
@@ -203,6 +323,10 @@ const update = asyncHandler(async (req, res) => {
 const remove = asyncHandler(async (req, res) => {
   const item = await User.findById(req.params.id);
   if (!item) return res.status(404).json({ message: "User not found" });
+
+  if (!ensureInScope(req, res, item)) {
+    return;
+  }
 
   const deletePermission = permissionForRoleAction(item.role, "delete");
   if (!ensurePermission(req, res, deletePermission)) {

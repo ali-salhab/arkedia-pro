@@ -13,6 +13,7 @@ import {
 } from "../store/services/api";
 
 export default function HotelsPage() {
+  const currentUser = useSelector((s) => s.auth.user);
   const permissions = useSelector((s) => s.auth.user?.permissions || []);
   const hasPermission = (permission) => permissions.includes(permission);
   const canViewHotels = hasPermission("hotels:view");
@@ -21,6 +22,15 @@ export default function HotelsPage() {
   const canDeleteHotels = hasPermission("hotels:delete");
   const canViewAdmins = hasPermission("admins:view");
   const canAddAdmins = hasPermission("admins:add");
+  const isPlatformRole = ["super_admin", "superadminuser"].includes(
+    currentUser?.role,
+  );
+  const currentUserId = currentUser?._id || currentUser?.sub || null;
+  const ownerScopeId = ["admin", "hotel", "restaurant", "activity"].includes(
+    currentUser?.role,
+  )
+    ? currentUserId
+    : currentUser?.adminId || null;
 
   const {
     data: hotelsData = [],
@@ -34,7 +44,10 @@ export default function HotelsPage() {
     isLoading: adminsLoading,
     isFetching: adminsFetching,
     error: adminsError,
-  } = useGetUsersQuery({ role: "admin" }, { skip: !canViewAdmins });
+  } = useGetUsersQuery(
+    { role: "admin" },
+    { skip: !(isPlatformRole && canViewAdmins) },
+  );
 
   const [createUser, { isLoading: isCreating }] = useCreateUserMutation();
   const [updateUser, { isLoading: isUpdating }] = useUpdateUserMutation();
@@ -52,12 +65,46 @@ export default function HotelsPage() {
   const disableAddHotel =
     isBusy ||
     !canAddHotels ||
-    !canViewAdmins ||
-    adminsLoading ||
-    Boolean(adminsError);
+    (isPlatformRole &&
+      (!canViewAdmins || adminsLoading || Boolean(adminsError)));
 
-  const hotelAccounts = Array.isArray(hotelsData) ? hotelsData : [];
+  const hotelAccountsRaw = Array.isArray(hotelsData) ? hotelsData : [];
+  const hotelAccounts = !isPlatformRole
+    ? ownerScopeId
+      ? hotelAccountsRaw.filter((item) => {
+          const ownerId = item?.adminId?._id || item?.adminId || null;
+          return ownerId && String(ownerId) === String(ownerScopeId);
+        })
+      : []
+    : hotelAccountsRaw;
   const adminsList = Array.isArray(adminsData) ? adminsData : [];
+
+  const resolveLinkedAdmin = (accountAdminId) => {
+    const ownerId = accountAdminId?._id || accountAdminId || null;
+    if (!ownerId) return null;
+
+    const listedAdmin = adminsList.find(
+      (a) => String(a._id) === String(ownerId),
+    );
+    if (listedAdmin) return listedAdmin;
+
+    if (
+      !isPlatformRole &&
+      ownerScopeId &&
+      String(ownerId) === String(ownerScopeId)
+    ) {
+      if (
+        currentUser?.role === "admin" &&
+        currentUserId &&
+        String(ownerId) === String(currentUserId)
+      ) {
+        return currentUser;
+      }
+      return { name: t("linkedToAdmin") };
+    }
+
+    return null;
+  };
 
   const hotelColumns = [
     { key: "name", label: t("name") },
@@ -66,7 +113,7 @@ export default function HotelsPage() {
       key: "adminId",
       label: t("linkedAdmin"),
       render: (v) => {
-        const admin = adminsList.find((a) => a._id === v || a._id === v?._id);
+        const admin = resolveLinkedAdmin(v);
         return admin ? (
           <span style={{ color: "#60a5fa", fontSize: 12 }}>{admin.name}</span>
         ) : (
@@ -113,18 +160,18 @@ export default function HotelsPage() {
 
   const handleAddNew = () => {
     if (!canAddHotels) return;
-    if (!canViewAdmins) {
+    if (isPlatformRole && !canViewAdmins) {
       window.alert(`${t("error")} 403: Missing admins:view permission`);
       return;
     }
-    if (adminsLoading || adminsFetching) return;
-    if (adminsError) {
+    if (isPlatformRole && (adminsLoading || adminsFetching)) return;
+    if (isPlatformRole && adminsError) {
       window.alert(t("errorLoadingAdmins"));
       return;
     }
 
     setEditingHotel(null);
-    if (adminsList.length === 0) {
+    if (isPlatformRole && adminsList.length === 0) {
       setAdminRequiredModalOpen(true);
       return;
     }
@@ -185,7 +232,9 @@ export default function HotelsPage() {
 
   if (hotelsError)
     return (
-      <div className="p-6 text-center text-red-500">{t("errorLoadingData")}</div>
+      <div className="p-6 text-center text-red-500">
+        {t("errorLoadingData")}
+      </div>
     );
 
   return (
@@ -264,45 +313,39 @@ export default function HotelsPage() {
         </button>
       </div>
 
-                {(canEditHotels || canDeleteHotels) && (
-                  <div style={{ display: "flex", gap: 8 }}>
-                    {canEditHotels && (
-                      <button
-                        onClick={() => handleEdit(hotel)}
-                        style={{
-                          flex: 1,
-                          padding: "8px 12px",
-                          background: "#3b82f6",
-                          border: "none",
-                          borderRadius: 6,
-                          color: "#fff",
-                          cursor: "pointer",
-                          fontSize: 13,
-                          fontWeight: 500,
-                        }}
-                      >
-                        {t("edit")}
-                      </button>
-                    )}
-                    {canDeleteHotels && (
-                      <button
-                        onClick={() => handleDelete(hotel._id)}
-                        style={{
-                          padding: "8px 12px",
-                          background: "#ef4444",
-                          border: "none",
-                          borderRadius: 6,
-                          color: "#fff",
-                          cursor: "pointer",
-                          fontSize: 13,
-                          fontWeight: 500,
-                        }}
-                      >
-                        {t("delete")}
-                      </button>
-                    )}
-                  </div>
-                )}
+      {/* Stats */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+          gap: 16,
+          marginBottom: 24,
+        }}
+      >
+        <div
+          style={{
+            background: "#f8fafc",
+            borderRadius: 12,
+            padding: 16,
+            borderLeft: "4px solid #22c55e",
+          }}
+        >
+          <div style={{ fontSize: 24, marginBottom: 8 }}>🏨</div>
+          <div style={{ fontSize: 28, fontWeight: 700, color: "#22c55e" }}>
+            {hotelAccounts.length}
+          </div>
+          <div style={{ fontSize: 12, color: "#64748b" }}>
+            {t("hotelAccounts")}
+          </div>
+        </div>
+        <div
+          style={{
+            background: "#f8fafc",
+            borderRadius: 12,
+            padding: 16,
+            borderLeft: "4px solid #60a5fa",
+          }}
+        >
           <div style={{ fontSize: 24, marginBottom: 8 }}>🔗</div>
           <div style={{ fontSize: 28, fontWeight: 700, color: "#60a5fa" }}>
             {hotelAccounts.filter((h) => h.adminId).length}
@@ -323,9 +366,7 @@ export default function HotelsPage() {
         }}
       >
         {hotelAccounts.map((hotel) => {
-          const linkedAdmin = adminsList.find(
-            (a) => a._id === hotel.adminId || a._id === hotel.adminId?._id,
-          );
+          const linkedAdmin = resolveLinkedAdmin(hotel.adminId);
           return (
             <div
               key={hotel._id}
@@ -429,39 +470,45 @@ export default function HotelsPage() {
                 >
                   {hotel.email}
                 </p>
-                <div style={{ display: "flex", gap: 8 }}>
-                  <button
-                    onClick={() => handleEdit(hotel)}
-                    style={{
-                      flex: 1,
-                      padding: "8px 12px",
-                      background: "#3b82f6",
-                      border: "none",
-                      borderRadius: 6,
-                      color: "#fff",
-                      cursor: "pointer",
-                      fontSize: 13,
-                      fontWeight: 500,
-                    }}
-                  >
-                    {t("edit")}
-                  </button>
-                  <button
-                    onClick={() => handleDelete(hotel._id)}
-                    style={{
-                      padding: "8px 12px",
-                      background: "#ef4444",
-                      border: "none",
-                      borderRadius: 6,
-                      color: "#fff",
-                      cursor: "pointer",
-                      fontSize: 13,
-                      fontWeight: 500,
-                    }}
-                  >
-                    {t("delete")}
-                  </button>
-                </div>
+                {(canEditHotels || canDeleteHotels) && (
+                  <div style={{ display: "flex", gap: 8 }}>
+                    {canEditHotels && (
+                      <button
+                        onClick={() => handleEdit(hotel)}
+                        style={{
+                          flex: 1,
+                          padding: "8px 12px",
+                          background: "#3b82f6",
+                          border: "none",
+                          borderRadius: 6,
+                          color: "#fff",
+                          cursor: "pointer",
+                          fontSize: 13,
+                          fontWeight: 500,
+                        }}
+                      >
+                        {t("edit")}
+                      </button>
+                    )}
+                    {canDeleteHotels && (
+                      <button
+                        onClick={() => handleDelete(hotel._id)}
+                        style={{
+                          padding: "8px 12px",
+                          background: "#ef4444",
+                          border: "none",
+                          borderRadius: 6,
+                          color: "#fff",
+                          cursor: "pointer",
+                          fontSize: 13,
+                          fontWeight: 500,
+                        }}
+                      >
+                        {t("delete")}
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           );
@@ -533,7 +580,7 @@ export default function HotelsPage() {
           >
             {t("cancel")}
           </button>
-          {canAddAdmins && (
+          {isPlatformRole && canAddAdmins && (
             <button
               className="btn btn-primary"
               onClick={handleOpenAdminCreation}

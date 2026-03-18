@@ -3,6 +3,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { useLanguage } from "../context/LanguageContext";
 import { logout } from "../store/slices/authSlice";
+import { api } from "../store/services/api";
 import {
   LayoutDashboard,
   Users,
@@ -169,6 +170,7 @@ export default function Sidebar({ mobileOpen = false, onClose }) {
   const roleBadge = ROLE_BADGE[currentUser?.role];
 
   const handleLogout = () => {
+    dispatch(api.util.resetApiState());
     dispatch(logout());
     navigate("/login");
   };

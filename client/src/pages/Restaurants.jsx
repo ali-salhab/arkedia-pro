@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useSelector } from "react-redux";
 import DataTable from "../components/DataTable";
 import { SkeletonTable } from "../components/SkeletonLoader";
 import UserFormModal from "../components/UserFormModal";
@@ -11,7 +12,41 @@ import {
 } from "../store/services/api";
 
 export default function RestaurantsPage() {
-  const { data: users = [], isLoading, isFetching } = useGetUsersQuery();
+  const currentUser = useSelector((s) => s.auth.user);
+  const permissions = useSelector((s) => s.auth.user?.permissions || []);
+  const hasPermission = (permission) => permissions.includes(permission);
+  const canViewRestaurants = hasPermission("restaurants:view");
+  const canAddRestaurants = hasPermission("restaurants:add");
+  const canEditRestaurants = hasPermission("restaurants:edit");
+  const canDeleteRestaurants = hasPermission("restaurants:delete");
+  const canViewAdmins = hasPermission("admins:view");
+  const isPlatformRole = ["super_admin", "superadminuser"].includes(
+    currentUser?.role,
+  );
+  const currentUserId = currentUser?._id || currentUser?.sub || null;
+  const ownerScopeId = ["admin", "hotel", "restaurant", "activity"].includes(
+    currentUser?.role,
+  )
+    ? currentUserId
+    : currentUser?.adminId || null;
+
+  const {
+    data: restaurantsData = [],
+    isLoading: restaurantsLoading,
+    isFetching: restaurantsFetching,
+    error: restaurantsError,
+  } = useGetUsersQuery({ role: "restaurant" }, { skip: !canViewRestaurants });
+
+  const {
+    data: adminsData = [],
+    isLoading: adminsLoading,
+    isFetching: adminsFetching,
+    error: adminsError,
+  } = useGetUsersQuery(
+    { role: "admin" },
+    { skip: !(isPlatformRole && canViewAdmins) },
+  );
+
   const [createUser, { isLoading: isCreating }] = useCreateUserMutation();
   const [updateUser, { isLoading: isUpdating }] = useUpdateUserMutation();
   const [deleteUser, { isLoading: isDeleting }] = useDeleteUserMutation();
@@ -21,10 +56,52 @@ export default function RestaurantsPage() {
   const { t } = useLanguage();
 
   const isMutating = isCreating || isUpdating || isDeleting;
+  const isBusy = isMutating || restaurantsFetching || adminsFetching;
+  const disableAddRestaurant =
+    isBusy ||
+    !canAddRestaurants ||
+    (isPlatformRole &&
+      (!canViewAdmins || adminsLoading || Boolean(adminsError)));
 
-  const usersArray = Array.isArray(users) ? users : [];
-  const restaurantAccounts = usersArray.filter((u) => u.role === "restaurant");
-  const adminsList = usersArray.filter((u) => u.role === "admin");
+  const restaurantAccountsRaw = Array.isArray(restaurantsData)
+    ? restaurantsData
+    : [];
+  const restaurantAccounts = !isPlatformRole
+    ? ownerScopeId
+      ? restaurantAccountsRaw.filter((item) => {
+          const ownerId = item?.adminId?._id || item?.adminId || null;
+          return ownerId && String(ownerId) === String(ownerScopeId);
+        })
+      : []
+    : restaurantAccountsRaw;
+  const adminsList = Array.isArray(adminsData) ? adminsData : [];
+
+  const resolveLinkedAdmin = (accountAdminId) => {
+    const ownerId = accountAdminId?._id || accountAdminId || null;
+    if (!ownerId) return null;
+
+    const listedAdmin = adminsList.find(
+      (a) => String(a._id) === String(ownerId),
+    );
+    if (listedAdmin) return listedAdmin;
+
+    if (
+      !isPlatformRole &&
+      ownerScopeId &&
+      String(ownerId) === String(ownerScopeId)
+    ) {
+      if (
+        currentUser?.role === "admin" &&
+        currentUserId &&
+        String(ownerId) === String(currentUserId)
+      ) {
+        return currentUser;
+      }
+      return { name: t("linkedToAdmin") };
+    }
+
+    return null;
+  };
 
   const restaurantColumns = [
     { key: "name", label: t("name") },
@@ -33,7 +110,7 @@ export default function RestaurantsPage() {
       key: "adminId",
       label: t("linkedAdmin"),
       render: (v) => {
-        const admin = adminsList.find((a) => a._id === v || a._id === v?._id);
+        const admin = resolveLinkedAdmin(v);
         return admin ? (
           <span style={{ color: "#60a5fa", fontSize: 12 }}>{admin.name}</span>
         ) : (
@@ -70,6 +147,17 @@ export default function RestaurantsPage() {
   ];
 
   const handleAddNew = () => {
+    if (!canAddRestaurants) return;
+    if (isPlatformRole && !canViewAdmins) {
+      window.alert(`${t("error")} 403: Missing admins:view permission`);
+      return;
+    }
+    if (isPlatformRole && (adminsLoading || adminsFetching)) return;
+    if (isPlatformRole && adminsError) {
+      window.alert(t("errorLoadingAdmins"));
+      return;
+    }
+
     setEditingRestaurant(null);
     setModalOpen(true);
   };
@@ -93,16 +181,31 @@ export default function RestaurantsPage() {
     }
   };
 
-  if (isLoading)
+  if (!canViewRestaurants) {
+    return (
+      <div className="card text-center text-sm font-medium text-rose-500">
+        {t("error")} 403: Missing restaurants:view permission
+      </div>
+    );
+  }
+
+  if (restaurantsLoading)
     return (
       <div style={{ padding: 24 }}>
         <SkeletonTable rows={5} cols={4} />
       </div>
     );
 
+  if (restaurantsError)
+    return (
+      <div className="p-6 text-center text-red-500">
+        {t("errorLoadingData")}
+      </div>
+    );
+
   return (
     <div style={{ padding: 24 }}>
-      {(isFetching || isMutating) && (
+      {isBusy && (
         <div
           style={{
             position: "fixed",
@@ -136,23 +239,23 @@ export default function RestaurantsPage() {
         </div>
         <button
           onClick={handleAddNew}
-          disabled={isMutating || isFetching}
+          disabled={disableAddRestaurant}
           style={{
-            background: isMutating ? "#fcd34d" : "#f59e0b",
+            background: disableAddRestaurant ? "#fcd34d" : "#f59e0b",
             padding: "12px 24px",
             borderRadius: 8,
             border: "none",
             color: "#fff",
             fontWeight: 600,
-            cursor: isMutating ? "not-allowed" : "pointer",
+            cursor: disableAddRestaurant ? "not-allowed" : "pointer",
             display: "flex",
             alignItems: "center",
             gap: 8,
-            opacity: isMutating ? 0.7 : 1,
+            opacity: disableAddRestaurant ? 0.7 : 1,
             transition: "all 0.2s",
           }}
         >
-          {isMutating ? (
+          {isBusy ? (
             <>
               <span
                 style={{
@@ -245,10 +348,7 @@ export default function RestaurantsPage() {
         }}
       >
         {restaurantAccounts.map((restaurant) => {
-          const linkedAdmin = adminsList.find(
-            (a) =>
-              a._id === restaurant.adminId || a._id === restaurant.adminId?._id,
-          );
+          const linkedAdmin = resolveLinkedAdmin(restaurant.adminId);
           return (
             <div
               key={restaurant._id}
@@ -328,39 +428,45 @@ export default function RestaurantsPage() {
                     👔 {linkedAdmin.name}
                   </div>
                 )}
-                <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-                  <button
-                    onClick={() => handleEdit(restaurant)}
-                    style={{
-                      flex: 1,
-                      padding: "8px 12px",
-                      background: "#f59e0b",
-                      border: "none",
-                      borderRadius: 6,
-                      color: "#fff",
-                      cursor: "pointer",
-                      fontSize: 13,
-                      fontWeight: 500,
-                    }}
-                  >
-                    {t("edit")}
-                  </button>
-                  <button
-                    onClick={() => handleDelete(restaurant._id)}
-                    style={{
-                      padding: "8px 12px",
-                      background: "#ef4444",
-                      border: "none",
-                      borderRadius: 6,
-                      color: "#fff",
-                      cursor: "pointer",
-                      fontSize: 13,
-                      fontWeight: 500,
-                    }}
-                  >
-                    {t("delete")}
-                  </button>
-                </div>
+                {(canEditRestaurants || canDeleteRestaurants) && (
+                  <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+                    {canEditRestaurants && (
+                      <button
+                        onClick={() => handleEdit(restaurant)}
+                        style={{
+                          flex: 1,
+                          padding: "8px 12px",
+                          background: "#f59e0b",
+                          border: "none",
+                          borderRadius: 6,
+                          color: "#fff",
+                          cursor: "pointer",
+                          fontSize: 13,
+                          fontWeight: 500,
+                        }}
+                      >
+                        {t("edit")}
+                      </button>
+                    )}
+                    {canDeleteRestaurants && (
+                      <button
+                        onClick={() => handleDelete(restaurant._id)}
+                        style={{
+                          padding: "8px 12px",
+                          background: "#ef4444",
+                          border: "none",
+                          borderRadius: 6,
+                          color: "#fff",
+                          cursor: "pointer",
+                          fontSize: 13,
+                          fontWeight: 500,
+                        }}
+                      >
+                        {t("delete")}
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           );

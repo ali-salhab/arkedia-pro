@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useLoginMutation } from "../store/services/api";
+import { api, useLoginMutation } from "../store/services/api";
 import { setCredentials } from "../store/slices/authSlice";
 import { useNavigate, Navigate } from "react-router-dom";
 import { useLanguage } from "../context/LanguageContext";
@@ -37,6 +37,7 @@ export default function LoginPage() {
     e.preventDefault();
     try {
       const res = await login({ email, password }).unwrap();
+      dispatch(api.util.resetApiState());
       dispatch(setCredentials(res));
       const role = res.user.role;
       navigate(ROLE_PATH[role] || "/");

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useSelector } from "react-redux";
 import DataTable from "../components/DataTable";
 import { SkeletonTable } from "../components/SkeletonLoader";
 import UserFormModal from "../components/UserFormModal";
@@ -11,7 +12,41 @@ import {
 } from "../store/services/api";
 
 export default function ActivitiesPage() {
-  const { data: users = [], isLoading, isFetching } = useGetUsersQuery();
+  const currentUser = useSelector((s) => s.auth.user);
+  const permissions = useSelector((s) => s.auth.user?.permissions || []);
+  const hasPermission = (permission) => permissions.includes(permission);
+  const canViewActivities = hasPermission("activities:view");
+  const canAddActivities = hasPermission("activities:add");
+  const canEditActivities = hasPermission("activities:edit");
+  const canDeleteActivities = hasPermission("activities:delete");
+  const canViewAdmins = hasPermission("admins:view");
+  const isPlatformRole = ["super_admin", "superadminuser"].includes(
+    currentUser?.role,
+  );
+  const currentUserId = currentUser?._id || currentUser?.sub || null;
+  const ownerScopeId = ["admin", "hotel", "restaurant", "activity"].includes(
+    currentUser?.role,
+  )
+    ? currentUserId
+    : currentUser?.adminId || null;
+
+  const {
+    data: activitiesData = [],
+    isLoading: activitiesLoading,
+    isFetching: activitiesFetching,
+    error: activitiesError,
+  } = useGetUsersQuery({ role: "activity" }, { skip: !canViewActivities });
+
+  const {
+    data: adminsData = [],
+    isLoading: adminsLoading,
+    isFetching: adminsFetching,
+    error: adminsError,
+  } = useGetUsersQuery(
+    { role: "admin" },
+    { skip: !(isPlatformRole && canViewAdmins) },
+  );
+
   const [createUser, { isLoading: isCreating }] = useCreateUserMutation();
   const [updateUser, { isLoading: isUpdating }] = useUpdateUserMutation();
   const [deleteUser, { isLoading: isDeleting }] = useDeleteUserMutation();
@@ -21,10 +56,52 @@ export default function ActivitiesPage() {
   const { t } = useLanguage();
 
   const isMutating = isCreating || isUpdating || isDeleting;
+  const isBusy = isMutating || activitiesFetching || adminsFetching;
+  const disableAddActivity =
+    isBusy ||
+    !canAddActivities ||
+    (isPlatformRole &&
+      (!canViewAdmins || adminsLoading || Boolean(adminsError)));
 
-  const usersArray = Array.isArray(users) ? users : [];
-  const activityAccounts = usersArray.filter((u) => u.role === "activity");
-  const adminsList = usersArray.filter((u) => u.role === "admin");
+  const activityAccountsRaw = Array.isArray(activitiesData)
+    ? activitiesData
+    : [];
+  const activityAccounts = !isPlatformRole
+    ? ownerScopeId
+      ? activityAccountsRaw.filter((item) => {
+          const ownerId = item?.adminId?._id || item?.adminId || null;
+          return ownerId && String(ownerId) === String(ownerScopeId);
+        })
+      : []
+    : activityAccountsRaw;
+  const adminsList = Array.isArray(adminsData) ? adminsData : [];
+
+  const resolveLinkedAdmin = (accountAdminId) => {
+    const ownerId = accountAdminId?._id || accountAdminId || null;
+    if (!ownerId) return null;
+
+    const listedAdmin = adminsList.find(
+      (a) => String(a._id) === String(ownerId),
+    );
+    if (listedAdmin) return listedAdmin;
+
+    if (
+      !isPlatformRole &&
+      ownerScopeId &&
+      String(ownerId) === String(ownerScopeId)
+    ) {
+      if (
+        currentUser?.role === "admin" &&
+        currentUserId &&
+        String(ownerId) === String(currentUserId)
+      ) {
+        return currentUser;
+      }
+      return { name: t("linkedToAdmin") };
+    }
+
+    return null;
+  };
 
   const activityColumns = [
     { key: "name", label: t("name") },
@@ -33,7 +110,7 @@ export default function ActivitiesPage() {
       key: "adminId",
       label: t("linkedAdmin"),
       render: (v) => {
-        const admin = adminsList.find((a) => a._id === v || a._id === v?._id);
+        const admin = resolveLinkedAdmin(v);
         return admin ? (
           <span style={{ color: "#60a5fa", fontSize: 12 }}>{admin.name}</span>
         ) : (
@@ -70,6 +147,17 @@ export default function ActivitiesPage() {
   ];
 
   const handleAddNew = () => {
+    if (!canAddActivities) return;
+    if (isPlatformRole && !canViewAdmins) {
+      window.alert(`${t("error")} 403: Missing admins:view permission`);
+      return;
+    }
+    if (isPlatformRole && (adminsLoading || adminsFetching)) return;
+    if (isPlatformRole && adminsError) {
+      window.alert(t("errorLoadingAdmins"));
+      return;
+    }
+
     setEditingActivity(null);
     setModalOpen(true);
   };
@@ -93,16 +181,31 @@ export default function ActivitiesPage() {
     }
   };
 
-  if (isLoading)
+  if (!canViewActivities) {
+    return (
+      <div className="card text-center text-sm font-medium text-rose-500">
+        {t("error")} 403: Missing activities:view permission
+      </div>
+    );
+  }
+
+  if (activitiesLoading)
     return (
       <div style={{ padding: 24 }}>
         <SkeletonTable rows={5} cols={4} />
       </div>
     );
 
+  if (activitiesError)
+    return (
+      <div className="p-6 text-center text-red-500">
+        {t("errorLoadingData")}
+      </div>
+    );
+
   return (
     <div style={{ padding: 24 }}>
-      {(isFetching || isMutating) && (
+      {isBusy && (
         <div
           style={{
             position: "fixed",
@@ -136,23 +239,23 @@ export default function ActivitiesPage() {
         </div>
         <button
           onClick={handleAddNew}
-          disabled={isMutating || isFetching}
+          disabled={disableAddActivity}
           style={{
-            background: isMutating ? "#c4b5fd" : "#8b5cf6",
+            background: disableAddActivity ? "#c4b5fd" : "#8b5cf6",
             padding: "12px 24px",
             borderRadius: 8,
             border: "none",
             color: "#fff",
             fontWeight: 600,
-            cursor: isMutating ? "not-allowed" : "pointer",
+            cursor: disableAddActivity ? "not-allowed" : "pointer",
             display: "flex",
             alignItems: "center",
             gap: 8,
-            opacity: isMutating ? 0.7 : 1,
+            opacity: disableAddActivity ? 0.7 : 1,
             transition: "all 0.2s",
           }}
         >
-          {isMutating ? (
+          {isBusy ? (
             <>
               <span
                 style={{
@@ -244,10 +347,7 @@ export default function ActivitiesPage() {
         }}
       >
         {activityAccounts.map((activity) => {
-          const linkedAdmin = adminsList.find(
-            (a) =>
-              a._id === activity.adminId || a._id === activity.adminId?._id,
-          );
+          const linkedAdmin = resolveLinkedAdmin(activity.adminId);
           return (
             <div
               key={activity._id}
@@ -327,39 +427,45 @@ export default function ActivitiesPage() {
                     👔 {linkedAdmin.name}
                   </div>
                 )}
-                <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-                  <button
-                    onClick={() => handleEdit(activity)}
-                    style={{
-                      flex: 1,
-                      padding: "8px 12px",
-                      background: "#8b5cf6",
-                      border: "none",
-                      borderRadius: 6,
-                      color: "#fff",
-                      cursor: "pointer",
-                      fontSize: 13,
-                      fontWeight: 500,
-                    }}
-                  >
-                    {t("edit")}
-                  </button>
-                  <button
-                    onClick={() => handleDelete(activity._id)}
-                    style={{
-                      padding: "8px 12px",
-                      background: "#ef4444",
-                      border: "none",
-                      borderRadius: 6,
-                      color: "#fff",
-                      cursor: "pointer",
-                      fontSize: 13,
-                      fontWeight: 500,
-                    }}
-                  >
-                    {t("delete")}
-                  </button>
-                </div>
+                {(canEditActivities || canDeleteActivities) && (
+                  <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+                    {canEditActivities && (
+                      <button
+                        onClick={() => handleEdit(activity)}
+                        style={{
+                          flex: 1,
+                          padding: "8px 12px",
+                          background: "#8b5cf6",
+                          border: "none",
+                          borderRadius: 6,
+                          color: "#fff",
+                          cursor: "pointer",
+                          fontSize: 13,
+                          fontWeight: 500,
+                        }}
+                      >
+                        {t("edit")}
+                      </button>
+                    )}
+                    {canDeleteActivities && (
+                      <button
+                        onClick={() => handleDelete(activity._id)}
+                        style={{
+                          padding: "8px 12px",
+                          background: "#ef4444",
+                          border: "none",
+                          borderRadius: 6,
+                          color: "#fff",
+                          cursor: "pointer",
+                          fontSize: 13,
+                          fontWeight: 500,
+                        }}
+                      >
+                        {t("delete")}
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           );
