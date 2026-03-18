@@ -42,7 +42,7 @@ const ROLE_MENUS = {
   ],
   admin: [
     { name: "Dashboard", route: "/admin", perm: null },
-    { name: "المستخدمون", route: "/users", perm: "users:view" },
+    { name: "Users", route: "/users", perm: "users:view" },
     { name: "My Hotels", route: "/hotels", perm: "hotels:view" },
     { name: "My Restaurants", route: "/restaurants", perm: "restaurants:view" },
     { name: "My Activities", route: "/activities", perm: "activities:view" },
@@ -53,7 +53,7 @@ const ROLE_MENUS = {
   ],
   hotel: [
     { name: "Dashboard", route: "/hotel", perm: null },
-    { name: "المستخدمون", route: "/users", perm: "users:view" },
+    { name: "Users", route: "/users", perm: "users:view" },
     { name: "Rooms", route: "/rooms", perm: "rooms:view" },
     { name: "Bookings", route: "/bookings", perm: "bookings:view" },
     { name: "Finance", route: "/finance", perm: "finance:view" },
@@ -62,7 +62,7 @@ const ROLE_MENUS = {
   ],
   restaurant: [
     { name: "Dashboard", route: "/restaurant", perm: null },
-    { name: "المستخدمون", route: "/users", perm: "users:view" },
+    { name: "Users", route: "/users", perm: "users:view" },
     { name: "Tables", route: "/rooms", perm: "rooms:view" },
     { name: "Reservations", route: "/bookings", perm: "bookings:view" },
     { name: "Finance", route: "/finance", perm: "finance:view" },
@@ -71,7 +71,7 @@ const ROLE_MENUS = {
   ],
   activity: [
     { name: "Dashboard", route: "/activity", perm: null },
-    { name: "المستخدمون", route: "/users", perm: "users:view" },
+    { name: "Users", route: "/users", perm: "users:view" },
     { name: "Activities", route: "/activities", perm: "activities:view" },
     { name: "Bookings", route: "/bookings", perm: "bookings:view" },
     { name: "Finance", route: "/finance", perm: "finance:view" },
@@ -116,7 +116,7 @@ const ICON_MAP = {
   Users: <Users size={18} />,
   Admins: <UserCheck size={18} />,
   "My Team": <Users size={18} />,
-  المستخدمون: <Users size={18} />,
+
   "All Hotels": <Building2 size={18} />,
   "My Hotels": <Building2 size={18} />,
   "All Restaurants": <UtensilsCrossed size={18} />,
