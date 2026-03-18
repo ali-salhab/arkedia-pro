@@ -109,6 +109,81 @@ const permissionMatrix = [
   },
 ];
 
+// Modules visible per role context (mirrors sidebar items)
+const roleModules = {
+  super_admin: [
+    "users",
+    "admins",
+    "hotels",
+    "restaurants",
+    "activities",
+    "bookings",
+    "rooms",
+    "finance",
+    "reports",
+    "settings",
+  ],
+  superadminuser: [
+    "users",
+    "admins",
+    "hotels",
+    "restaurants",
+    "activities",
+    "bookings",
+    "rooms",
+    "finance",
+    "reports",
+    "settings",
+  ],
+  admin: [
+    "users",
+    "hotels",
+    "restaurants",
+    "activities",
+    "bookings",
+    "finance",
+    "reports",
+    "settings",
+  ],
+  adminuser: [
+    "users",
+    "hotels",
+    "restaurants",
+    "activities",
+    "bookings",
+    "finance",
+    "reports",
+    "settings",
+  ],
+  hotel: ["users", "rooms", "bookings", "finance", "reports", "settings"],
+  hoteluser: ["users", "rooms", "bookings", "finance", "reports", "settings"],
+  restaurant: ["users", "rooms", "bookings", "finance", "reports", "settings"],
+  restaurantuser: [
+    "users",
+    "rooms",
+    "bookings",
+    "finance",
+    "reports",
+    "settings",
+  ],
+  activity: [
+    "users",
+    "activities",
+    "bookings",
+    "finance",
+    "reports",
+    "settings",
+  ],
+  activityuser: [
+    "users",
+    "activities",
+    "bookings",
+    "finance",
+    "reports",
+    "settings",
+  ],
+};
+
 // Role presets with default permissions
 const rolePresets = {
   super_admin: permissionMatrix.flatMap((m) =>
@@ -285,6 +360,16 @@ export default function UserFormModal({
   const isPlatformRole = ["super_admin", "superadminuser"].includes(
     currentUser?.role,
   );
+
+  // Filter permission modules to only those relevant to this dashboard context
+  const allowedModules =
+    roleModules[currentUser?.role] ||
+    Object.keys(
+      Object.fromEntries(permissionMatrix.map((m) => [m.module, true])),
+    );
+  const visibleMatrix = permissionMatrix.filter((m) =>
+    allowedModules.includes(m.module),
+  );
   const isSuperAdmin = currentUser?.role === "super_admin";
   const isAdmin = currentUser?.role === "admin";
 
@@ -391,7 +476,7 @@ export default function UserFormModal({
   };
 
   const selectAllPermissions = () => {
-    const allPerms = permissionMatrix.flatMap((m) =>
+    const allPerms = visibleMatrix.flatMap((m) =>
       m.actions.map((a) => `${m.module}:${a.key}`),
     );
     setForm((prev) => ({ ...prev, permissions: allPerms }));
@@ -957,7 +1042,7 @@ export default function UserFormModal({
                 gap: 16,
               }}
             >
-              {permissionMatrix.map((module) => (
+              {visibleMatrix.map((module) => (
                 <div
                   key={module.module}
                   style={{
