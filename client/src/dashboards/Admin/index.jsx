@@ -4,58 +4,25 @@ import {
   useGetBookingsQuery,
   useGetFinanceQuery,
 } from "../../store/services/api";
+import { useLanguage } from "../../context/LanguageContext";
+import {
+  toArr,
+  buildMonthlySeries,
+  calcTrend,
+  formatCompactCurrency,
+  takeLastMonths,
+} from "../../utils/dashboardMetrics";
 import StatCard from "../../components/StatCard";
 import OverviewChart from "../../components/OverviewChart";
 import DonutChart from "../../components/DonutChart";
 import MonthlyGoals from "../../components/MonthlyGoals";
 import { DollarSign, Building2, CalendarDays, Users } from "lucide-react";
 
-function toArr(d) {
-  return Array.isArray(d) ? d : d?.items || [];
-}
-const MONTHS = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
-];
-function byMonth(items, dateField, valueField = null) {
-  const map = MONTHS.map((month) => ({ month, value: 0 }));
-  items.forEach((item) => {
-    const d = new Date(item[dateField]);
-    if (!isNaN(d))
-      map[d.getMonth()].value += valueField ? Number(item[valueField]) || 0 : 1;
-  });
-  return map;
-}
-function calcTrend(monthData) {
-  const m = new Date().getMonth();
-  const curr = monthData[m]?.value || 0;
-  const prev = monthData[(m - 1 + 12) % 12]?.value || 0;
-  const pct = prev === 0 ? 0 : (((curr - prev) / prev) * 100).toFixed(1);
-  return {
-    trend: `${Number(pct) >= 0 ? "+" : ""}${pct}%`,
-    positive: Number(pct) >= 0,
-  };
-}
-function fmtMoney(n) {
-  if (n >= 1e6) return `$${(n / 1e6).toFixed(1)}M`;
-  if (n >= 1e3) return `$${(n / 1e3).toFixed(0)}K`;
-  return `$${Math.round(n)}`;
-}
-
 export default function AdminDashboard() {
-  const user = useSelector((s) => s.auth.user);
-  const perms = useSelector((s) => s.auth.user?.permissions || []);
-  const has = (p) => perms.includes(p);
+  const user = useSelector((state) => state.auth.user);
+  const perms = useSelector((state) => state.auth.user?.permissions || []);
+  const has = (permission) => perms.includes(permission);
+  const { t, lang } = useLanguage();
 
   const { data: hotelsData } = useGetUsersQuery(
     { role: "hotel" },
@@ -69,58 +36,92 @@ export default function AdminDashboard() {
     { role: "activity" },
     { skip: !has("activities:view") },
   );
-  const { data: bd } = useGetBookingsQuery(undefined, {
+  const { data: teamData } = useGetUsersQuery(
+    { role: "adminuser" },
+    { skip: !has("users:view") },
+  );
+  const { data: bookingsData } = useGetBookingsQuery(undefined, {
     skip: !has("bookings:view"),
   });
-  const { data: fd } = useGetFinanceQuery(undefined, {
+  const { data: financeData } = useGetFinanceQuery(undefined, {
     skip: !has("finance:view"),
   });
 
   const hotels = toArr(hotelsData);
   const restaurants = toArr(restaurantsData);
   const activities = toArr(activitiesData);
-  const bookings = toArr(bd);
-  const finance = toArr(fd);
+  const team = toArr(teamData);
+  const bookings = toArr(bookingsData);
+  const finance = toArr(financeData);
 
-  const revenue = finance.filter((f) => f.type === "revenue");
-  const expenses = finance.filter((f) => f.type === "expense");
-  const totalRevenue = revenue.reduce((s, f) => s + (Number(f.amount) || 0), 0);
-  const totalAccounts = hotels.length + restaurants.length + activities.length;
+  const revenueRows = finance.filter((item) => item.type === "revenue");
+  const expenseRows = finance.filter((item) => item.type === "expense");
+  const managedAccounts = [...hotels, ...restaurants, ...activities];
 
-  const revByMonth = byMonth(revenue, "date", "amount");
-  const bkByMonth = byMonth(bookings, "checkIn");
-  const expByMonth = byMonth(expenses, "date", "amount");
-  const profitByMonth = revByMonth.map((r, i) => ({
-    month: r.month,
-    value: Math.max(0, r.value - (expByMonth[i]?.value || 0)),
+  const totalRevenue = revenueRows.reduce(
+    (sum, item) => sum + (Number(item.amount) || 0),
+    0,
+  );
+
+  const revenueByMonth = buildMonthlySeries(
+    revenueRows,
+    ["date", "bookingDate", "createdAt"],
+    "amount",
+    lang,
+  );
+  const bookingsByMonth = buildMonthlySeries(
+    bookings,
+    ["checkIn", "bookingDate", "createdAt"],
+    null,
+    lang,
+  );
+  const expensesByMonth = buildMonthlySeries(
+    expenseRows,
+    ["date", "bookingDate", "createdAt"],
+    "amount",
+    lang,
+  );
+  const managedByMonth = buildMonthlySeries(
+    managedAccounts,
+    ["createdAt"],
+    null,
+    lang,
+  );
+  const teamByMonth = buildMonthlySeries(team, ["createdAt"], null, lang);
+
+  const profitByMonth = revenueByMonth.map((monthPoint, index) => ({
+    month: monthPoint.month,
+    value: Math.max(0, monthPoint.value - (expensesByMonth[index]?.value || 0)),
   }));
 
-  const revTrend = calcTrend(revByMonth);
-  const bkTrend = calcTrend(bkByMonth);
+  const revenueTrend = calcTrend(revenueByMonth);
+  const bookingsTrend = calcTrend(bookingsByMonth);
+  const managedTrend = calcTrend(managedByMonth);
+  const teamTrend = calcTrend(teamByMonth);
 
   const donutData = [
-    { name: "Hotels", value: hotels.length },
-    { name: "Restaurants", value: restaurants.length },
-    { name: "Activities", value: activities.length },
-  ].filter((d) => d.value > 0);
+    { name: t("dashboardSegmentHotels"), value: hotels.length },
+    { name: t("dashboardSegmentRestaurants"), value: restaurants.length },
+    { name: t("dashboardSegmentActivities"), value: activities.length },
+  ].filter((item) => item.value > 0);
 
-  const m = new Date().getMonth();
+  const currentMonth = new Date().getMonth();
   const goals = [
     {
-      label: "Revenue Target",
-      current: Math.round(revByMonth[m]?.value || 0),
+      label: t("dashboardGoalRevenue"),
+      current: Math.round(revenueByMonth[currentMonth]?.value || 0),
       target: 100000,
       color: "#f97316",
     },
     {
-      label: "Bookings Target",
-      current: bkByMonth[m]?.value || 0,
+      label: t("dashboardGoalBookings"),
+      current: bookingsByMonth[currentMonth]?.value || 0,
       target: 500,
       color: "#14b8a6",
     },
     {
-      label: "Managed Accounts",
-      current: totalAccounts,
+      label: t("dashboardGoalManagedAccounts"),
+      current: managedAccounts.length,
       target: 20,
       color: "#3b82f6",
     },
@@ -129,67 +130,72 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-6 pb-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-800">Dashboard</h1>
-        <p className="text-sm text-slate-500 mt-1">
-          Welcome back, {user?.name}. Here's what's happening with your business
-          today.
+        <h1
+          className="text-2xl font-bold"
+          style={{ color: "var(--text-primary)" }}
+        >
+          {t("dashboard")}
+        </h1>
+        <p className="mt-1 text-sm" style={{ color: "var(--text-secondary)" }}>
+          {t("dashboardWelcomeLine")} {user?.name}.{" "}
+          {t("dashboardBusinessOverview")}
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
-          title="Total Revenue"
-          value={fmtMoney(totalRevenue)}
-          trend={revTrend.trend}
-          trendPositive={revTrend.positive}
-          sparkData={revByMonth.slice(-7)}
+          title={t("dashboardCardTotalRevenue")}
+          value={formatCompactCurrency(totalRevenue, lang)}
+          trend={revenueTrend.trend}
+          trendPositive={revenueTrend.positive}
+          sparkData={takeLastMonths(revenueByMonth, 7)}
           color="#f97316"
           icon={DollarSign}
         />
         <StatCard
-          title="Managed Accounts"
-          value={totalAccounts}
-          trend="—"
-          sparkData={Array.from({ length: 7 }, () => ({
-            value: totalAccounts,
-          }))}
+          title={t("dashboardCardManagedAccounts")}
+          value={managedAccounts.length}
+          trend={managedTrend.trend}
+          trendPositive={managedTrend.positive}
+          sparkData={takeLastMonths(managedByMonth, 7)}
           color="#3b82f6"
           icon={Building2}
         />
         <StatCard
-          title="Total Bookings"
+          title={t("dashboardCardTotalBookings")}
           value={bookings.length}
-          trend={bkTrend.trend}
-          trendPositive={bkTrend.positive}
-          sparkData={bkByMonth.slice(-7)}
+          trend={bookingsTrend.trend}
+          trendPositive={bookingsTrend.positive}
+          sparkData={takeLastMonths(bookingsByMonth, 7)}
           color="#1e3a5f"
           icon={CalendarDays}
         />
         <StatCard
-          title="Team Members"
-          value={0}
-          trend="—"
-          sparkData={Array.from({ length: 7 }, () => ({ value: 0 }))}
+          title={t("dashboardCardTeamMembers")}
+          value={team.length}
+          trend={teamTrend.trend}
+          trendPositive={teamTrend.positive}
+          sparkData={takeLastMonths(teamByMonth, 7)}
           color="#14b8a6"
           icon={Users}
         />
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-3">
         <div className="xl:col-span-2">
           <OverviewChart
-            revenueData={revByMonth}
-            ordersData={bkByMonth}
+            revenueData={revenueByMonth}
+            ordersData={bookingsByMonth}
             profitData={profitByMonth}
-            labels={{ orders: "Bookings" }}
+            labels={{ orders: t("dashboardTabBookings") }}
           />
         </div>
         <div className="flex flex-col gap-5">
           <DonutChart
             data={donutData}
-            title="Account Types"
-            subtitle="Distribution across managed entities"
-            centerLabel="Total"
+            title={t("dashboardAccountTypes")}
+            subtitle={t("dashboardAccountTypesSubtitle")}
+            centerLabel={t("dashboardTotalLabel")}
           />
           <MonthlyGoals goals={goals} />
         </div>

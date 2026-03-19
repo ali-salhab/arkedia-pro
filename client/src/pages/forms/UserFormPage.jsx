@@ -1,5 +1,4 @@
 import { useNavigate, useLocation } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
 import UserFormModal from "../../components/UserFormModal";
 import {
   useCreateUserMutation,
@@ -29,15 +28,7 @@ export default function UserFormPage() {
   const handleClose = () => navigate(backTo);
 
   return (
-    <div className="max-w-5xl mx-auto space-y-4">
-      <button
-        onClick={handleClose}
-        className="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-800 transition-colors"
-      >
-        <ArrowLeft className="w-4 h-4" />
-        Back
-      </button>
-
+    <div className="mx-auto w-full max-w-7xl px-1 sm:px-2">
       <UserFormModal
         open={true}
         pageMode={true}

@@ -43,7 +43,7 @@ export default function Notifications() {
           {notifications.map((n) => (
             <div
               key={n.id}
-              className="bg-white rounded-xl border border-slate-100 shadow-sm px-4 py-3 flex items-start gap-3"
+              className="bg-white dark:bg-slate-800/70 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm px-4 py-3 flex items-start gap-3"
             >
               <div className="w-9 h-9 rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0 mt-0.5">
                 <Bell className="w-4 h-4 text-orange-500" />

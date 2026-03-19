@@ -6,9 +6,8 @@ import { useLanguage } from "../context/LanguageContext";
 export default function NotificationPanel({ notifications = [], onClear }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
-  const { t, theme, dir } = useLanguage();
+  const { t, dir } = useLanguage();
   const navigate = useNavigate();
-  const isDark = theme === "dark";
 
   useEffect(() => {
     const handler = (e) => {
@@ -20,11 +19,6 @@ export default function NotificationPanel({ notifications = [], onClear }) {
 
   const unread = notifications.length;
 
-  const bg = isDark ? "#1e293b" : "#fff";
-  const border = isDark ? "#334155" : "#e2e8f0";
-  const textColor = isDark ? "#f1f5f9" : "#1e293b";
-  const mutedColor = isDark ? "#94a3b8" : "#64748b";
-
   return (
     <div style={{ position: "relative" }} ref={ref}>
       <button
@@ -34,13 +28,13 @@ export default function NotificationPanel({ notifications = [], onClear }) {
           width: 38,
           height: 38,
           borderRadius: 10,
-          border: `1px solid ${border}`,
-          background: isDark ? "#1e293b" : "#f8fafc",
+          border: "1px solid var(--border)",
+          background: "var(--bg-raised)",
           cursor: "pointer",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          color: isDark ? "#94a3b8" : "#64748b",
+          color: "var(--text-secondary)",
           transition: "all 0.2s",
         }}
         aria-label={t("notifications")}
@@ -52,7 +46,7 @@ export default function NotificationPanel({ notifications = [], onClear }) {
               position: "absolute",
               top: -4,
               right: -4,
-              background: "#ef4444",
+              background: "var(--danger)",
               color: "#fff",
               fontSize: 10,
               fontWeight: 700,
@@ -62,7 +56,7 @@ export default function NotificationPanel({ notifications = [], onClear }) {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              border: "2px solid " + (isDark ? "#0f172a" : "#fff"),
+              border: "2px solid var(--bg-surface)",
               animation: "pulse 2s cubic-bezier(0.4,0,0.6,1) infinite",
             }}
           >
@@ -78,8 +72,8 @@ export default function NotificationPanel({ notifications = [], onClear }) {
             top: "calc(100% + 8px)",
             ...(dir === "rtl" ? { left: 0 } : { right: 0 }),
             width: 320,
-            background: bg,
-            border: `1px solid ${border}`,
+            background: "var(--bg-surface)",
+            border: "1px solid var(--border)",
             borderRadius: 14,
             boxShadow: "0 10px 40px rgba(0,0,0,0.15)",
             zIndex: 1200,
@@ -92,10 +86,16 @@ export default function NotificationPanel({ notifications = [], onClear }) {
               alignItems: "center",
               justifyContent: "space-between",
               padding: "12px 16px",
-              borderBottom: `1px solid ${border}`,
+              borderBottom: "1px solid var(--border)",
             }}
           >
-            <span style={{ fontWeight: 600, fontSize: 14, color: textColor }}>
+            <span
+              style={{
+                fontWeight: 600,
+                fontSize: 14,
+                color: "var(--text-primary)",
+              }}
+            >
               {t("notifications")}
             </span>
             <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
@@ -104,7 +104,7 @@ export default function NotificationPanel({ notifications = [], onClear }) {
                   onClick={onClear}
                   style={{
                     fontSize: 12,
-                    color: "#3b82f6",
+                    color: "var(--brand)",
                     background: "none",
                     border: "none",
                     cursor: "pointer",
@@ -121,7 +121,7 @@ export default function NotificationPanel({ notifications = [], onClear }) {
                 }}
                 style={{
                   fontSize: 12,
-                  color: "#64748b",
+                  color: "var(--text-secondary)",
                   background: "none",
                   border: "none",
                   cursor: "pointer",
@@ -138,7 +138,7 @@ export default function NotificationPanel({ notifications = [], onClear }) {
               style={{
                 padding: "32px 16px",
                 textAlign: "center",
-                color: mutedColor,
+                color: "var(--text-secondary)",
                 fontSize: 13,
               }}
             >
@@ -154,7 +154,7 @@ export default function NotificationPanel({ notifications = [], onClear }) {
                     padding: "12px 16px",
                     borderBottom:
                       i < notifications.length - 1
-                        ? `1px solid ${border}`
+                        ? "1px solid var(--border)"
                         : "none",
                     display: "flex",
                     gap: 10,
@@ -168,12 +168,8 @@ export default function NotificationPanel({ notifications = [], onClear }) {
                       borderRadius: 10,
                       background:
                         n.type === "permissions"
-                          ? isDark
-                            ? "#1d4ed820"
-                            : "#dbeafe"
-                          : isDark
-                            ? "#33415520"
-                            : "#f1f5f9",
+                          ? "var(--brand-muted)"
+                          : "var(--bg-raised)",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
@@ -188,20 +184,22 @@ export default function NotificationPanel({ notifications = [], onClear }) {
                       style={{
                         fontWeight: 600,
                         fontSize: 13,
-                        color: textColor,
+                        color: "var(--text-primary)",
                         marginBottom: 2,
                       }}
                     >
                       {n.title}
                     </div>
-                    <div style={{ fontSize: 12, color: mutedColor }}>
+                    <div
+                      style={{ fontSize: 12, color: "var(--text-secondary)" }}
+                    >
                       {n.body}
                     </div>
                     {n.time && (
                       <div
                         style={{
                           fontSize: 11,
-                          color: mutedColor,
+                          color: "var(--text-muted)",
                           marginTop: 4,
                         }}
                       >

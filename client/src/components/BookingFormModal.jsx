@@ -29,12 +29,12 @@ const EMPTY_FORM = {
 };
 
 const inp = {
-  background: "#fff",
-  border: "1px solid #e2e8f0",
+  background: "var(--bg-surface)",
+  border: "1px solid var(--border)",
   borderRadius: 8,
   padding: "9px 12px",
   fontSize: 14,
-  color: "#1e293b",
+  color: "var(--text-primary)",
   width: "100%",
   outline: "none",
 };
@@ -42,7 +42,7 @@ const lbl = {
   display: "block",
   fontWeight: 600,
   fontSize: 12,
-  color: "#64748b",
+  color: "var(--text-secondary)",
   marginBottom: 4,
   textTransform: "uppercase",
   letterSpacing: "0.05em",
@@ -50,27 +50,27 @@ const lbl = {
 const sectionTitle = {
   fontSize: 13,
   fontWeight: 700,
-  color: "#334155",
+  color: "var(--text-secondary)",
   marginBottom: 12,
   paddingBottom: 6,
-  borderBottom: "1px solid #f1f5f9",
+  borderBottom: "1px solid var(--bg-raised)",
   marginTop: 4,
 };
 
 const STATUS_COLORS = {
-  pending: { bg: "#fef9c3", color: "#a16207" },
-  confirmed: { bg: "#dcfce7", color: "#16a34a" },
-  checked_in: { bg: "#dbeafe", color: "#1d4ed8" },
-  checked_out: { bg: "#f3e8ff", color: "#7c3aed" },
-  cancelled: { bg: "#fee2e2", color: "#dc2626" },
-  no_show: { bg: "#f1f5f9", color: "#64748b" },
+  pending: { bg: "rgba(251, 191, 36, 0.18)", color: "var(--warning)" },
+  confirmed: { bg: "rgba(34, 197, 94, 0.14)", color: "var(--success)" },
+  checked_in: { bg: "var(--brand-muted)", color: "var(--brand)" },
+  checked_out: { bg: "var(--brand-muted)", color: "var(--brand)" },
+  cancelled: { bg: "rgba(220, 38, 38, 0.12)", color: "var(--danger)" },
+  no_show: { bg: "var(--bg-raised)", color: "var(--text-secondary)" },
 };
 
 const PAYMENT_STATUS_COLORS = {
-  unpaid: { bg: "#fee2e2", color: "#dc2626" },
-  partial: { bg: "#fef9c3", color: "#a16207" },
-  paid: { bg: "#dcfce7", color: "#16a34a" },
-  refunded: { bg: "#dbeafe", color: "#1d4ed8" },
+  unpaid: { bg: "rgba(220, 38, 38, 0.12)", color: "var(--danger)" },
+  partial: { bg: "rgba(251, 191, 36, 0.18)", color: "var(--warning)" },
+  paid: { bg: "rgba(34, 197, 94, 0.14)", color: "var(--success)" },
+  refunded: { bg: "var(--brand-muted)", color: "var(--brand)" },
 };
 
 function generateRef() {
@@ -207,8 +207,8 @@ export default function BookingFormModal({
     cursor: "pointer",
     fontSize: 13,
     fontWeight: 600,
-    background: tab === id ? "#3b82f6" : "#f1f5f9",
-    color: tab === id ? "#fff" : "#64748b",
+    background: tab === id ? "var(--brand)" : "var(--bg-raised)",
+    color: tab === id ? "#fff" : "var(--text-secondary)",
     transition: "all 0.15s",
   });
 
@@ -217,21 +217,23 @@ export default function BookingFormModal({
   const innerContent = (
     <div
       style={{
-        background: "#fff",
-        borderRadius: 16,
+        background: "var(--bg-surface)",
+        borderRadius: pageMode ? 0 : 16,
         width: "100%",
-        maxWidth: 700,
+        maxWidth: pageMode ? "none" : 700,
         maxHeight: pageMode ? "none" : "92vh",
         display: "flex",
         flexDirection: "column",
-        boxShadow: "0 25px 60px rgba(0,0,0,0.2)",
+        boxShadow: pageMode ? "none" : "0 25px 60px rgba(0,0,0,0.2)",
+        border: "none",
         direction: isRtl ? "rtl" : "ltr",
       }}
     >
       {/* Header */}
       <div
         style={{
-          background: "linear-gradient(135deg, #0f766e, #1d4ed8)",
+          background: "var(--bg-raised)",
+          borderBottom: "1px solid var(--border)",
           borderRadius: "16px 16px 0 0",
           padding: "20px 24px",
           display: "flex",
@@ -241,14 +243,20 @@ export default function BookingFormModal({
         }}
       >
         <div>
-          <div style={{ fontSize: 20, fontWeight: 700, color: "#fff" }}>
+          <div
+            style={{
+              fontSize: 20,
+              fontWeight: 700,
+              color: "var(--text-primary)",
+            }}
+          >
             {booking ? `✏️ ${t("bk_editTitle")}` : `📅 ${t("bk_addTitle")}`}
           </div>
           {booking?.reference && (
             <div
               style={{
                 fontSize: 12,
-                color: "rgba(255,255,255,0.7)",
+                color: "var(--text-secondary)",
                 marginTop: 2,
                 fontFamily: "monospace",
               }}
@@ -274,15 +282,15 @@ export default function BookingFormModal({
           <button
             onClick={onClose}
             style={{
-              background: "rgba(255,255,255,0.15)",
-              border: "none",
+              background: "var(--bg-raised)",
+              border: "1px solid var(--border)",
               borderRadius: 8,
               width: 36,
               height: 36,
               cursor: "pointer",
-              color: "#fff",
+              color: "var(--text-secondary)",
               fontSize: 18,
-              display: "flex",
+              display: pageMode ? "none" : "flex",
               alignItems: "center",
               justifyContent: "center",
             }}
@@ -298,8 +306,8 @@ export default function BookingFormModal({
           display: "flex",
           gap: 6,
           padding: "14px 24px 0",
-          background: "#fafafa",
-          borderBottom: "1px solid #e2e8f0",
+          background: "var(--bg-raised)",
+          borderBottom: "1px solid var(--border)",
           flexShrink: 0,
           flexWrap: "wrap",
         }}
@@ -316,11 +324,11 @@ export default function BookingFormModal({
         {error && (
           <div
             style={{
-              background: "#fef2f2",
-              border: "1px solid #fecaca",
+              background: "rgba(220, 38, 38, 0.12)",
+              border: "1px solid rgba(220, 38, 38, 0.35)",
               borderRadius: 8,
               padding: "10px 14px",
-              color: "#dc2626",
+              color: "var(--danger)",
               fontSize: 13,
               marginBottom: 16,
             }}
@@ -483,11 +491,11 @@ export default function BookingFormModal({
             {nights > 0 && (
               <div
                 style={{
-                  background: "#eff6ff",
+                  background: "var(--brand-muted)",
                   borderRadius: 8,
                   padding: "10px 14px",
                   fontSize: 13,
-                  color: "#1d4ed8",
+                  color: "var(--brand)",
                   fontWeight: 600,
                 }}
               >
@@ -530,7 +538,7 @@ export default function BookingFormModal({
                       left: 12,
                       top: "50%",
                       transform: "translateY(-50%)",
-                      color: "#94a3b8",
+                      color: "var(--text-muted)",
                       fontSize: 14,
                     }}
                   >
@@ -615,8 +623,9 @@ export default function BookingFormModal({
             {/* Invoice summary */}
             <div
               style={{
-                background: "linear-gradient(135deg, #f0fdf4, #eff6ff)",
-                border: "1px solid #bbf7d0",
+                background:
+                  "linear-gradient(135deg, rgba(34, 197, 94, 0.12), var(--brand-muted))",
+                border: "1px solid rgba(34, 197, 94, 0.28)",
                 borderRadius: 12,
                 padding: 16,
               }}
@@ -625,7 +634,7 @@ export default function BookingFormModal({
                 style={{
                   fontSize: 13,
                   fontWeight: 700,
-                  color: "#15803d",
+                  color: "var(--success)",
                   marginBottom: 12,
                 }}
               >
@@ -643,7 +652,7 @@ export default function BookingFormModal({
                   style={{
                     display: "flex",
                     justifyContent: "space-between",
-                    color: "#64748b",
+                    color: "var(--text-secondary)",
                   }}
                 >
                   <span>{t("bk_summaryNightsRate")}</span>
@@ -656,7 +665,7 @@ export default function BookingFormModal({
                   style={{
                     display: "flex",
                     justifyContent: "space-between",
-                    color: "#64748b",
+                    color: "var(--text-secondary)",
                   }}
                 >
                   <span>{t("bk_summarySubtotal")}</span>
@@ -669,7 +678,7 @@ export default function BookingFormModal({
                     style={{
                       display: "flex",
                       justifyContent: "space-between",
-                      color: "#ef4444",
+                      color: "var(--danger)",
                     }}
                   >
                     <span>
@@ -685,7 +694,7 @@ export default function BookingFormModal({
                     style={{
                       display: "flex",
                       justifyContent: "space-between",
-                      color: "#64748b",
+                      color: "var(--text-secondary)",
                     }}
                   >
                     <span>
@@ -702,8 +711,8 @@ export default function BookingFormModal({
                     justifyContent: "space-between",
                     fontWeight: 700,
                     fontSize: 16,
-                    color: "#15803d",
-                    borderTop: "1px solid #d1fae5",
+                    color: "var(--success)",
+                    borderTop: "1px solid rgba(34, 197, 94, 0.18)",
                     paddingTop: 8,
                   }}
                 >
@@ -716,11 +725,11 @@ export default function BookingFormModal({
                   style={{
                     display: "flex",
                     justifyContent: "space-between",
-                    color: "#64748b",
+                    color: "var(--text-secondary)",
                   }}
                 >
                   <span>{t("bk_summaryPaid")}</span>
-                  <span style={{ color: "#16a34a" }}>
+                  <span style={{ color: "var(--success)" }}>
                     {form.currency} {Number(form.paidAmount).toFixed(2)}
                   </span>
                 </div>
@@ -729,8 +738,8 @@ export default function BookingFormModal({
                     display: "flex",
                     justifyContent: "space-between",
                     fontWeight: 700,
-                    color: balance > 0 ? "#dc2626" : "#16a34a",
-                    borderTop: "1px solid #e2e8f0",
+                    color: balance > 0 ? "var(--danger)" : "var(--success)",
+                    borderTop: "1px solid var(--border)",
                     paddingTop: 6,
                   }}
                 >
@@ -783,8 +792,8 @@ export default function BookingFormModal({
       <div
         style={{
           padding: "14px 24px",
-          background: "#f8fafc",
-          borderTop: "1px solid #e2e8f0",
+          background: "var(--bg-raised)",
+          borderTop: "1px solid var(--border)",
           borderRadius: "0 0 16px 16px",
           display: "flex",
           justifyContent: "space-between",
@@ -792,11 +801,11 @@ export default function BookingFormModal({
           flexShrink: 0,
         }}
       >
-        <div style={{ fontSize: 12, color: "#94a3b8" }}>
+        <div style={{ fontSize: 12, color: "var(--text-muted)" }}>
           {nights > 0 && form.pricePerNight > 0 && (
             <span>
               💰 {t("bk_footerTotal")}:{" "}
-              <strong style={{ color: "#15803d" }}>
+              <strong style={{ color: "var(--success)" }}>
                 {form.currency} {grandTotal.toFixed(2)}
               </strong>
             </span>
@@ -808,9 +817,9 @@ export default function BookingFormModal({
             style={{
               padding: "10px 20px",
               borderRadius: 8,
-              border: "1px solid #e2e8f0",
-              background: "#fff",
-              color: "#64748b",
+              border: "1px solid var(--border)",
+              background: "var(--bg-surface)",
+              color: "var(--text-secondary)",
               fontWeight: 600,
               cursor: "pointer",
               fontSize: 14,
@@ -825,9 +834,7 @@ export default function BookingFormModal({
               padding: "10px 28px",
               borderRadius: 8,
               border: "none",
-              background: saving
-                ? "#6ee7b7"
-                : "linear-gradient(135deg, #0f766e, #1d4ed8)",
+              background: saving ? "rgba(34, 197, 94, 0.28)" : "var(--brand)",
               color: "#fff",
               fontWeight: 700,
               cursor: saving ? "not-allowed" : "pointer",

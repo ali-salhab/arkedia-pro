@@ -11,10 +11,10 @@ import {
 import PermissionWrapper from "../components/PermissionWrapper";
 
 const STATUS_STYLE = {
-  available: { background: "#dcfce7", color: "#16a34a" },
-  occupied: { background: "#fee2e2", color: "#dc2626" },
-  maintenance: { background: "#fef9c3", color: "#a16207" },
-  reserved: { background: "#dbeafe", color: "#1d4ed8" },
+  available: { background: "rgba(22,163,74,0.15)", color: "#16a34a" },
+  occupied: { background: "rgba(220,38,38,0.15)", color: "#ef4444" },
+  maintenance: { background: "rgba(161,98,7,0.15)", color: "#d97706" },
+  reserved: { background: "rgba(29,78,216,0.15)", color: "#3b82f6" },
 };
 
 const TYPE_ICON = {
@@ -105,40 +105,39 @@ export default function RoomsPage() {
             label: t("roomsPage_totalRooms"),
             value: stats.total,
             color: "#3b82f6",
-            bg: "#eff6ff",
           },
           {
             label: t("roomsPage_available"),
             value: stats.available,
             color: "#16a34a",
-            bg: "#f0fdf4",
           },
           {
             label: t("roomsPage_occupied"),
             value: stats.occupied,
             color: "#dc2626",
-            bg: "#fef2f2",
           },
           {
             label: t("roomsPage_maintenance"),
             value: stats.maintenance,
             color: "#a16207",
-            bg: "#fefce8",
           },
         ].map((s) => (
           <div
             key={s.label}
             style={{
-              background: s.bg,
+              background: "var(--bg-surface)",
               borderRadius: 12,
               padding: "16px 20px",
+              border: "1px solid var(--border)",
               borderLeft: `4px solid ${s.color}`,
             }}
           >
             <div style={{ fontSize: 28, fontWeight: 800, color: s.color }}>
               {s.value}
             </div>
-            <div style={{ fontSize: 13, color: "#64748b", marginTop: 2 }}>
+            <div
+              style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 2 }}
+            >
               {s.label}
             </div>
           </div>
@@ -168,10 +167,12 @@ export default function RoomsPage() {
             style={{
               padding: "9px 14px",
               borderRadius: 8,
-              border: "1px solid #e2e8f0",
+              border: "1px solid var(--border)",
               fontSize: 14,
               minWidth: 220,
               outline: "none",
+              background: "var(--bg-surface)",
+              color: "var(--text-primary)",
             }}
             placeholder={t("roomsPage_searchPlaceholder")}
             value={search}
@@ -181,9 +182,11 @@ export default function RoomsPage() {
             style={{
               padding: "9px 14px",
               borderRadius: 8,
-              border: "1px solid #e2e8f0",
+              border: "1px solid var(--border)",
               fontSize: 14,
               outline: "none",
+              background: "var(--bg-surface)",
+              color: "var(--text-primary)",
             }}
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
@@ -219,7 +222,13 @@ export default function RoomsPage() {
 
       {/* Cards grid */}
       {filtered.length === 0 ? (
-        <div style={{ textAlign: "center", padding: 60, color: "#94a3b8" }}>
+        <div
+          style={{
+            textAlign: "center",
+            padding: 60,
+            color: "var(--text-muted)",
+          }}
+        >
           <div style={{ fontSize: 48 }}>🏨</div>
           <div style={{ marginTop: 12, fontSize: 16 }}>
             {t("roomsPage_noRooms")}
@@ -237,9 +246,9 @@ export default function RoomsPage() {
             <div
               key={r._id}
               style={{
-                background: "#fff",
+                background: "var(--bg-surface)",
                 borderRadius: 14,
-                border: "1px solid #e2e8f0",
+                border: "1px solid var(--border)",
                 overflow: "hidden",
                 boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
                 transition: "box-shadow 0.2s",
@@ -288,7 +297,11 @@ export default function RoomsPage() {
                       {r.name ? ` — ${r.name}` : ""}
                     </div>
                     <div
-                      style={{ fontSize: 13, color: "#64748b", marginTop: 2 }}
+                      style={{
+                        fontSize: 13,
+                        color: "var(--text-muted)",
+                        marginTop: 2,
+                      }}
                     >
                       {r.category || r.type}{" "}
                       {r.floor ? `· Floor ${r.floor}` : ""}
@@ -312,7 +325,7 @@ export default function RoomsPage() {
                     display: "flex",
                     gap: 14,
                     fontSize: 13,
-                    color: "#475569",
+                    color: "var(--text-secondary)",
                     marginBottom: 12,
                   }}
                 >
@@ -331,13 +344,17 @@ export default function RoomsPage() {
                   }}
                 >
                   <div
-                    style={{ fontSize: 18, fontWeight: 700, color: "#1d4ed8" }}
+                    style={{
+                      fontSize: 18,
+                      fontWeight: 700,
+                      color: "var(--brand)",
+                    }}
                   >
                     {r.currency || "USD"} {r.pricePerNight || 0}
                     <span
                       style={{
                         fontSize: 12,
-                        color: "#94a3b8",
+                        color: "var(--text-muted)",
                         fontWeight: 400,
                       }}
                     >
@@ -348,8 +365,8 @@ export default function RoomsPage() {
                         style={{
                           marginLeft: 6,
                           fontSize: 11,
-                          background: "#fef9c3",
-                          color: "#a16207",
+                          background: "rgba(161,98,7,0.15)",
+                          color: "#d97706",
                           borderRadius: 10,
                           padding: "2px 7px",
                         }}
@@ -365,11 +382,11 @@ export default function RoomsPage() {
                         style={{
                           padding: "5px 12px",
                           borderRadius: 7,
-                          border: "1px solid #e2e8f0",
-                          background: "#f8fafc",
+                          border: "1px solid var(--border)",
+                          background: "var(--bg-raised)",
                           cursor: "pointer",
                           fontSize: 13,
-                          color: "#1d4ed8",
+                          color: "var(--brand)",
                           fontWeight: 600,
                         }}
                       >
@@ -383,10 +400,10 @@ export default function RoomsPage() {
                           padding: "5px 12px",
                           borderRadius: 7,
                           border: "none",
-                          background: "#fef2f2",
+                          background: "rgba(220,38,38,0.12)",
                           cursor: "pointer",
                           fontSize: 13,
-                          color: "#dc2626",
+                          color: "var(--danger)",
                           fontWeight: 600,
                         }}
                       >
@@ -416,17 +433,30 @@ export default function RoomsPage() {
         >
           <div
             style={{
-              background: "#fff",
+              background: "var(--bg-surface)",
               borderRadius: 14,
               padding: 28,
               maxWidth: 380,
               width: "90%",
             }}
           >
-            <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 10 }}>
+            <div
+              style={{
+                fontSize: 18,
+                fontWeight: 700,
+                marginBottom: 10,
+                color: "var(--text-primary)",
+              }}
+            >
               {t("roomsPage_deleteRoomTitle")} #{confirmDelete.number}?
             </div>
-            <div style={{ fontSize: 14, color: "#64748b", marginBottom: 20 }}>
+            <div
+              style={{
+                fontSize: 14,
+                color: "var(--text-muted)",
+                marginBottom: 20,
+              }}
+            >
               {t("roomsPage_deleteCannotUndo")}
             </div>
             <div
@@ -437,8 +467,9 @@ export default function RoomsPage() {
                 style={{
                   padding: "9px 18px",
                   borderRadius: 8,
-                  border: "1px solid #e2e8f0",
-                  background: "#fff",
+                  border: "1px solid var(--border)",
+                  background: "var(--bg-surface)",
+                  color: "var(--text-secondary)",
                   cursor: "pointer",
                 }}
               >

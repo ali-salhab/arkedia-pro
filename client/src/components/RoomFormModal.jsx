@@ -54,12 +54,12 @@ const EMPTY_FORM = {
 };
 
 const inp = {
-  background: "#fff",
-  border: "1px solid #e2e8f0",
+  background: "var(--bg-surface)",
+  border: "1px solid var(--border)",
   borderRadius: 8,
   padding: "9px 12px",
   fontSize: 14,
-  color: "#1e293b",
+  color: "var(--text-primary)",
   width: "100%",
   outline: "none",
 };
@@ -67,7 +67,7 @@ const lbl = {
   display: "block",
   fontWeight: 600,
   fontSize: 12,
-  color: "#64748b",
+  color: "var(--text-secondary)",
   marginBottom: 4,
   textTransform: "uppercase",
   letterSpacing: "0.05em",
@@ -75,10 +75,10 @@ const lbl = {
 const sectionTitle = {
   fontSize: 13,
   fontWeight: 700,
-  color: "#334155",
+  color: "var(--text-secondary)",
   marginBottom: 12,
   paddingBottom: 6,
-  borderBottom: "1px solid #f1f5f9",
+  borderBottom: "1px solid var(--bg-raised)",
   marginTop: 4,
 };
 
@@ -219,8 +219,8 @@ export default function RoomFormModal({
     cursor: "pointer",
     fontSize: 13,
     fontWeight: 600,
-    background: tab === id ? "#3b82f6" : "#f1f5f9",
-    color: tab === id ? "#fff" : "#64748b",
+    background: tab === id ? "var(--brand)" : "var(--bg-raised)",
+    color: tab === id ? "#fff" : "var(--text-secondary)",
     transition: "all 0.15s",
   });
 
@@ -229,21 +229,22 @@ export default function RoomFormModal({
   const innerContent = (
     <div
       style={{
-        background: "#fff",
-        borderRadius: 16,
+        background: "var(--bg-surface)",
+        borderRadius: pageMode ? 0 : 16,
         width: "100%",
-        maxWidth: 680,
+        maxWidth: pageMode ? "none" : 680,
         maxHeight: pageMode ? "none" : "92vh",
         display: "flex",
         flexDirection: "column",
-        boxShadow: "0 25px 60px rgba(0,0,0,0.2)",
+        boxShadow: pageMode ? "none" : "0 25px 60px rgba(0,0,0,0.2)",
+        border: "none",
         direction: isRtl ? "rtl" : "ltr",
       }}
     >
       {/* Header */}
       <div
         style={{
-          background: "linear-gradient(135deg, #1d4ed8, #7c3aed)",
+          background: "linear-gradient(135deg, var(--brand), var(--brand))",
           borderRadius: "16px 16px 0 0",
           padding: "20px 24px",
           display: "flex",
@@ -277,7 +278,7 @@ export default function RoomFormModal({
             cursor: "pointer",
             color: "#fff",
             fontSize: 18,
-            display: "flex",
+            display: pageMode ? "none" : "flex",
             alignItems: "center",
             justifyContent: "center",
           }}
@@ -292,8 +293,8 @@ export default function RoomFormModal({
           display: "flex",
           gap: 6,
           padding: "14px 24px 0",
-          background: "#fafafa",
-          borderBottom: "1px solid #e2e8f0",
+          background: "var(--bg-raised)",
+          borderBottom: "1px solid var(--border)",
           flexShrink: 0,
           flexWrap: "wrap",
         }}
@@ -314,11 +315,11 @@ export default function RoomFormModal({
         {error && (
           <div
             style={{
-              background: "#fef2f2",
-              border: "1px solid #fecaca",
+              background: "rgba(220, 38, 38, 0.12)",
+              border: "1px solid rgba(220, 38, 38, 0.35)",
               borderRadius: 8,
               padding: "10px 14px",
-              color: "#dc2626",
+              color: "var(--danger)",
               fontSize: 13,
               marginBottom: 16,
             }}
@@ -510,7 +511,7 @@ export default function RoomFormModal({
                   gap: 8,
                   cursor: "pointer",
                   fontSize: 14,
-                  color: "#334155",
+                  color: "var(--text-secondary)",
                 }}
               >
                 <input
@@ -528,7 +529,7 @@ export default function RoomFormModal({
                   gap: 8,
                   cursor: "pointer",
                   fontSize: 14,
-                  color: "#334155",
+                  color: "var(--text-secondary)",
                 }}
               >
                 <input
@@ -575,7 +576,7 @@ export default function RoomFormModal({
                       left: 12,
                       top: "50%",
                       transform: "translateY(-50%)",
-                      color: "#94a3b8",
+                      color: "var(--text-muted)",
                       fontSize: 14,
                     }}
                   >
@@ -618,8 +619,9 @@ export default function RoomFormModal({
             {form.pricePerNight > 0 && (
               <div
                 style={{
-                  background: "linear-gradient(135deg, #eff6ff, #f0fdf4)",
-                  border: "1px solid #bfdbfe",
+                  background:
+                    "linear-gradient(135deg, var(--brand-muted), rgba(34, 197, 94, 0.12))",
+                  border: "1px solid var(--border)",
                   borderRadius: 12,
                   padding: 16,
                 }}
@@ -628,7 +630,7 @@ export default function RoomFormModal({
                   style={{
                     fontSize: 13,
                     fontWeight: 700,
-                    color: "#1e40af",
+                    color: "var(--brand)",
                     marginBottom: 10,
                   }}
                 >
@@ -646,7 +648,7 @@ export default function RoomFormModal({
                     style={{
                       display: "flex",
                       justifyContent: "space-between",
-                      color: "#64748b",
+                      color: "var(--text-secondary)",
                     }}
                   >
                     <span>{t("rm_basePrice")}</span>
@@ -660,7 +662,7 @@ export default function RoomFormModal({
                         style={{
                           display: "flex",
                           justifyContent: "space-between",
-                          color: "#ef4444",
+                          color: "var(--danger)",
                         }}
                       >
                         <span>Discount ({form.discount}%)</span>
@@ -676,8 +678,8 @@ export default function RoomFormModal({
                           display: "flex",
                           justifyContent: "space-between",
                           fontWeight: 700,
-                          color: "#16a34a",
-                          borderTop: "1px solid #d1fae5",
+                          color: "var(--success)",
+                          borderTop: "1px solid rgba(34, 197, 94, 0.18)",
                           paddingTop: 6,
                         }}
                       >
@@ -696,9 +698,9 @@ export default function RoomFormModal({
                     style={{
                       display: "flex",
                       justifyContent: "space-between",
-                      color: "#64748b",
+                      color: "var(--text-secondary)",
                       paddingTop: 4,
-                      borderTop: "1px solid #e2e8f0",
+                      borderTop: "1px solid var(--border)",
                     }}
                   >
                     <span>{t("rm_perWeek")}</span>
@@ -715,7 +717,7 @@ export default function RoomFormModal({
                     style={{
                       display: "flex",
                       justifyContent: "space-between",
-                      color: "#64748b",
+                      color: "var(--text-secondary)",
                     }}
                   >
                     <span>{t("rm_perMonth")}</span>
@@ -757,8 +759,10 @@ export default function RoomFormModal({
                       gap: 10,
                       padding: "10px 14px",
                       borderRadius: 10,
-                      border: `2px solid ${active ? "#3b82f6" : "#e2e8f0"}`,
-                      background: active ? "#eff6ff" : "#fafafa",
+                      border: `2px solid ${active ? "var(--brand)" : "var(--border)"}`,
+                      background: active
+                        ? "var(--brand-muted)"
+                        : "var(--bg-raised)",
                       cursor: "pointer",
                       transition: "all 0.15s",
                       userSelect: "none",
@@ -770,7 +774,9 @@ export default function RoomFormModal({
                         style={{
                           fontSize: 13,
                           fontWeight: 600,
-                          color: active ? "#1d4ed8" : "#475569",
+                          color: active
+                            ? "var(--brand)"
+                            : "var(--text-secondary)",
                         }}
                       >
                         {label}
@@ -778,7 +784,7 @@ export default function RoomFormModal({
                       <div
                         style={{
                           fontSize: 11,
-                          color: active ? "#3b82f6" : "#94a3b8",
+                          color: active ? "var(--brand)" : "var(--text-muted)",
                         }}
                       >
                         {active
@@ -794,7 +800,7 @@ export default function RoomFormModal({
               style={{
                 marginTop: 14,
                 fontSize: 12,
-                color: "#94a3b8",
+                color: "var(--text-muted)",
                 textAlign: "center",
               }}
             >
@@ -810,12 +816,12 @@ export default function RoomFormModal({
             <div
               onClick={() => fileRef.current?.click()}
               style={{
-                border: "2px dashed #cbd5e1",
+                border: "2px dashed var(--border)",
                 borderRadius: 12,
                 padding: "28px 16px",
                 textAlign: "center",
                 cursor: "pointer",
-                background: "#fafafa",
+                background: "var(--bg-raised)",
                 marginBottom: 16,
                 transition: "border-color 0.15s",
               }}
@@ -837,10 +843,22 @@ export default function RoomFormModal({
               }}
             >
               <div style={{ fontSize: 36, marginBottom: 8 }}>📸</div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: "#334155" }}>
+              <div
+                style={{
+                  fontSize: 14,
+                  fontWeight: 600,
+                  color: "var(--text-secondary)",
+                }}
+              >
                 {t("rm_photosUploadHint")}
               </div>
-              <div style={{ fontSize: 12, color: "#94a3b8", marginTop: 4 }}>
+              <div
+                style={{
+                  fontSize: 12,
+                  color: "var(--text-muted)",
+                  marginTop: 4,
+                }}
+              >
                 {t("rm_photosLimit")}
               </div>
               <input
@@ -870,8 +888,8 @@ export default function RoomFormModal({
                       overflow: "hidden",
                       border:
                         form.thumbnail === url
-                          ? "3px solid #3b82f6"
-                          : "2px solid #e2e8f0",
+                          ? "3px solid var(--brand)"
+                          : "2px solid var(--border)",
                       aspectRatio: "4/3",
                     }}
                   >
@@ -890,7 +908,7 @@ export default function RoomFormModal({
                           position: "absolute",
                           top: 6,
                           left: 6,
-                          background: "#3b82f6",
+                          background: "var(--brand)",
                           borderRadius: 4,
                           padding: "2px 7px",
                           fontSize: 10,
@@ -958,8 +976,8 @@ export default function RoomFormModal({
       <div
         style={{
           padding: "14px 24px",
-          background: "#f8fafc",
-          borderTop: "1px solid #e2e8f0",
+          background: "var(--bg-raised)",
+          borderTop: "1px solid var(--border)",
           borderRadius: "0 0 16px 16px",
           display: "flex",
           justifyContent: "space-between",
@@ -972,9 +990,9 @@ export default function RoomFormModal({
           style={{
             padding: "10px 20px",
             borderRadius: 8,
-            border: "1px solid #e2e8f0",
+            border: "1px solid var(--border)",
             background: "#fff",
-            color: "#64748b",
+            color: "var(--text-secondary)",
             fontWeight: 600,
             cursor: "pointer",
             fontSize: 14,
@@ -990,8 +1008,8 @@ export default function RoomFormModal({
             borderRadius: 8,
             border: "none",
             background: saving
-              ? "#93c5fd"
-              : "linear-gradient(135deg, #1d4ed8, #7c3aed)",
+              ? "var(--brand-muted)"
+              : "linear-gradient(135deg, var(--brand), var(--brand))",
             color: "#fff",
             fontWeight: 700,
             cursor: saving ? "not-allowed" : "pointer",

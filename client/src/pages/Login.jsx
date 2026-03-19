@@ -50,7 +50,7 @@ export default function LoginPage() {
     <div className="login-page" dir={dir}>
       <div className="w-full max-w-5xl grid gap-8 lg:grid-cols-2 items-center">
         <div className="hidden lg:block space-y-6">
-          <div className="inline-flex items-center gap-3 rounded-full border border-slate-200 px-4 py-2 bg-white shadow-sm">
+          <div className="inline-flex items-center gap-3 rounded-full border border-slate-200 px-4 py-2 bg-white dark:bg-slate-800/80 dark:border-slate-700 shadow-sm">
             <img
               src="/logo.png?v=2"
               alt="Travky.com"

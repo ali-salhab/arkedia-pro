@@ -11,19 +11,19 @@ import {
 import PermissionWrapper from "../components/PermissionWrapper";
 
 const STATUS_STYLE = {
-  pending: { background: "#fef9c3", color: "#a16207" },
-  confirmed: { background: "#dcfce7", color: "#16a34a" },
-  checked_in: { background: "#dbeafe", color: "#1d4ed8" },
-  checked_out: { background: "#f3e8ff", color: "#7c3aed" },
-  cancelled: { background: "#fee2e2", color: "#dc2626" },
-  no_show: { background: "#f1f5f9", color: "#64748b" },
+  pending: { background: "rgba(161,98,7,0.15)", color: "#d97706" },
+  confirmed: { background: "rgba(22,163,74,0.15)", color: "#16a34a" },
+  checked_in: { background: "rgba(29,78,216,0.15)", color: "#3b82f6" },
+  checked_out: { background: "rgba(124,58,237,0.15)", color: "#8b5cf6" },
+  cancelled: { background: "rgba(220,38,38,0.15)", color: "#ef4444" },
+  no_show: { background: "rgba(100,116,139,0.15)", color: "#94a3b8" },
 };
 
 const PAYMENT_STYLE = {
-  unpaid: { background: "#fee2e2", color: "#dc2626" },
-  partial: { background: "#fef9c3", color: "#a16207" },
-  paid: { background: "#dcfce7", color: "#16a34a" },
-  refunded: { background: "#dbeafe", color: "#1d4ed8" },
+  unpaid: { background: "rgba(220,38,38,0.15)", color: "#ef4444" },
+  partial: { background: "rgba(161,98,7,0.15)", color: "#d97706" },
+  paid: { background: "rgba(22,163,74,0.15)", color: "#16a34a" },
+  refunded: { background: "rgba(29,78,216,0.15)", color: "#3b82f6" },
 };
 
 function fmt(d) {
@@ -123,40 +123,39 @@ export default function BookingsPage() {
             label: t("bkPage_totalBookings"),
             value: stats.total,
             color: "#3b82f6",
-            bg: "#eff6ff",
           },
           {
             label: t("bkPage_confirmed"),
             value: stats.confirmed,
             color: "#16a34a",
-            bg: "#f0fdf4",
           },
           {
             label: t("bkPage_checkedIn"),
             value: stats.checkedIn,
             color: "#1d4ed8",
-            bg: "#dbeafe",
           },
           {
             label: t("bkPage_pendingPayment"),
             value: stats.unpaid,
             color: "#dc2626",
-            bg: "#fef2f2",
           },
         ].map((s) => (
           <div
             key={s.label}
             style={{
-              background: s.bg,
+              background: "var(--bg-surface)",
               borderRadius: 12,
               padding: "16px 20px",
+              border: "1px solid var(--border)",
               borderLeft: `4px solid ${s.color}`,
             }}
           >
             <div style={{ fontSize: 28, fontWeight: 800, color: s.color }}>
               {s.value}
             </div>
-            <div style={{ fontSize: 13, color: "#64748b", marginTop: 2 }}>
+            <div
+              style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 2 }}
+            >
               {s.label}
             </div>
           </div>
@@ -186,10 +185,12 @@ export default function BookingsPage() {
             style={{
               padding: "9px 14px",
               borderRadius: 8,
-              border: "1px solid #e2e8f0",
+              border: "1px solid var(--border)",
               fontSize: 14,
               minWidth: 220,
               outline: "none",
+              background: "var(--bg-surface)",
+              color: "var(--text-primary)",
             }}
             placeholder={t("bkPage_searchPlaceholder")}
             value={search}
@@ -199,9 +200,11 @@ export default function BookingsPage() {
             style={{
               padding: "9px 14px",
               borderRadius: 8,
-              border: "1px solid #e2e8f0",
+              border: "1px solid var(--border)",
               fontSize: 14,
               outline: "none",
+              background: "var(--bg-surface)",
+              color: "var(--text-primary)",
             }}
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
@@ -218,9 +221,11 @@ export default function BookingsPage() {
             style={{
               padding: "9px 14px",
               borderRadius: 8,
-              border: "1px solid #e2e8f0",
+              border: "1px solid var(--border)",
               fontSize: 14,
               outline: "none",
+              background: "var(--bg-surface)",
+              color: "var(--text-primary)",
             }}
             value={filterPayment}
             onChange={(e) => setFilterPayment(e.target.value)}
@@ -265,9 +270,9 @@ export default function BookingsPage() {
       ) : (
         <div
           style={{
-            background: "#fff",
+            background: "var(--bg-surface)",
             borderRadius: 14,
-            border: "1px solid #e2e8f0",
+            border: "1px solid var(--border)",
             overflow: "hidden",
           }}
         >
@@ -277,8 +282,8 @@ export default function BookingsPage() {
             <thead>
               <tr
                 style={{
-                  background: "#f8fafc",
-                  borderBottom: "1px solid #e2e8f0",
+                  background: "var(--bg-raised)",
+                  borderBottom: "1px solid var(--border)",
                 }}
               >
                 {[
@@ -296,10 +301,10 @@ export default function BookingsPage() {
                     key={h}
                     style={{
                       padding: "12px 14px",
-                      textAlign: "left",
+                      textAlign: "center",
                       fontWeight: 700,
                       fontSize: 12,
-                      color: "#64748b",
+                      color: "var(--text-muted)",
                       textTransform: "uppercase",
                       letterSpacing: "0.04em",
                       whiteSpace: "nowrap",
@@ -315,8 +320,9 @@ export default function BookingsPage() {
                 <tr
                   key={b._id}
                   style={{
-                    borderBottom: "1px solid #f1f5f9",
-                    background: i % 2 === 0 ? "#fff" : "#fafafa",
+                    borderBottom: "1px solid var(--border-soft)",
+                    background:
+                      i % 2 === 0 ? "var(--bg-surface)" : "var(--bg-raised)",
                   }}
                 >
                   <td
@@ -324,29 +330,39 @@ export default function BookingsPage() {
                       padding: "12px 14px",
                       fontFamily: "monospace",
                       fontSize: 13,
-                      color: "#475569",
+                      color: "var(--text-secondary)",
+                      textAlign: "center",
                     }}
                   >
                     {b.reference || "—"}
                   </td>
-                  <td style={{ padding: "12px 14px" }}>
-                    <div style={{ fontWeight: 600, color: "#1e293b" }}>
+                  <td style={{ padding: "12px 14px", textAlign: "center" }}>
+                    <div
+                      style={{ fontWeight: 600, color: "var(--text-primary)" }}
+                    >
                       {b.customerName}
                     </div>
                     {b.customerEmail && (
-                      <div style={{ fontSize: 12, color: "#94a3b8" }}>
+                      <div style={{ fontSize: 12, color: "var(--text-muted)" }}>
                         {b.customerEmail}
                       </div>
                     )}
                   </td>
-                  <td style={{ padding: "12px 14px", color: "#64748b" }}>
+                  <td
+                    style={{
+                      padding: "12px 14px",
+                      color: "var(--text-secondary)",
+                      textAlign: "center",
+                    }}
+                  >
                     {b.roomNumber ? `#${b.roomNumber}` : "—"}
                   </td>
                   <td
                     style={{
                       padding: "12px 14px",
-                      color: "#64748b",
+                      color: "var(--text-secondary)",
                       whiteSpace: "nowrap",
+                      textAlign: "center",
                     }}
                   >
                     {fmt(b.checkIn)}
@@ -354,8 +370,9 @@ export default function BookingsPage() {
                   <td
                     style={{
                       padding: "12px 14px",
-                      color: "#64748b",
+                      color: "var(--text-secondary)",
                       whiteSpace: "nowrap",
+                      textAlign: "center",
                     }}
                   >
                     {fmt(b.checkOut)}
@@ -364,12 +381,13 @@ export default function BookingsPage() {
                     style={{
                       padding: "12px 14px",
                       fontWeight: 700,
-                      color: "#1e293b",
+                      color: "var(--text-primary)",
+                      textAlign: "center",
                     }}
                   >
                     {b.currency || "USD"} {(b.total || 0).toFixed(2)}
                   </td>
-                  <td style={{ padding: "12px 14px" }}>
+                  <td style={{ padding: "12px 14px", textAlign: "center" }}>
                     <span
                       style={{
                         ...(STATUS_STYLE[b.status] || STATUS_STYLE.pending),
@@ -382,7 +400,7 @@ export default function BookingsPage() {
                       {(b.status || "pending").replace("_", " ").toUpperCase()}
                     </span>
                   </td>
-                  <td style={{ padding: "12px 14px" }}>
+                  <td style={{ padding: "12px 14px", textAlign: "center" }}>
                     <span
                       style={{
                         ...(PAYMENT_STYLE[b.paymentStatus] ||
@@ -396,19 +414,26 @@ export default function BookingsPage() {
                       {(b.paymentStatus || "unpaid").toUpperCase()}
                     </span>
                   </td>
-                  <td style={{ padding: "12px 14px" }}>
-                    <div style={{ display: "flex", gap: 6 }}>
+                  <td style={{ padding: "12px 14px", textAlign: "center" }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        gap: 6,
+                        justifyContent: "center",
+                        alignItems: "center",
+                      }}
+                    >
                       <PermissionWrapper permission="bookings:edit">
                         <button
                           onClick={() => openEdit(b)}
                           style={{
                             padding: "4px 10px",
                             borderRadius: 6,
-                            border: "1px solid #e2e8f0",
-                            background: "#f8fafc",
+                            border: "1px solid var(--border)",
+                            background: "var(--bg-raised)",
                             cursor: "pointer",
                             fontSize: 12,
-                            color: "#1d4ed8",
+                            color: "var(--brand)",
                             fontWeight: 600,
                           }}
                         >
@@ -422,10 +447,10 @@ export default function BookingsPage() {
                             padding: "4px 10px",
                             borderRadius: 6,
                             border: "none",
-                            background: "#fef2f2",
+                            background: "rgba(220, 38, 38, 0.12)",
                             cursor: "pointer",
                             fontSize: 12,
-                            color: "#dc2626",
+                            color: "var(--danger)",
                             fontWeight: 600,
                           }}
                         >
@@ -456,9 +481,10 @@ export default function BookingsPage() {
         >
           <div
             style={{
-              background: "#fff",
+              background: "var(--bg-surface)",
               borderRadius: 14,
               padding: 28,
+              border: "1px solid var(--border)",
               maxWidth: 380,
               width: "90%",
             }}
@@ -466,7 +492,13 @@ export default function BookingsPage() {
             <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 10 }}>
               {t("bkPage_deleteBookingTitle")}
             </div>
-            <div style={{ fontSize: 14, color: "#64748b", marginBottom: 6 }}>
+            <div
+              style={{
+                fontSize: 14,
+                color: "var(--text-secondary)",
+                marginBottom: 6,
+              }}
+            >
               {confirmDelete.customerName}
             </div>
             {confirmDelete.reference && (
@@ -474,14 +506,20 @@ export default function BookingsPage() {
                 style={{
                   fontSize: 12,
                   fontFamily: "monospace",
-                  color: "#94a3b8",
+                  color: "var(--text-muted)",
                   marginBottom: 18,
                 }}
               >
                 {confirmDelete.reference}
               </div>
             )}
-            <div style={{ fontSize: 13, color: "#64748b", marginBottom: 20 }}>
+            <div
+              style={{
+                fontSize: 13,
+                color: "var(--text-secondary)",
+                marginBottom: 20,
+              }}
+            >
               {t("roomsPage_deleteCannotUndo")}
             </div>
             <div
@@ -492,8 +530,9 @@ export default function BookingsPage() {
                 style={{
                   padding: "9px 18px",
                   borderRadius: 8,
-                  border: "1px solid #e2e8f0",
-                  background: "#fff",
+                  border: "1px solid var(--border)",
+                  background: "var(--bg-raised)",
+                  color: "var(--text-primary)",
                   cursor: "pointer",
                 }}
               >

@@ -1,4 +1,4 @@
-import { AreaChart, Area, ResponsiveContainer } from "recharts";
+import { AreaChart, Area, ResponsiveContainer, YAxis } from "recharts";
 import { TrendingUp, TrendingDown } from "lucide-react";
 
 export default function StatCard({
@@ -13,11 +13,25 @@ export default function StatCard({
   const isPositive = trendPositive !== false;
   const hasTrend = trend && trend !== "—";
 
+  const values = Array.isArray(sparkData)
+    ? sparkData
+        .map((point) => Number(point?.value))
+        .filter((value) => Number.isFinite(value))
+    : [];
+  const minValue = values.length > 0 ? Math.min(...values) : 0;
+  const maxValue = values.length > 0 ? Math.max(...values) : 0;
+  const span = Math.max(1, maxValue - minValue);
+  const pad = span * 0.25;
+  const yDomain = [Math.max(0, minValue - pad), maxValue + pad];
+
   return (
-    <div className="bg-white dark:bg-slate-800/70 rounded-2xl border border-slate-100 dark:border-slate-700/60 shadow-sm overflow-hidden flex flex-col">
+    <div className="card overflow-hidden flex flex-col">
       <div className="p-5 pb-3 flex-1">
         <div className="flex items-start justify-between mb-3">
-          <span className="text-sm font-medium text-slate-500 dark:text-slate-400">
+          <span
+            className="text-sm font-medium"
+            style={{ color: "var(--text-secondary)" }}
+          >
             {title}
           </span>
           {Icon && (
@@ -29,18 +43,23 @@ export default function StatCard({
             </div>
           )}
         </div>
-        <div className="text-3xl font-bold tracking-tight text-slate-800 dark:text-slate-100">
+        <div
+          className="text-3xl font-bold tracking-tight"
+          style={{ color: "var(--text-primary)" }}
+        >
           {value}
         </div>
         {hasTrend && (
           <div
-            className={`flex items-center gap-1.5 mt-1.5 text-sm font-medium ${
-              isPositive ? "text-emerald-500" : "text-red-500"
-            }`}
+            className="flex items-center gap-1.5 mt-1.5 text-sm font-medium"
+            style={{ color: isPositive ? "var(--success)" : "var(--danger)" }}
           >
             {isPositive ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
             <span>{trend}</span>
-            <span className="text-slate-400 dark:text-slate-500 font-normal text-xs">
+            <span
+              className="font-normal text-xs"
+              style={{ color: "var(--text-muted)" }}
+            >
               vs last month
             </span>
           </div>
@@ -53,6 +72,7 @@ export default function StatCard({
               data={sparkData}
               margin={{ top: 0, right: 0, left: 0, bottom: 0 }}
             >
+              <YAxis domain={yDomain} hide />
               <defs>
                 <linearGradient
                   id={`spark-${title.replace(/\s+/g, "")}`}

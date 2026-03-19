@@ -27,10 +27,11 @@ export default function RoomFormPage() {
   const handleClose = () => navigate(backTo);
 
   return (
-    <div className="max-w-4xl mx-auto space-y-4">
+    <div className="mx-auto w-full px-1 sm:px-2">
       <button
         onClick={handleClose}
-        className="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-800 transition-colors"
+        className="btn btn-secondary"
+        style={{ width: "fit-content" }}
       >
         <ArrowLeft className="w-4 h-4" />
         Back

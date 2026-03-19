@@ -1,4 +1,5 @@
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
+import { useLanguage } from "../context/LanguageContext";
 
 const COLORS = [
   "#f97316",
@@ -11,13 +12,16 @@ const COLORS = [
 
 export default function DonutChart({
   data = [],
-  title = "Distribution",
+  title,
   subtitle = "",
-  centerLabel = "Total",
+  centerLabel,
 }) {
+  const { t } = useLanguage();
+  const chartTitle = title || t("dashboardDistributionTitle");
+  const chartCenterLabel = centerLabel || t("dashboardTotalLabel");
   const total = data.reduce((s, d) => s + (d.value || 0), 0);
   const isEmpty = total === 0 || data.length === 0;
-  const displayData = isEmpty ? [{ name: "No data", value: 1 }] : data;
+  const displayData = isEmpty ? [{ name: t("noData"), value: 1 }] : data;
 
   const formatCenter = () => {
     if (isEmpty) return "—";
@@ -26,13 +30,27 @@ export default function DonutChart({
     return String(total);
   };
 
+  const tooltipStyles = {
+    borderRadius: 10,
+    fontSize: 12,
+    border: "1px solid var(--border)",
+    background: "var(--bg-surface)",
+    color: "var(--text-primary)",
+  };
+
   return (
-    <div className="bg-white dark:bg-slate-800/70 rounded-2xl p-6 border border-slate-100 dark:border-slate-700/60 shadow-sm">
-      <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">
-        {title}
+    <div className="card">
+      <h3
+        className="text-base font-bold"
+        style={{ color: "var(--text-primary)" }}
+      >
+        {chartTitle}
       </h3>
       {subtitle && (
-        <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+        <p
+          className="mt-0.5 text-sm"
+          style={{ color: "var(--text-secondary)" }}
+        >
           {subtitle}
         </p>
       )}
@@ -62,21 +80,20 @@ export default function DonutChart({
               {!isEmpty && (
                 <Tooltip
                   formatter={(v) => [`${((v / total) * 100).toFixed(0)}%`]}
-                  contentStyle={{
-                    borderRadius: 10,
-                    fontSize: 12,
-                    border: "1px solid #e2e8f0",
-                  }}
+                  contentStyle={tooltipStyles}
                 />
               )}
             </PieChart>
           </ResponsiveContainer>
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-            <div className="text-xl font-bold text-slate-800 dark:text-slate-100">
+            <div
+              className="text-xl font-bold"
+              style={{ color: "var(--text-primary)" }}
+            >
               {formatCenter()}
             </div>
-            <div className="text-xs text-slate-500 dark:text-slate-400">
-              {centerLabel}
+            <div className="text-xs" style={{ color: "var(--text-secondary)" }}>
+              {chartCenterLabel}
             </div>
           </div>
         </div>
@@ -92,18 +109,24 @@ export default function DonutChart({
                     className="w-2.5 h-2.5 rounded-full flex-shrink-0"
                     style={{ background: COLORS[i % COLORS.length] }}
                   />
-                  <span className="text-slate-600 dark:text-slate-300 truncate">
+                  <span
+                    className="truncate"
+                    style={{ color: "var(--text-secondary)" }}
+                  >
                     {d.name}
                   </span>
                 </div>
-                <span className="font-semibold text-slate-700 dark:text-slate-200 flex-shrink-0">
+                <span
+                  className="font-semibold flex-shrink-0"
+                  style={{ color: "var(--text-primary)" }}
+                >
                   {((d.value / total) * 100).toFixed(0)}%
                 </span>
               </div>
             ))
           ) : (
-            <p className="text-sm text-slate-400 dark:text-slate-500">
-              No data
+            <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+              {t("noData")}
             </p>
           )}
         </div>

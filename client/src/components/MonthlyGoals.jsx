@@ -1,24 +1,35 @@
+import { useLanguage } from "../context/LanguageContext";
+
 function GoalBar({ label, current, target, color = "#3b82f6", unit = "" }) {
   const pct = target > 0 ? Math.min(100, (current / target) * 100) : 0;
   return (
     <div>
       <div className="flex justify-between items-center text-sm mb-1.5">
-        <span className="text-slate-600 dark:text-slate-300 font-medium">
+        <span
+          className="font-medium"
+          style={{ color: "var(--text-secondary)" }}
+        >
           {label}
         </span>
-        <span className="text-slate-500 dark:text-slate-400 text-xs">
+        <span className="text-xs" style={{ color: "var(--text-muted)" }}>
           {current}
           {unit} / {target}
           {unit}
         </span>
       </div>
-      <div className="h-2 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+      <div
+        className="h-2 rounded-full overflow-hidden"
+        style={{ background: "var(--bg-raised)" }}
+      >
         <div
           className="h-full rounded-full transition-all duration-700"
           style={{ width: `${pct}%`, background: color }}
         />
       </div>
-      <div className="text-right text-xs text-slate-400 dark:text-slate-500 mt-0.5">
+      <div
+        className="mt-0.5 text-right text-xs"
+        style={{ color: "var(--text-muted)" }}
+      >
         {pct.toFixed(0)}%
       </div>
     </div>
@@ -26,20 +37,31 @@ function GoalBar({ label, current, target, color = "#3b82f6", unit = "" }) {
 }
 
 export default function MonthlyGoals({ goals = [] }) {
+  const { t } = useLanguage();
+
   return (
-    <div className="bg-white dark:bg-slate-800/70 rounded-2xl p-6 border border-slate-100 dark:border-slate-700/60 shadow-sm">
-      <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">
-        Monthly Goals
+    <div className="card">
+      <h3
+        className="text-base font-bold"
+        style={{ color: "var(--text-primary)" }}
+      >
+        {t("dashboardMonthlyGoalsTitle")}
       </h3>
-      <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5 mb-5">
-        Track progress toward targets
+      <p
+        className="mt-0.5 mb-5 text-sm"
+        style={{ color: "var(--text-secondary)" }}
+      >
+        {t("dashboardMonthlyGoalsSubtitle")}
       </p>
       <div className="space-y-4">
         {goals.length > 0 ? (
           goals.map((g, i) => <GoalBar key={i} {...g} />)
         ) : (
-          <p className="text-sm text-slate-400 dark:text-slate-500 text-center py-4">
-            No active goals
+          <p
+            className="py-4 text-center text-sm"
+            style={{ color: "var(--text-muted)" }}
+          >
+            {t("dashboardNoGoals")}
           </p>
         )}
       </div>

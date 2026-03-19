@@ -112,40 +112,26 @@ const SIDEBAR_NAME_MAP = {
 };
 
 const ICON_MAP = {
-  Dashboard: <LayoutDashboard size={18} />,
-  Users: <Users size={18} />,
-  Admins: <UserCheck size={18} />,
-  "My Team": <Users size={18} />,
-
-  "All Hotels": <Building2 size={18} />,
-  "My Hotels": <Building2 size={18} />,
-  "All Restaurants": <UtensilsCrossed size={18} />,
-  "My Restaurants": <UtensilsCrossed size={18} />,
-  "All Activities": <Zap size={18} />,
-  "My Activities": <Zap size={18} />,
-  "All Bookings": <CalendarDays size={18} />,
-  "Rooms/Tables": <BedDouble size={18} />,
-  Rooms: <BedDouble size={18} />,
-  Tables: <BedDouble size={18} />,
-  Reservations: <CalendarDays size={18} />,
-  Activities: <Zap size={18} />,
-  Bookings: <CalendarDays size={18} />,
-  Finance: <DollarSign size={18} />,
-  Reports: <BarChart2 size={18} />,
-  Settings: <Settings size={18} />,
-};
-
-const ROLE_BADGE = {
-  super_admin: { label: "Super Admin", color: "#0369a1", bg: "#e0f2fe" },
-  superadminuser: { label: "SA Staff", color: "#0369a1", bg: "#e0f2fe" },
-  admin: { label: "Admin", color: "#2563eb", bg: "#dbeafe" },
-  adminuser: { label: "Admin Staff", color: "#2563eb", bg: "#dbeafe" },
-  hotel: { label: "Hotel", color: "#166534", bg: "#dcfce7" },
-  hoteluser: { label: "Hotel Staff", color: "#166534", bg: "#dcfce7" },
-  restaurant: { label: "Restaurant", color: "#92400e", bg: "#fef3c7" },
-  restaurantuser: { label: "Rest. Staff", color: "#92400e", bg: "#fef3c7" },
-  activity: { label: "Activity", color: "#0f766e", bg: "#ccfbf1" },
-  activityuser: { label: "Act. Staff", color: "#0f766e", bg: "#ccfbf1" },
+  Dashboard: <LayoutDashboard size={17} />,
+  Users: <Users size={17} />,
+  Admins: <UserCheck size={17} />,
+  "My Team": <Users size={17} />,
+  "All Hotels": <Building2 size={17} />,
+  "My Hotels": <Building2 size={17} />,
+  "All Restaurants": <UtensilsCrossed size={17} />,
+  "My Restaurants": <UtensilsCrossed size={17} />,
+  "All Activities": <Zap size={17} />,
+  "My Activities": <Zap size={17} />,
+  "All Bookings": <CalendarDays size={17} />,
+  "Rooms/Tables": <BedDouble size={17} />,
+  Rooms: <BedDouble size={17} />,
+  Tables: <BedDouble size={17} />,
+  Reservations: <CalendarDays size={17} />,
+  Activities: <Zap size={17} />,
+  Bookings: <CalendarDays size={17} />,
+  Finance: <DollarSign size={17} />,
+  Reports: <BarChart2 size={17} />,
+  Settings: <Settings size={17} />,
 };
 
 function buildMenu(role, permissions) {
@@ -167,7 +153,6 @@ export default function Sidebar({ mobileOpen = false, onClose }) {
     () => buildMenu(currentUser?.role, userPerms),
     [currentUser?.role, userPerms],
   );
-  const roleBadge = ROLE_BADGE[currentUser?.role];
 
   const handleLogout = () => {
     dispatch(api.util.resetApiState());
@@ -181,16 +166,18 @@ export default function Sidebar({ mobileOpen = false, onClose }) {
 
   return (
     <>
+      {/* Mobile overlay */}
       <div
-        className={`fixed inset-0 z-30 bg-slate-950/40 backdrop-blur-sm transition-opacity lg:hidden ${
+        className={`fixed inset-0 z-30 backdrop-blur-sm transition-opacity lg:hidden ${
           mobileOpen ? "opacity-100" : "pointer-events-none opacity-0"
         }`}
+        style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
         onClick={closeMobile}
       />
 
       <aside
-        className={`fixed ${isRtl ? "right-0" : "left-0"} top-[60px] z-40 flex h-[calc(100vh-60px)] flex-col border-r border-white/40 bg-white/85 shadow-2xl backdrop-blur-2xl transition-all duration-300 dark:border-slate-700 dark:bg-slate-900/90 lg:static lg:top-0 lg:z-10 lg:h-full ${
-          collapsed ? "lg:w-20" : "lg:w-72"
+        className={`fixed ${isRtl ? "right-0" : "left-0"} top-[56px] z-40 flex h-[calc(100vh-56px)] flex-col transition-all duration-300 lg:static lg:top-0 lg:z-10 lg:h-full ${
+          collapsed ? "lg:w-[68px]" : "lg:w-64"
         } ${
           mobileOpen
             ? "translate-x-0"
@@ -198,39 +185,46 @@ export default function Sidebar({ mobileOpen = false, onClose }) {
               ? "translate-x-full lg:translate-x-0"
               : "-translate-x-full lg:translate-x-0"
         }`}
+        style={{
+          backgroundColor: "var(--sidebar-bg)",
+          borderRight: isRtl ? "none" : "1px solid var(--sidebar-border)",
+          borderLeft: isRtl ? "1px solid var(--sidebar-border)" : "none",
+        }}
       >
-        <div className="flex items-center justify-between bg-gradient-to-r from-sky-700 via-blue-600 to-cyan-500 px-4 py-3 shadow-lg shadow-sky-900/15">
-          <div className="flex min-w-0 items-center gap-2">
-            <img
-              src="/logo.png"
-              alt="logo"
-              className="h-9 w-9 rounded-full border border-white/40 object-cover"
-              onError={(e) => {
-                e.target.style.display = "none";
-              }}
-            />
-          </div>
-
+        <div className="hidden justify-end px-2 pt-2 lg:flex">
           <button
             onClick={() => setCollapsed((v) => !v)}
-            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            className="hidden h-8 w-8 items-center justify-center rounded-lg bg-white/20 text-white transition hover:bg-white/30 lg:flex"
+            title={collapsed ? "Expand" : "Collapse"}
+            className="h-7 w-7 items-center justify-center rounded-lg transition"
+            style={{
+              backgroundColor: "var(--bg-raised)",
+              color: "var(--text-secondary)",
+              border: "1px solid var(--border)",
+            }}
+            onMouseEnter={(e) =>
+              (e.currentTarget.style.backgroundColor =
+                "var(--sidebar-hover-bg)")
+            }
+            onMouseLeave={(e) =>
+              (e.currentTarget.style.backgroundColor = "var(--bg-raised)")
+            }
           >
             {collapsed ? (
               isRtl ? (
-                <ChevronLeft size={16} />
+                <ChevronLeft size={15} />
               ) : (
-                <ChevronRight size={16} />
+                <ChevronRight size={15} />
               )
             ) : isRtl ? (
-              <ChevronRight size={16} />
+              <ChevronRight size={15} />
             ) : (
-              <ChevronLeft size={16} />
+              <ChevronLeft size={15} />
             )}
           </button>
         </div>
 
-        <nav className="flex-1 space-y-1 overflow-y-auto px-2 py-3">
+        {/* Nav items */}
+        <nav className="flex-1 overflow-y-auto px-2 pb-3 pt-2 space-y-0.5">
           {menu.map((item) => (
             <NavLink
               key={item.route}
@@ -240,17 +234,35 @@ export default function Sidebar({ mobileOpen = false, onClose }) {
                 collapsed ? t(SIDEBAR_NAME_MAP[item.name] || item.name) : ""
               }
               className={({ isActive }) =>
-                `group flex items-center rounded-xl px-3 py-2 text-sm transition ${
-                  collapsed ? "justify-center" : "justify-start gap-3"
-                } ${
-                  isActive
-                    ? "bg-sky-50 text-sky-700 dark:bg-sky-500/20 dark:text-sky-200"
-                    : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+                `sidebar-item ${collapsed ? "justify-center" : "gap-3"} ${
+                  isActive ? "active" : ""
                 }`
               }
+              style={({ isActive }) =>
+                isActive
+                  ? {
+                      borderLeft: isRtl
+                        ? "none"
+                        : "2px solid var(--sidebar-active-border)",
+                      borderRight: isRtl
+                        ? "2px solid var(--sidebar-active-border)"
+                        : "none",
+                      paddingLeft: isRtl
+                        ? undefined
+                        : collapsed
+                          ? undefined
+                          : "calc(0.75rem - 2px)",
+                      paddingRight: isRtl
+                        ? collapsed
+                          ? undefined
+                          : "calc(0.75rem - 2px)"
+                        : undefined,
+                    }
+                  : undefined
+              }
             >
-              <span className="shrink-0">
-                {ICON_MAP[item.name] || <Circle size={18} />}
+              <span className="shrink-0" style={{ opacity: 0.85 }}>
+                {ICON_MAP[item.name] || <Circle size={17} />}
               </span>
               {!collapsed && (
                 <span className="truncate">
@@ -261,15 +273,26 @@ export default function Sidebar({ mobileOpen = false, onClose }) {
           ))}
         </nav>
 
-        <div className="border-t border-slate-200/80 p-2 dark:border-slate-700">
+        {/* Logout */}
+        <div
+          className="p-2"
+          style={{ borderTop: "1px solid var(--sidebar-border)" }}
+        >
           <button
             onClick={handleLogout}
             title={collapsed ? t("logout") : ""}
-            className={`flex w-full items-center rounded-xl px-3 py-2 text-sm font-medium text-rose-500 transition hover:bg-rose-50 dark:hover:bg-rose-500/10 ${
+            className={`flex w-full items-center rounded-xl px-3 py-2 text-sm font-medium transition ${
               collapsed ? "justify-center" : "gap-3"
             }`}
+            style={{ color: "var(--danger)" }}
+            onMouseEnter={(e) =>
+              (e.currentTarget.style.backgroundColor = "var(--bg-raised)")
+            }
+            onMouseLeave={(e) =>
+              (e.currentTarget.style.backgroundColor = "transparent")
+            }
           >
-            <LogOut size={18} />
+            <LogOut size={17} />
             {!collapsed && <span>{t("logout")}</span>}
           </button>
         </div>

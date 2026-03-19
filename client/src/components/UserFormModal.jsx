@@ -320,11 +320,11 @@ const rolePresets = {
 };
 
 const inputStyle = {
-  background: "#ffffff",
-  border: "1px solid #cbd5e1",
+  background: "var(--bg-surface)",
+  border: "1px solid var(--border)",
   borderRadius: 8,
   padding: "10px 14px",
-  color: "#1e293b",
+  color: "var(--text-primary)",
   width: "100%",
   fontSize: 14,
 };
@@ -333,7 +333,7 @@ const labelStyle = {
   display: "block",
   marginBottom: 6,
   fontWeight: 500,
-  color: "#475569",
+  color: "var(--text-secondary)",
   fontSize: 13,
 };
 
@@ -405,7 +405,39 @@ export default function UserFormModal({
   const [saveError, setSaveError] = useState("");
   const [useCustomPermissions, setUseCustomPermissions] = useState(false);
   const { t, dir } = useLanguage();
+  const isRtl = dir === "rtl";
   const logoInputRef = useRef(null);
+
+  const selectedRole = fixedRole || form.role;
+  const roleLabels = {
+    super_admin: t("role_super_admin"),
+    superadminuser: isRtl ? "مستخدم مسؤول رئيسي" : "Super Admin User",
+    admin: t("role_admin"),
+    adminuser: isRtl ? "مستخدم مدير" : "Admin User",
+    hotel: t("role_hotel"),
+    hoteluser: isRtl ? "مستخدم فندق" : "Hotel User",
+    restaurant: t("role_restaurant"),
+    restaurantuser: isRtl ? "مستخدم مطعم" : "Restaurant User",
+    activity: t("role_activity"),
+    activityuser: isRtl ? "مستخدم نشاط" : "Activity User",
+  };
+  const selectedRoleLabel = roleLabels[selectedRole] || selectedRole;
+  const pageTitle = user
+    ? `${isRtl ? "تعديل" : "Edit"} ${selectedRoleLabel}`
+    : `${isRtl ? "إضافة" : "New"} ${selectedRoleLabel}`;
+  const pageSubtitle = isRtl
+    ? "أدخل البيانات الأساسية ثم راجع الصلاحيات قبل الحفظ."
+    : "Enter the essential details and review permissions before saving.";
+  const backLabel = isRtl ? "رجوع" : "Back";
+  const showLogoUpload = [
+    "hotel",
+    "hoteluser",
+    "restaurant",
+    "restaurantuser",
+    "activity",
+    "activityuser",
+  ].includes(selectedRole);
+  const selectedAdmin = adminsList.find((admin) => admin._id === form.adminId);
 
   useEffect(() => {
     if (user) {
@@ -535,8 +567,7 @@ export default function UserFormModal({
       alert(t("password") + " required");
       return;
     }
-    const effectiveRole = fixedRole || form.role;
-    const needsAdmin = ADMIN_OWNED_ROLES.has(effectiveRole);
+    const needsAdmin = ADMIN_OWNED_ROLES.has(selectedRole);
     if (isPlatformRole && needsAdmin && !form.adminId) {
       alert(t("adminRequired"));
       return;
@@ -595,10 +626,10 @@ export default function UserFormModal({
       className="card"
       style={{
         width: pageMode ? "100%" : "90%",
-        maxWidth: 900,
+        maxWidth: pageMode ? "none" : 900,
         maxHeight: pageMode ? "none" : "90vh",
         overflow: "auto",
-        background: "#ffffff",
+        background: "var(--bg-surface)",
       }}
     >
       {/* Header */}
@@ -606,22 +637,52 @@ export default function UserFormModal({
         style={{
           display: "flex",
           justifyContent: "space-between",
-          alignItems: "center",
+          alignItems: "flex-start",
           marginBottom: 20,
           padding: "0 0 16px 0",
-          borderBottom: "1px solid #e2e8f0",
+          borderBottom: "1px solid var(--border)",
         }}
       >
-        <h2 style={{ margin: 0, color: "#1e293b" }}>
-          {user ? t("editUser") : t("createNewUser")}
-        </h2>
-        <button
-          className="btn"
-          onClick={onClose}
-          style={{ background: "#475569" }}
-        >
-          ✕
-        </button>
+        <div>
+          <h2
+            style={{
+              margin: 0,
+              color: "var(--text-primary)",
+              fontSize: pageMode ? 28 : 22,
+              fontWeight: 700,
+            }}
+          >
+            {pageMode
+              ? isRtl
+                ? "المعلومات الأساسية"
+                : "Basic Information"
+              : user
+                ? t("editUser")
+                : t("createNewUser")}
+          </h2>
+          {pageMode && (
+            <p
+              style={{
+                margin: "6px 0 0 0",
+                color: "var(--text-secondary)",
+                fontSize: 14,
+              }}
+            >
+              {isRtl
+                ? "أدخل تفاصيل الحساب الأساسية ثم راجع إعدادات الصلاحيات."
+                : "Enter the account basics, then review permission settings."}
+            </p>
+          )}
+        </div>
+        {!pageMode && (
+          <button
+            className="icon-btn"
+            onClick={onClose}
+            aria-label={t("close")}
+          >
+            ✕
+          </button>
+        )}
       </div>
 
       {/* Tabs */}
@@ -630,7 +691,7 @@ export default function UserFormModal({
           display: "flex",
           gap: 8,
           marginBottom: 20,
-          borderBottom: "1px solid #e2e8f0",
+          borderBottom: "1px solid var(--border)",
           paddingBottom: 12,
         }}
       >
@@ -638,10 +699,11 @@ export default function UserFormModal({
           onClick={() => setActiveTab("basic")}
           style={{
             padding: "10px 20px",
-            background: activeTab === "basic" ? "#2563eb" : "#f1f5f9",
+            background:
+              activeTab === "basic" ? "var(--brand)" : "var(--bg-raised)",
             border: "none",
             borderRadius: 8,
-            color: activeTab === "basic" ? "#fff" : "#64748b",
+            color: activeTab === "basic" ? "#fff" : "var(--text-secondary)",
             cursor: "pointer",
             fontWeight: 500,
           }}
@@ -652,10 +714,12 @@ export default function UserFormModal({
           onClick={() => setActiveTab("permissions")}
           style={{
             padding: "10px 20px",
-            background: activeTab === "permissions" ? "#2563eb" : "#f1f5f9",
+            background:
+              activeTab === "permissions" ? "var(--brand)" : "var(--bg-raised)",
             border: "none",
             borderRadius: 8,
-            color: activeTab === "permissions" ? "#fff" : "#64748b",
+            color:
+              activeTab === "permissions" ? "#fff" : "var(--text-secondary)",
             cursor: "pointer",
             fontWeight: 500,
           }}
@@ -669,9 +733,9 @@ export default function UserFormModal({
         <div
           style={{
             padding: 16,
-            background: "#f8fafc",
+            background: "var(--bg-raised)",
             borderRadius: 12,
-            border: "1px solid #e2e8f0",
+            border: "1px solid var(--border)",
           }}
         >
           <div
@@ -728,8 +792,8 @@ export default function UserFormModal({
                 <div
                   style={{
                     ...inputStyle,
-                    background: "#f1f5f9",
-                    color: "#475569",
+                    background: "var(--bg-raised)",
+                    color: "var(--text-secondary)",
                     display: "flex",
                     alignItems: "center",
                     fontWeight: 600,
@@ -797,18 +861,18 @@ export default function UserFormModal({
           </div>
 
           {/* Admin Selector — required for platform roles when creating hotel/restaurant/activity accounts */}
-          {isPlatformRole && ADMIN_OWNED_ROLES.has(fixedRole || form.role) && (
+          {isPlatformRole && ADMIN_OWNED_ROLES.has(selectedRole) && (
             <div style={{ marginTop: 16 }}>
-              <label style={{ ...labelStyle, color: "#f59e0b" }}>
+              <label style={{ ...labelStyle, color: "var(--warning)" }}>
                 🔗 {t("linkedAdmin")} *
               </label>
               {adminsList.length === 0 ? (
                 <div
                   style={{
                     ...inputStyle,
-                    background: "#fef2f2",
-                    borderColor: "#ef4444",
-                    color: "#ef4444",
+                    background: "rgba(220, 38, 38, 0.12)",
+                    borderColor: "var(--danger)",
+                    color: "var(--danger)",
                   }}
                 >
                   ⚠️ No admins found — create an admin account first before
@@ -819,7 +883,9 @@ export default function UserFormModal({
                   <select
                     style={{
                       ...inputStyle,
-                      borderColor: form.adminId ? "#22c55e" : "#ef4444",
+                      borderColor: form.adminId
+                        ? "var(--success)"
+                        : "var(--danger)",
                     }}
                     value={form.adminId}
                     onChange={(e) => handleChange("adminId", e.target.value)}
@@ -834,7 +900,7 @@ export default function UserFormModal({
                   {!form.adminId && (
                     <p
                       style={{
-                        color: "#ef4444",
+                        color: "var(--danger)",
                         fontSize: 12,
                         marginTop: 4,
                       }}
@@ -848,71 +914,81 @@ export default function UserFormModal({
           )}
 
           {/* Logo URL for hotel/restaurant/activity */}
-          {fixedRole &&
-            fixedRole !== "super_admin" &&
-            fixedRole !== "admin" && (
-              <div style={{ marginTop: 16 }}>
-                <label style={labelStyle}>🖼️ {t("logoUpload")}</label>
-                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                  {form.logo && (
-                    <img
-                      src={form.logo}
-                      alt="logo"
-                      style={{
-                        width: 52,
-                        height: 52,
-                        borderRadius: "50%",
-                        objectFit: "cover",
-                        border: "2px solid #e2e8f0",
-                      }}
-                    />
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => logoInputRef.current?.click()}
+          {showLogoUpload && (
+            <div style={{ marginTop: 16 }}>
+              <label style={labelStyle}>🖼️ {t("logoUpload")}</label>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                {form.logo && (
+                  <img
+                    src={form.logo}
+                    alt="logo"
                     style={{
-                      padding: "10px 18px",
-                      background: "#f1f5f9",
-                      border: "1px dashed #94a3b8",
-                      borderRadius: 8,
-                      color: "#475569",
-                      cursor: "pointer",
-                      fontSize: 13,
-                      fontWeight: 500,
+                      width: 52,
+                      height: 52,
+                      borderRadius: "50%",
+                      objectFit: "cover",
+                      border: "2px solid var(--border)",
                     }}
-                  >
-                    📂 {t("logoUpload")}
-                  </button>
-                  {form.logo && (
-                    <span style={{ color: "#22c55e", fontSize: 12 }}>
-                      {t("logoPreview")}
-                    </span>
-                  )}
-                </div>
-                <input
-                  ref={logoInputRef}
-                  type="file"
-                  accept="image/*"
-                  style={{ display: "none" }}
-                  onChange={handleLogoUpload}
-                />
+                  />
+                )}
+                <button
+                  type="button"
+                  onClick={() => logoInputRef.current?.click()}
+                  style={{
+                    padding: "10px 18px",
+                    background: "var(--bg-raised)",
+                    border: "1px dashed var(--text-muted)",
+                    borderRadius: 8,
+                    color: "var(--text-secondary)",
+                    cursor: "pointer",
+                    fontSize: 13,
+                    fontWeight: 500,
+                  }}
+                >
+                  📂 {t("logoUpload")}
+                </button>
+                {form.logo && (
+                  <span style={{ color: "var(--success)", fontSize: 12 }}>
+                    {t("logoPreview")}
+                  </span>
+                )}
               </div>
-            )}
+              <input
+                ref={logoInputRef}
+                type="file"
+                accept="image/*"
+                style={{ display: "none" }}
+                onChange={handleLogoUpload}
+              />
+            </div>
+          )}
 
           {/* Role Description */}
           <div
             style={{
               marginTop: 20,
               padding: 16,
-              background: "#eff6ff",
+              background: "var(--brand-muted)",
               borderRadius: 8,
-              borderLeft: "4px solid #3b82f6",
+              borderLeft: "4px solid var(--brand)",
             }}
           >
-            <h4 style={{ margin: "0 0 8px 0", color: "#2563eb", fontSize: 14 }}>
+            <h4
+              style={{
+                margin: "0 0 8px 0",
+                color: "var(--brand)",
+                fontSize: 14,
+              }}
+            >
               {t("roleDescription")}
             </h4>
-            <p style={{ margin: 0, color: "#475569", fontSize: 13 }}>
+            <p
+              style={{
+                margin: 0,
+                color: "var(--text-secondary)",
+                fontSize: 13,
+              }}
+            >
               {t("roleDesc_" + form.role)}
             </p>
           </div>
@@ -937,7 +1013,10 @@ export default function UserFormModal({
                 }
               }}
             />
-            <label htmlFor="customPerms" style={{ color: "#374151" }}>
+            <label
+              htmlFor="customPerms"
+              style={{ color: "var(--text-secondary)" }}
+            >
               {t("useCustomPerms")}
             </label>
           </div>
@@ -960,7 +1039,7 @@ export default function UserFormModal({
               onClick={selectAllPermissions}
               style={{
                 padding: "8px 16px",
-                background: "#22c55e",
+                background: "var(--success)",
                 border: "none",
                 borderRadius: 6,
                 color: "#fff",
@@ -974,7 +1053,7 @@ export default function UserFormModal({
               onClick={clearAllPermissions}
               style={{
                 padding: "8px 16px",
-                background: "#ef4444",
+                background: "var(--danger)",
                 border: "none",
                 borderRadius: 6,
                 color: "#fff",
@@ -988,7 +1067,7 @@ export default function UserFormModal({
               onClick={applyRolePreset}
               style={{
                 padding: "8px 16px",
-                background: "#8b5cf6",
+                background: "var(--brand)",
                 border: "none",
                 borderRadius: 6,
                 color: "#fff",
@@ -1000,7 +1079,7 @@ export default function UserFormModal({
             </button>
             <span
               style={{
-                color: "#6b7280",
+                color: "var(--text-secondary)",
                 fontSize: 13,
                 alignSelf: "center",
                 marginLeft: "auto",
@@ -1022,14 +1101,14 @@ export default function UserFormModal({
               <div
                 key={module.module}
                 style={{
-                  background: "#f8fafc",
+                  background: "var(--bg-raised)",
                   borderRadius: 12,
                   padding: 16,
                   border: isModuleFullySelected(module.module)
-                    ? "2px solid #22c55e"
+                    ? "2px solid var(--success)"
                     : isModulePartiallySelected(module.module)
-                      ? "2px solid #f59e0b"
-                      : "2px solid #e2e8f0",
+                      ? "2px solid var(--warning)"
+                      : "2px solid var(--border)",
                 }}
               >
                 {/* Module Header */}
@@ -1040,12 +1119,18 @@ export default function UserFormModal({
                     gap: 10,
                     marginBottom: 12,
                     paddingBottom: 10,
-                    borderBottom: "1px solid #e2e8f0",
+                    borderBottom: "1px solid var(--border)",
                   }}
                 >
                   <span style={{ fontSize: 24 }}>{module.icon}</span>
                   <div style={{ flex: 1 }}>
-                    <h4 style={{ margin: 0, color: "#1e293b", fontSize: 15 }}>
+                    <h4
+                      style={{
+                        margin: 0,
+                        color: "var(--text-primary)",
+                        fontSize: 15,
+                      }}
+                    >
                       {t(`module_${module.module}`)}
                     </h4>
                   </div>
@@ -1065,7 +1150,9 @@ export default function UserFormModal({
                       }
                       style={{ width: 18, height: 18 }}
                     />
-                    <span style={{ color: "#475569", fontSize: 12 }}>
+                    <span
+                      style={{ color: "var(--text-secondary)", fontSize: 12 }}
+                    >
                       {t("allLabel")}
                     </span>
                   </label>
@@ -1086,12 +1173,14 @@ export default function UserFormModal({
                           alignItems: "center",
                           gap: 10,
                           padding: "8px 12px",
-                          background: isSelected ? "#dcfce7" : "#ffffff",
+                          background: isSelected
+                            ? "rgba(34, 197, 94, 0.14)"
+                            : "var(--bg-surface)",
                           borderRadius: 6,
                           cursor: "pointer",
                           border: isSelected
-                            ? "1px solid #86efac"
-                            : "1px solid #e2e8f0",
+                            ? "1px solid rgba(34, 197, 94, 0.45)"
+                            : "1px solid var(--border)",
                           transition: "all 0.15s",
                         }}
                       >
@@ -1103,7 +1192,9 @@ export default function UserFormModal({
                         />
                         <span
                           style={{
-                            color: isSelected ? "#16a34a" : "#4b5563",
+                            color: isSelected
+                              ? "var(--success)"
+                              : "var(--text-secondary)",
                             fontSize: 13,
                           }}
                         >
@@ -1114,8 +1205,8 @@ export default function UserFormModal({
                             style={{
                               marginLeft: "auto",
                               fontSize: 10,
-                              background: "#fee2e2",
-                              color: "#ef4444",
+                              background: "rgba(220, 38, 38, 0.12)",
+                              color: "var(--danger)",
                               padding: "2px 6px",
                               borderRadius: 4,
                             }}
@@ -1136,19 +1227,23 @@ export default function UserFormModal({
             style={{
               marginTop: 20,
               padding: 16,
-              background: "#f8fafc",
+              background: "var(--bg-raised)",
               borderRadius: 12,
-              border: "1px solid #e2e8f0",
+              border: "1px solid var(--border)",
             }}
           >
             <h4
-              style={{ margin: "0 0 12px 0", color: "#1e293b", fontSize: 14 }}
+              style={{
+                margin: "0 0 12px 0",
+                color: "var(--text-primary)",
+                fontSize: 14,
+              }}
             >
               📋 {t("permSummary")}
             </h4>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
               {(form.permissions || []).length === 0 ? (
-                <span style={{ color: "#9ca3af", fontSize: 13 }}>
+                <span style={{ color: "var(--text-muted)", fontSize: 13 }}>
                   {t("noPermsSelected")}
                 </span>
               ) : (
@@ -1157,10 +1252,10 @@ export default function UserFormModal({
                     key={p}
                     style={{
                       padding: "4px 10px",
-                      background: "#e2e8f0",
+                      background: "#1e3a8a",
                       borderRadius: 20,
                       fontSize: 11,
-                      color: "#475569",
+                      color: "#93c5fd",
                     }}
                   >
                     {p}
@@ -1178,10 +1273,10 @@ export default function UserFormModal({
           style={{
             marginTop: 16,
             padding: "12px 16px",
-            background: "#fef2f2",
-            border: "1px solid #fca5a5",
+            background: "rgba(220, 38, 38, 0.12)",
+            border: "1px solid rgba(220, 38, 38, 0.35)",
             borderRadius: 8,
-            color: "#dc2626",
+            color: "var(--danger)",
             fontSize: 13,
             fontWeight: 500,
             display: "flex",
@@ -1193,40 +1288,227 @@ export default function UserFormModal({
         </div>
       )}
 
-      {/* Footer */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "flex-end",
-          gap: 12,
-          marginTop: 20,
-          paddingTop: 16,
-          borderTop: "1px solid #e2e8f0",
-        }}
-      >
-        <button
-          className="btn"
-          onClick={onClose}
-          style={{ background: "#475569" }}
-        >
-          {t("cancel")}
-        </button>
-        <button
-          className="btn btn-primary"
-          onClick={handleSubmit}
-          disabled={loading || !form.name || !form.email}
+      {!pageMode && (
+        <div
           style={{
-            background: loading ? "#475569" : "#3b82f6",
-            opacity: !form.name || !form.email ? 0.5 : 1,
+            display: "flex",
+            justifyContent: "flex-end",
+            gap: 12,
+            marginTop: 20,
+            paddingTop: 16,
+            borderTop: "1px solid var(--border)",
           }}
         >
-          {loading ? t("saving") : user ? t("updateUser") : t("createUser")}
-        </button>
-      </div>
+          <button className="btn btn-secondary" onClick={onClose}>
+            {t("cancel")}
+          </button>
+          <button
+            className="btn btn-primary"
+            onClick={handleSubmit}
+            disabled={loading || !form.name || !form.email}
+            style={{
+              background: loading ? "var(--bg-raised)" : "var(--brand)",
+              color: loading ? "var(--text-secondary)" : "#ffffff",
+              opacity: !form.name || !form.email ? 0.5 : 1,
+            }}
+          >
+            {loading ? t("saving") : user ? t("updateUser") : t("createUser")}
+          </button>
+        </div>
+      )}
     </div>
   );
 
-  if (pageMode) return innerContent;
+  const needsLinkedAdmin =
+    isPlatformRole && ADMIN_OWNED_ROLES.has(selectedRole);
+  const pagePrimaryDisabled =
+    loading ||
+    !form.name ||
+    !form.email ||
+    (!user && !form.password) ||
+    (needsLinkedAdmin && !form.adminId);
+
+  if (pageMode) {
+    return (
+      <div className="space-y-6" style={{ direction: isRtl ? "rtl" : "ltr" }}>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p
+              style={{
+                margin: 0,
+                color: "var(--text-muted)",
+                fontSize: 13,
+              }}
+            >
+              {t("dashboard")} / {selectedRoleLabel}
+            </p>
+            <h1
+              style={{
+                margin: "6px 0 0",
+                color: "var(--text-primary)",
+                fontSize: 40,
+                lineHeight: 1.1,
+                fontWeight: 700,
+              }}
+            >
+              {pageTitle}
+            </h1>
+            <p
+              style={{
+                margin: "8px 0 0",
+                color: "var(--text-secondary)",
+                fontSize: 14,
+              }}
+            >
+              {pageSubtitle}
+            </p>
+          </div>
+          <button className="btn btn-secondary" onClick={onClose}>
+            {backLabel}
+          </button>
+        </div>
+
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
+          {innerContent}
+
+          <div className="space-y-4">
+            <div className="card">
+              <h3
+                style={{
+                  margin: 0,
+                  color: "var(--text-primary)",
+                  fontSize: 24,
+                  fontWeight: 700,
+                }}
+              >
+                {isRtl ? "معلومات الحساب" : "Organization"}
+              </h3>
+              <p
+                style={{
+                  margin: "6px 0 16px",
+                  color: "var(--text-secondary)",
+                  fontSize: 13,
+                }}
+              >
+                {isRtl ? "ملخص سريع قبل الحفظ" : "Quick summary before saving."}
+              </p>
+
+              <div style={{ display: "grid", gap: 10 }}>
+                <div>
+                  <p
+                    style={{
+                      margin: "0 0 6px",
+                      color: "var(--text-muted)",
+                      fontSize: 12,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.06em",
+                    }}
+                  >
+                    {t("role")}
+                  </p>
+                  <div
+                    style={{
+                      background: "var(--bg-raised)",
+                      border: "1px solid var(--border)",
+                      borderRadius: 10,
+                      padding: "10px 12px",
+                      color: "var(--text-primary)",
+                      fontWeight: 600,
+                    }}
+                  >
+                    {selectedRoleLabel}
+                  </div>
+                </div>
+
+                <div>
+                  <p
+                    style={{
+                      margin: "0 0 6px",
+                      color: "var(--text-muted)",
+                      fontSize: 12,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.06em",
+                    }}
+                  >
+                    {t("permissions")}
+                  </p>
+                  <div
+                    style={{
+                      background: "var(--bg-raised)",
+                      border: "1px solid var(--border)",
+                      borderRadius: 10,
+                      padding: "10px 12px",
+                      color: "var(--text-primary)",
+                      fontWeight: 600,
+                    }}
+                  >
+                    {(form.permissions || []).length} {t("permissionsSelected")}
+                  </div>
+                </div>
+
+                {needsLinkedAdmin && (
+                  <div>
+                    <p
+                      style={{
+                        margin: "0 0 6px",
+                        color: "var(--text-muted)",
+                        fontSize: 12,
+                        textTransform: "uppercase",
+                        letterSpacing: "0.06em",
+                      }}
+                    >
+                      {t("linkedAdmin")}
+                    </p>
+                    <div
+                      style={{
+                        background: "var(--bg-raised)",
+                        border: `1px solid ${
+                          form.adminId ? "var(--border)" : "var(--danger)"
+                        }`,
+                        borderRadius: 10,
+                        padding: "10px 12px",
+                        color: form.adminId
+                          ? "var(--text-primary)"
+                          : "var(--danger)",
+                        fontWeight: 600,
+                      }}
+                    >
+                      {selectedAdmin
+                        ? `${selectedAdmin.name} (${selectedAdmin.email})`
+                        : t("adminRequired")}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="card" style={{ display: "grid", gap: 10 }}>
+              <button
+                onClick={handleSubmit}
+                disabled={pagePrimaryDisabled}
+                className="btn"
+                style={{
+                  width: "100%",
+                  background: pagePrimaryDisabled ? "#444" : "#111111",
+                  color: "#ffffff",
+                  opacity: pagePrimaryDisabled ? 0.65 : 1,
+                }}
+              >
+                {loading
+                  ? t("saving")
+                  : user
+                    ? t("updateUser")
+                    : t("createUser")}
+              </button>
+              <button className="btn btn-secondary" onClick={onClose}>
+                {t("cancel")}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
