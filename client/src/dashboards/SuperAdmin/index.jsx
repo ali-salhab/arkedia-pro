@@ -1,263 +1,193 @@
-import PermissionWrapper from "../../components/PermissionWrapper";
-import DataTable from "../../components/DataTable";
-import DashboardControlPanelDetails from "../../components/DashboardControlPanelDetails";
 import { useSelector } from "react-redux";
-import { useLanguage } from "../../context/LanguageContext";
 import {
   useGetUsersQuery,
-  useGetRestaurantsQuery,
-  useGetHotelsQuery,
-  useGetActivitiesQuery,
   useGetBookingsQuery,
-  useGetRoomsQuery,
   useGetFinanceQuery,
-  useGetReportsQuery,
 } from "../../store/services/api";
+import StatCard from "../../components/StatCard";
+import OverviewChart from "../../components/OverviewChart";
+import DonutChart from "../../components/DonutChart";
+import MonthlyGoals from "../../components/MonthlyGoals";
+import { DollarSign, Shield, CalendarDays, Building2 } from "lucide-react";
 
-function toArray(data) {
-  return Array.isArray(data) ? data : data?.items || [];
+function toArr(d) {
+  return Array.isArray(d) ? d : d?.items || [];
+}
+const MONTHS = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
+function byMonth(items, dateField, valueField = null) {
+  const map = MONTHS.map((month) => ({ month, value: 0 }));
+  items.forEach((item) => {
+    const d = new Date(item[dateField]);
+    if (!isNaN(d))
+      map[d.getMonth()].value += valueField ? Number(item[valueField]) || 0 : 1;
+  });
+  return map;
+}
+function calcTrend(monthData) {
+  const m = new Date().getMonth();
+  const curr = monthData[m]?.value || 0;
+  const prev = monthData[(m - 1 + 12) % 12]?.value || 0;
+  const pct = prev === 0 ? 0 : (((curr - prev) / prev) * 100).toFixed(1);
+  return {
+    trend: `${Number(pct) >= 0 ? "+" : ""}${pct}%`,
+    positive: Number(pct) >= 0,
+  };
+}
+function fmtMoney(n) {
+  if (n >= 1e6) return `$${(n / 1e6).toFixed(1)}M`;
+  if (n >= 1e3) return `$${(n / 1e3).toFixed(0)}K`;
+  return `$${Math.round(n)}`;
 }
 
 export default function SuperAdminDashboard() {
-  const { t } = useLanguage();
-  const permissions = useSelector((s) => s.auth.user?.permissions || []);
-  const hasPermission = (permission) => permissions.includes(permission);
+  const user = useSelector((s) => s.auth.user);
+  const perms = useSelector((s) => s.auth.user?.permissions || []);
+  const has = (p) => perms.includes(p);
 
-  const canViewUsers = hasPermission("users:view");
-  const canViewRestaurants = hasPermission("restaurants:view");
-  const canViewHotels = hasPermission("hotels:view");
-  const canViewActivities = hasPermission("activities:view");
-  const canViewBookings = hasPermission("bookings:view");
-  const canViewRooms = hasPermission("rooms:view");
-  const canViewFinance = hasPermission("finance:view");
-  const canViewReports = hasPermission("reports:view");
+  const { data: ud } = useGetUsersQuery(undefined, {
+    skip: !has("users:view"),
+  });
+  const { data: bd } = useGetBookingsQuery(undefined, {
+    skip: !has("bookings:view"),
+  });
+  const { data: fd } = useGetFinanceQuery(undefined, {
+    skip: !has("finance:view"),
+  });
 
-  const { data: usersData, isLoading: usersLoading } = useGetUsersQuery(
-    undefined,
-    { skip: !canViewUsers },
-  );
-  const { data: restaurantsData, isLoading: restaurantsLoading } =
-    useGetRestaurantsQuery(undefined, { skip: !canViewRestaurants });
-  const { data: hotelsData, isLoading: hotelsLoading } = useGetHotelsQuery(
-    undefined,
-    { skip: !canViewHotels },
-  );
-  const { data: activitiesData, isLoading: activitiesLoading } =
-    useGetActivitiesQuery(undefined, { skip: !canViewActivities });
-  const { data: bookingsData, isLoading: bookingsLoading } =
-    useGetBookingsQuery(undefined, { skip: !canViewBookings });
-  const { data: roomsData, isLoading: roomsLoading } = useGetRoomsQuery(
-    undefined,
-    { skip: !canViewRooms },
-  );
-  const { data: financeData, isLoading: financeLoading } = useGetFinanceQuery(
-    undefined,
-    { skip: !canViewFinance },
-  );
-  const { data: reportsData, isLoading: reportsLoading } = useGetReportsQuery(
-    undefined,
-    { skip: !canViewReports },
-  );
+  const allUsers = toArr(ud);
+  const bookings = toArr(bd);
+  const finance = toArr(fd);
 
-  const users = toArray(usersData);
-  const platformTeam = users.filter((u) => u.role === "superadminuser");
-  const hotels = toArray(hotelsData);
-  const restaurants = toArray(restaurantsData);
-  const activities = toArray(activitiesData);
-  const bookings = toArray(bookingsData);
-  const rooms = toArray(roomsData);
-  const finance = toArray(financeData);
-  const reports = toArray(reportsData);
+  const admins = allUsers.filter((u) => u.role === "admin");
+  const hotels = allUsers.filter((u) => u.role === "hotel");
+  const restaurants = allUsers.filter((u) => u.role === "restaurant");
+  const activities = allUsers.filter((u) => u.role === "activity");
+  const managed = hotels.length + restaurants.length + activities.length;
 
-  const userColumns = [
-    { key: "name", label: t("name") },
-    { key: "email", label: t("email") },
+  const revenue = finance.filter((f) => f.type === "revenue");
+  const expenses = finance.filter((f) => f.type === "expense");
+  const totalRevenue = revenue.reduce((s, f) => s + (Number(f.amount) || 0), 0);
+
+  const revByMonth = byMonth(revenue, "date", "amount");
+  const bkByMonth = byMonth(bookings, "checkIn");
+  const expByMonth = byMonth(expenses, "date", "amount");
+  const profitByMonth = revByMonth.map((r, i) => ({
+    month: r.month,
+    value: Math.max(0, r.value - (expByMonth[i]?.value || 0)),
+  }));
+
+  const revTrend = calcTrend(revByMonth);
+  const bkTrend = calcTrend(bkByMonth);
+
+  const donutData = [
+    { name: "Hotels", value: hotels.length },
+    { name: "Restaurants", value: restaurants.length },
+    { name: "Activities", value: activities.length },
+    { name: "Admins", value: admins.length },
+  ].filter((d) => d.value > 0);
+
+  const m = new Date().getMonth();
+  const goals = [
     {
-      key: "permissions",
-      label: t("permissions"),
-      render: (_value, row) =>
-        `${(row.permissions || []).length} ${t("permissions")}`,
+      label: "Platform Revenue",
+      current: Math.round(revByMonth[m]?.value || 0),
+      target: 500000,
+      color: "#f97316",
     },
-  ];
-
-  const hotelColumns = [
-    { key: "name", label: t("name") },
-    { key: "location", label: t("location") },
-    { key: "stars", label: t("stars") },
-  ];
-
-  const restaurantColumns = [
-    { key: "name", label: t("name") },
-    { key: "location", label: t("location") },
-    { key: "capacity", label: t("capacity") },
-  ];
-
-  const activityColumns = [
-    { key: "name", label: t("name") },
-    { key: "type", label: t("type") },
-    { key: "price", label: t("price") },
-  ];
-
-  const bookingColumns = [
-    { key: "guestName", label: t("guest") },
-    { key: "checkIn", label: t("checkIn") },
-    { key: "checkOut", label: t("checkOut") },
-    { key: "status", label: t("status") },
-  ];
-
-  const roomColumns = [
-    { key: "number", label: t("roomTableNum") },
-    { key: "type", label: t("type") },
-    { key: "price", label: t("price") },
-  ];
-
-  const financeColumns = [
     {
-      key: "type",
-      label: t("type"),
-      render: (value) => (value === "expense" ? t("expenses") : t("revenue")),
+      label: "Bookings Target",
+      current: bkByMonth[m]?.value || 0,
+      target: 2000,
+      color: "#14b8a6",
     },
-    { key: "description", label: t("description") },
     {
-      key: "amount",
-      label: t("amount"),
-      render: (value, row) =>
-        `${row.currency || "USD"} ${Number(value || 0).toFixed(2)}`,
+      label: "Managed Entities",
+      current: managed,
+      target: 100,
+      color: "#3b82f6",
     },
-    { key: "date", label: t("date") },
-  ];
-
-  const reportColumns = [
-    { key: "title", label: t("reportTitle") },
-    { key: "generatedAt", label: t("generatedAt") },
   ];
 
   return (
-    <div className="space-y-6">
-      <PermissionWrapper permission="users:view">
-        <section className="card">
-          <div className="mb-4">
-            <h2 className="section-heading">{`👥 ${t("superAdminUsers")}`}</h2>
-            <p className="section-subheading">
-              Dashboard control panel is read-only for user management.
-            </p>
-          </div>
-          {usersLoading ? (
-            <p className="section-subheading">{t("loading")}</p>
-          ) : (
-            <DataTable
-              columns={userColumns}
-              data={platformTeam}
-              exportFilename="platform_team.csv"
-            />
-          )}
-        </section>
-      </PermissionWrapper>
+    <div className="space-y-6 pb-6">
+      <div>
+        <h1 className="text-2xl font-bold text-slate-800">Dashboard</h1>
+        <p className="text-sm text-slate-500 mt-1">
+          Welcome back, {user?.name}. Platform-wide overview.
+        </p>
+      </div>
 
-      <PermissionWrapper permission="hotels:view">
-        <section className="card">
-          <h2 className="section-heading mb-4">{t("allHotels")}</h2>
-          {hotelsLoading ? (
-            <p className="section-subheading">{t("loading")}</p>
-          ) : (
-            <DataTable
-              columns={hotelColumns}
-              data={hotels}
-              exportFilename="all_hotels.csv"
-            />
-          )}
-        </section>
-      </PermissionWrapper>
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
+        <StatCard
+          title="Platform Revenue"
+          value={fmtMoney(totalRevenue)}
+          trend={revTrend.trend}
+          trendPositive={revTrend.positive}
+          sparkData={revByMonth.slice(-7)}
+          color="#f97316"
+          icon={DollarSign}
+        />
+        <StatCard
+          title="Admin Accounts"
+          value={admins.length}
+          trend="—"
+          sparkData={Array.from({ length: 7 }, () => ({
+            value: admins.length,
+          }))}
+          color="#ef4444"
+          icon={Shield}
+        />
+        <StatCard
+          title="Total Bookings"
+          value={bookings.length}
+          trend={bkTrend.trend}
+          trendPositive={bkTrend.positive}
+          sparkData={bkByMonth.slice(-7)}
+          color="#1e3a5f"
+          icon={CalendarDays}
+        />
+        <StatCard
+          title="Managed Entities"
+          value={managed}
+          trend="—"
+          sparkData={Array.from({ length: 7 }, () => ({ value: managed }))}
+          color="#14b8a6"
+          icon={Building2}
+        />
+      </div>
 
-      <PermissionWrapper permission="restaurants:view">
-        <section className="card">
-          <h2 className="section-heading mb-4">{t("allRestaurants")}</h2>
-          {restaurantsLoading ? (
-            <p className="section-subheading">{t("loading")}</p>
-          ) : (
-            <DataTable
-              columns={restaurantColumns}
-              data={restaurants}
-              exportFilename="all_restaurants.csv"
-            />
-          )}
-        </section>
-      </PermissionWrapper>
-
-      <PermissionWrapper permission="activities:view">
-        <section className="card">
-          <h2 className="section-heading mb-4">{t("allActivities")}</h2>
-          {activitiesLoading ? (
-            <p className="section-subheading">{t("loading")}</p>
-          ) : (
-            <DataTable
-              columns={activityColumns}
-              data={activities}
-              exportFilename="all_activities.csv"
-            />
-          )}
-        </section>
-      </PermissionWrapper>
-
-      <PermissionWrapper permission="bookings:view">
-        <section className="card">
-          <h2 className="section-heading mb-4">{t("bookings")}</h2>
-          {bookingsLoading ? (
-            <p className="section-subheading">{t("loading")}</p>
-          ) : (
-            <DataTable
-              columns={bookingColumns}
-              data={bookings}
-              exportFilename="bookings.csv"
-            />
-          )}
-        </section>
-      </PermissionWrapper>
-
-      <PermissionWrapper permission="rooms:view">
-        <section className="card">
-          <h2 className="section-heading mb-4">{t("roomsTables")}</h2>
-          {roomsLoading ? (
-            <p className="section-subheading">{t("loading")}</p>
-          ) : (
-            <DataTable
-              columns={roomColumns}
-              data={rooms}
-              exportFilename="rooms.csv"
-            />
-          )}
-        </section>
-      </PermissionWrapper>
-
-      <PermissionWrapper permission="finance:view">
-        <section className="card">
-          <h2 className="section-heading mb-4">{t("finance")}</h2>
-          {financeLoading ? (
-            <p className="section-subheading">{t("loading")}</p>
-          ) : (
-            <DataTable
-              columns={financeColumns}
-              data={finance}
-              exportFilename="finance.csv"
-            />
-          )}
-        </section>
-      </PermissionWrapper>
-
-      <PermissionWrapper permission="reports:view">
-        <section className="card">
-          <h2 className="section-heading mb-4">{t("reports")}</h2>
-          {reportsLoading ? (
-            <p className="section-subheading">{t("loading")}</p>
-          ) : (
-            <DataTable
-              columns={reportColumns}
-              data={reports}
-              exportFilename="reports.csv"
-            />
-          )}
-        </section>
-      </PermissionWrapper>
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
+        <div className="xl:col-span-2">
+          <OverviewChart
+            revenueData={revByMonth}
+            ordersData={bkByMonth}
+            profitData={profitByMonth}
+            labels={{ orders: "Bookings" }}
+          />
+        </div>
+        <div className="flex flex-col gap-5">
+          <DonutChart
+            data={donutData}
+            title="Entity Distribution"
+            subtitle="Platform-wide account breakdown"
+            centerLabel="Total"
+          />
+          <MonthlyGoals goals={goals} />
+        </div>
+      </div>
     </div>
   );
 }

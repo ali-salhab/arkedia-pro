@@ -1,191 +1,215 @@
-import PermissionWrapper from "../../components/PermissionWrapper";
-import DataTable from "../../components/DataTable";
-import DashboardControlPanelDetails from "../../components/DashboardControlPanelDetails";
-import { SkeletonTable } from "../../components/SkeletonLoader";
 import { useSelector } from "react-redux";
-import { useLanguage } from "../../context/LanguageContext";
 import {
   useGetUsersQuery,
   useGetRoomsQuery,
   useGetBookingsQuery,
   useGetFinanceQuery,
-  useGetReportsQuery,
 } from "../../store/services/api";
+import StatCard from "../../components/StatCard";
+import OverviewChart from "../../components/OverviewChart";
+import DonutChart from "../../components/DonutChart";
+import MonthlyGoals from "../../components/MonthlyGoals";
+import { DollarSign, Users, CalendarDays, BedDouble } from "lucide-react";
 
-function toArray(data) {
-  return Array.isArray(data) ? data : data?.items || [];
+function toArr(d) {
+  return Array.isArray(d) ? d : d?.items || [];
+}
+
+const MONTHS = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
+
+function byMonth(items, dateField, valueField = null) {
+  const map = MONTHS.map((month) => ({ month, value: 0 }));
+  items.forEach((item) => {
+    const d = new Date(item[dateField]);
+    if (!isNaN(d))
+      map[d.getMonth()].value += valueField ? Number(item[valueField]) || 0 : 1;
+  });
+  return map;
+}
+
+function calcTrend(monthData) {
+  const m = new Date().getMonth();
+  const curr = monthData[m]?.value || 0;
+  const prev = monthData[(m - 1 + 12) % 12]?.value || 0;
+  const pct = prev === 0 ? 0 : (((curr - prev) / prev) * 100).toFixed(1);
+  return {
+    trend: `${Number(pct) >= 0 ? "+" : ""}${pct}%`,
+    positive: Number(pct) >= 0,
+  };
+}
+
+function fmtMoney(n) {
+  if (n >= 1e6) return `$${(n / 1e6).toFixed(1)}M`;
+  if (n >= 1e3) return `$${(n / 1e3).toFixed(0)}K`;
+  return `$${Math.round(n)}`;
 }
 
 export default function HotelDashboard() {
-  const { t } = useLanguage();
-  const permissions = useSelector((s) => s.auth.user?.permissions || []);
-  const hasPermission = (permission) => permissions.includes(permission);
+  const user = useSelector((s) => s.auth.user);
+  const perms = useSelector((s) => s.auth.user?.permissions || []);
+  const has = (p) => perms.includes(p);
 
-  const canViewUsers = hasPermission("users:view");
-  const canViewRooms = hasPermission("rooms:view");
-  const canViewBookings = hasPermission("bookings:view");
-  const canViewFinance = hasPermission("finance:view");
-  const canViewReports = hasPermission("reports:view");
+  const { data: ud } = useGetUsersQuery(undefined, {
+    skip: !has("users:view"),
+  });
+  const { data: rd } = useGetRoomsQuery(undefined, {
+    skip: !has("rooms:view"),
+  });
+  const { data: bd } = useGetBookingsQuery(undefined, {
+    skip: !has("bookings:view"),
+  });
+  const { data: fd } = useGetFinanceQuery(undefined, {
+    skip: !has("finance:view"),
+  });
 
-  const { data: usersData, isLoading: usersLoading } = useGetUsersQuery(
-    undefined,
-    { skip: !canViewUsers },
-  );
-  const { data: roomsData, isLoading: roomsLoading } = useGetRoomsQuery(
-    undefined,
-    { skip: !canViewRooms },
-  );
-  const { data: bookingsData, isLoading: bookingsLoading } =
-    useGetBookingsQuery(undefined, { skip: !canViewBookings });
-  const { data: financeData, isLoading: financeLoading } = useGetFinanceQuery(
-    undefined,
-    { skip: !canViewFinance },
-  );
-  const { data: reportsData, isLoading: reportsLoading } = useGetReportsQuery(
-    undefined,
-    { skip: !canViewReports },
-  );
+  const team = toArr(ud),
+    rooms = toArr(rd),
+    bookings = toArr(bd),
+    finance = toArr(fd);
+  const revenue = finance.filter((f) => f.type === "revenue");
+  const expenses = finance.filter((f) => f.type === "expense");
+  const totalRevenue = revenue.reduce((s, f) => s + (Number(f.amount) || 0), 0);
+  const available = rooms.filter(
+    (r) => r.status === "available" || !r.status,
+  ).length;
 
-  const hotelTeam = toArray(usersData);
-  const rooms = toArray(roomsData);
-  const bookings = toArray(bookingsData);
-  const finance = toArray(financeData);
-  const reports = toArray(reportsData);
+  const revByMonth = byMonth(revenue, "date", "amount");
+  const bkByMonth = byMonth(bookings, "checkIn");
+  const expByMonth = byMonth(expenses, "date", "amount");
+  const profitByMonth = revByMonth.map((r, i) => ({
+    month: r.month,
+    value: Math.max(0, r.value - (expByMonth[i]?.value || 0)),
+  }));
 
-  const userColumns = [
-    { key: "name", label: t("name") },
-    { key: "email", label: t("email") },
-    { key: "role", label: t("role") },
+  const revTrend = calcTrend(revByMonth);
+  const bkTrend = calcTrend(bkByMonth);
+
+  const donutData = [
     {
-      key: "permissions",
-      label: t("permissions"),
-      render: (_value, row) =>
-        `${(row.permissions || []).length} ${t("permissionsSelected")}`,
+      name: "Confirmed",
+      value: bookings.filter((b) => b.status === "confirmed").length,
     },
-  ];
-
-  const roomColumns = [
-    { key: "number", label: t("roomTableNum") },
-    { key: "type", label: t("type") },
-    { key: "price", label: t("price") },
-    { key: "status", label: t("status") },
-  ];
-
-  const bookingColumns = [
-    { key: "guestName", label: t("guest") },
-    { key: "checkIn", label: t("checkIn") },
-    { key: "checkOut", label: t("checkOut") },
-    { key: "status", label: t("status") },
-  ];
-
-  const financeColumns = [
     {
-      key: "type",
-      label: t("type"),
-      render: (value) => (value === "expense" ? t("expenses") : t("revenue")),
+      name: "Pending",
+      value: bookings.filter((b) => b.status === "pending").length,
     },
-    { key: "description", label: t("description") },
     {
-      key: "amount",
-      label: t("amount"),
-      render: (value, row) =>
-        `${row.currency || "USD"} ${Number(value || 0).toFixed(2)}`,
+      name: "Checked In",
+      value: bookings.filter((b) => b.status === "checked_in").length,
     },
-    { key: "date", label: t("date") },
-  ];
+    {
+      name: "Cancelled",
+      value: bookings.filter((b) => b.status === "cancelled").length,
+    },
+  ].filter((d) => d.value > 0);
 
-  const reportColumns = [
-    { key: "title", label: t("reportTitle") },
-    { key: "generatedAt", label: t("generatedAt") },
+  const m = new Date().getMonth();
+  const occupancy =
+    rooms.length > 0
+      ? Math.round(((rooms.length - available) / rooms.length) * 100)
+      : 0;
+
+  const goals = [
+    {
+      label: "Revenue Target",
+      current: Math.round(revByMonth[m]?.value || 0),
+      target: 50000,
+      color: "#f97316",
+    },
+    {
+      label: "Bookings Target",
+      current: bkByMonth[m]?.value || 0,
+      target: 100,
+      color: "#14b8a6",
+    },
+    {
+      label: "Occupancy Rate",
+      current: occupancy,
+      target: 100,
+      color: "#3b82f6",
+      unit: "%",
+    },
   ];
 
   return (
-    <div className="space-y-6">
-      <DashboardControlPanelDetails
-        title={t("hotelAccounts")}
-        subtitle={t("dashboardReadOnlyNotice")}
-        stats={[
-          { label: t("users"), value: hotelTeam.length },
-          { label: t("roomsTables"), value: rooms.length },
-          { label: t("bookings"), value: bookings.length },
-          { label: t("reports"), value: reports.length },
-        ]}
-      />
+    <div className="space-y-6 pb-6">
+      <div>
+        <h1 className="text-2xl font-bold text-slate-800">Dashboard</h1>
+        <p className="text-sm text-slate-500 mt-1">
+          Welcome back, {user?.name}. Here's what's happening with your business
+          today.
+        </p>
+      </div>
 
-      <PermissionWrapper permission="users:view">
-        <section className="card">
-          <h2 className="section-heading mb-4">👥 {t("users")}</h2>
-          {usersLoading ? (
-            <SkeletonTable rows={3} cols={4} />
-          ) : (
-            <DataTable
-              columns={userColumns}
-              data={hotelTeam}
-              exportFilename="hotel_team.csv"
-            />
-          )}
-        </section>
-      </PermissionWrapper>
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
+        <StatCard
+          title="Total Revenue"
+          value={fmtMoney(totalRevenue)}
+          trend={revTrend.trend}
+          trendPositive={revTrend.positive}
+          sparkData={revByMonth.slice(-7)}
+          color="#f97316"
+          icon={DollarSign}
+        />
+        <StatCard
+          title="Team Members"
+          value={team.length}
+          trend="—"
+          sparkData={Array.from({ length: 7 }, () => ({ value: team.length }))}
+          color="#14b8a6"
+          icon={Users}
+        />
+        <StatCard
+          title="Total Bookings"
+          value={bookings.length}
+          trend={bkTrend.trend}
+          trendPositive={bkTrend.positive}
+          sparkData={bkByMonth.slice(-7)}
+          color="#1e3a5f"
+          icon={CalendarDays}
+        />
+        <StatCard
+          title="Available Rooms"
+          value={available}
+          trend="—"
+          sparkData={Array.from({ length: 7 }, () => ({ value: available }))}
+          color="#f59e0b"
+          icon={BedDouble}
+        />
+      </div>
 
-      <PermissionWrapper permission="rooms:view">
-        <section className="card">
-          <h2 className="section-heading mb-4">{t("roomsTables")}</h2>
-          {roomsLoading ? (
-            <SkeletonTable rows={3} cols={4} />
-          ) : (
-            <DataTable
-              columns={roomColumns}
-              data={rooms}
-              exportFilename="rooms.csv"
-            />
-          )}
-        </section>
-      </PermissionWrapper>
-
-      <PermissionWrapper permission="bookings:view">
-        <section className="card">
-          <h2 className="section-heading mb-4">{t("bookings")}</h2>
-          {bookingsLoading ? (
-            <SkeletonTable rows={3} cols={4} />
-          ) : (
-            <DataTable
-              columns={bookingColumns}
-              data={bookings}
-              exportFilename="bookings.csv"
-            />
-          )}
-        </section>
-      </PermissionWrapper>
-
-      <PermissionWrapper permission="finance:view">
-        <section className="card">
-          <h2 className="section-heading mb-4">{t("finance")}</h2>
-          {financeLoading ? (
-            <SkeletonTable rows={3} cols={4} />
-          ) : (
-            <DataTable
-              columns={financeColumns}
-              data={finance}
-              exportFilename="finance.csv"
-            />
-          )}
-        </section>
-      </PermissionWrapper>
-
-      <PermissionWrapper permission="reports:view">
-        <section className="card">
-          <h2 className="section-heading mb-4">{t("reports")}</h2>
-          {reportsLoading ? (
-            <SkeletonTable rows={3} cols={4} />
-          ) : (
-            <DataTable
-              columns={reportColumns}
-              data={reports}
-              exportFilename="reports.csv"
-            />
-          )}
-        </section>
-      </PermissionWrapper>
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
+        <div className="xl:col-span-2">
+          <OverviewChart
+            revenueData={revByMonth}
+            ordersData={bkByMonth}
+            profitData={profitByMonth}
+            labels={{ orders: "Bookings" }}
+          />
+        </div>
+        <div className="flex flex-col gap-5">
+          <DonutChart
+            data={donutData}
+            title="Booking Status"
+            subtitle="Where your bookings stand"
+            centerLabel="Visits"
+          />
+          <MonthlyGoals goals={goals} />
+        </div>
+      </div>
     </div>
   );
 }
