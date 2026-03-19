@@ -4,7 +4,7 @@ import { api } from "../store/services/api";
 import { logout } from "../store/slices/authSlice";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "../context/LanguageContext";
-import { Menu, Moon, Sun, Palette, LogOut, Search } from "lucide-react";
+import { Menu, Moon, Sun, Globe, LogOut, Search } from "lucide-react";
 import NotificationPanel from "./NotificationPanel";
 
 const ROLE_LABELS = {
@@ -106,7 +106,7 @@ export default function Navbar({
                 isDark ? "text-white" : "text-slate-900"
               }`}
             >
-              Arkedia
+              Travky.com
             </p>
             <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">
               Dashboard
@@ -160,7 +160,7 @@ export default function Navbar({
           title="Toggle language"
           aria-label="Toggle language"
         >
-          <Palette size={16} />
+          <Globe size={16} />
         </button>
         <NotificationPanel
           notifications={notifications}

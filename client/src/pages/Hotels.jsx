@@ -1,570 +1,156 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import DataTable from "../components/DataTable";
+import LoadingScreen from "../components/LoadingScreen";
 import Modal from "../components/Modal";
-import { SkeletonTable } from "../components/SkeletonLoader";
 import { useLanguage } from "../context/LanguageContext";
 import {
   useGetUsersQuery,
-  useCreateUserMutation,
-  useUpdateUserMutation,
   useDeleteUserMutation,
 } from "../store/services/api";
+import { Pencil, Trash2, Search, Download, Plus } from "lucide-react";
+
+const AVATAR_COLORS = ["#6366f1","#3b82f6","#0ea5e9","#10b981","#f59e0b","#ef4444","#8b5cf6","#ec4899"];
+function avatarColor(name) { return AVATAR_COLORS[(name?.charCodeAt(0) || 0) % AVATAR_COLORS.length]; }
 
 export default function HotelsPage() {
   const currentUser = useSelector((s) => s.auth.user);
-  const permissions = useSelector((s) => s.auth.user?.permissions || []);
-  const hasPermission = (permission) => permissions.includes(permission);
-  const canViewHotels = hasPermission("hotels:view");
-  const canAddHotels = hasPermission("hotels:add");
-  const canEditHotels = hasPermission("hotels:edit");
-  const canDeleteHotels = hasPermission("hotels:delete");
-  const canViewAdmins = hasPermission("admins:view");
-  const canAddAdmins = hasPermission("admins:add");
-  const isPlatformRole = ["super_admin", "superadminuser"].includes(
-    currentUser?.role,
-  );
-  const currentUserId = currentUser?._id || currentUser?.sub || null;
-  const ownerScopeId = ["admin", "hotel", "restaurant", "activity"].includes(
-    currentUser?.role,
-  )
-    ? currentUserId
-    : currentUser?.adminId || null;
-
-  const {
-    data: hotelsData = [],
-    isLoading: hotelsLoading,
-    isFetching: hotelsFetching,
-    error: hotelsError,
-  } = useGetUsersQuery({ role: "hotel" }, { skip: !canViewHotels });
-
-  const {
-    data: adminsData = [],
-    isLoading: adminsLoading,
-    isFetching: adminsFetching,
-    error: adminsError,
-  } = useGetUsersQuery(
-    { role: "admin" },
-    { skip: !(isPlatformRole && canViewAdmins) },
-  );
-
-  const [createUser, { isLoading: isCreating }] = useCreateUserMutation();
-  const [updateUser, { isLoading: isUpdating }] = useUpdateUserMutation();
-  const [deleteUser, { isLoading: isDeleting }] = useDeleteUserMutation();
+  const { t, lang } = useLanguage();
   const navigate = useNavigate();
-
-  const [modalOpen, setModalOpen] = useState(false);
-  const [adminModalOpen, setAdminModalOpen] = useState(false);
+  const [search, setSearch] = useState("");
   const [adminRequiredModalOpen, setAdminRequiredModalOpen] = useState(false);
   const [resumeHotelCreation, setResumeHotelCreation] = useState(false);
-  const [editingHotel, setEditingHotel] = useState(null);
-  const { t } = useLanguage();
 
-  const isMutating = isCreating || isUpdating || isDeleting;
-  const isBusy = isMutating || hotelsFetching || adminsFetching;
-  const disableAddHotel =
-    isBusy ||
-    !canAddHotels ||
-    (isPlatformRole &&
-      (!canViewAdmins || adminsLoading || Boolean(adminsError)));
+  const { data: users = [], isLoading, error } = useGetUsersQuery();
+  const [deleteUser] = useDeleteUserMutation();
 
-  const hotelAccountsRaw = Array.isArray(hotelsData) ? hotelsData : [];
-  const hotelAccounts = !isPlatformRole
-    ? ownerScopeId
-      ? hotelAccountsRaw.filter((item) => {
-          const ownerId = item?.adminId?._id || item?.adminId || null;
-          return ownerId && String(ownerId) === String(ownerScopeId);
-        })
-      : []
-    : hotelAccountsRaw;
-  const adminsList = Array.isArray(adminsData) ? adminsData : [];
+  const usersArray = Array.isArray(users) ? users : [];
+  const hotels = usersArray.filter((u) => u.role === "hotel");
+  const adminsList = usersArray.filter((u) => u.role === "admin");
 
-  const resolveLinkedAdmin = (accountAdminId) => {
-    const ownerId = accountAdminId?._id || accountAdminId || null;
-    if (!ownerId) return null;
-
-    const listedAdmin = adminsList.find(
-      (a) => String(a._id) === String(ownerId),
-    );
-    if (listedAdmin) return listedAdmin;
-
-    if (
-      !isPlatformRole &&
-      ownerScopeId &&
-      String(ownerId) === String(ownerScopeId)
-    ) {
-      if (
-        currentUser?.role === "admin" &&
-        currentUserId &&
-        String(ownerId) === String(currentUserId)
-      ) {
-        return currentUser;
-      }
-      return { name: t("linkedToAdmin") };
-    }
-
-    return null;
+  const resolveLinkedAdmin = (hotel) => {
+    if (!hotel.adminCompany) return null;
+    const id = typeof hotel.adminCompany === "object" ? hotel.adminCompany._id : hotel.adminCompany;
+    return adminsList.find((a) => a._id === id) || null;
   };
 
-  const hotelColumns = [
-    { key: "name", label: t("name") },
-    { key: "email", label: t("email") },
-    {
-      key: "adminId",
-      label: t("linkedAdmin"),
-      render: (v) => {
-        const admin = resolveLinkedAdmin(v);
-        return admin ? (
-          <span style={{ color: "#60a5fa", fontSize: 12 }}>{admin.name}</span>
-        ) : (
-          <span style={{ color: "#ef4444", fontSize: 12 }}>
-            ⚠️ {t("noAdminLinked")}
-          </span>
-        );
-      },
-    },
-    {
-      key: "logo",
-      label: t("logo"),
-      render: (v) =>
-        v ? (
-          <img
-            src={v}
-            alt="logo"
-            style={{
-              width: 48,
-              height: 36,
-              borderRadius: 6,
-              objectFit: "cover",
-            }}
-          />
-        ) : (
-          <span style={{ fontSize: 24 }}>🏨</span>
-        ),
-    },
-    {
-      key: "createdAt",
-      label: t("createdAt"),
-      render: (v) => (v ? new Date(v).toLocaleDateString() : "-"),
-    },
-  ];
+  const disableAddHotel = false;
 
   useEffect(() => {
     if (resumeHotelCreation && adminsList.length > 0) {
       setResumeHotelCreation(false);
-      setAdminModalOpen(false);
-      navigate("/hotels/new", {
-        state: { fixedRole: "hotel", adminsList, backTo: "/hotels" },
-      });
+      navigate("/hotels/new", { state: { backTo: "/hotels" } });
     }
-  }, [adminsList.length, resumeHotelCreation]);
+  }, [adminsList.length, resumeHotelCreation, navigate]);
 
   const handleAddNew = () => {
-    if (!canAddHotels) return;
-    if (isPlatformRole && !canViewAdmins) {
-      window.alert(`${t("error")} 403: Missing admins:view permission`);
-      return;
-    }
-    if (isPlatformRole && (adminsLoading || adminsFetching)) return;
-    if (isPlatformRole && adminsError) {
-      window.alert(t("errorLoadingAdmins"));
-      return;
-    }
-
-    if (isPlatformRole && adminsList.length === 0) {
+    if (adminsList.length === 0) {
       setAdminRequiredModalOpen(true);
       return;
     }
-    navigate("/hotels/new", {
-      state: { fixedRole: "hotel", adminsList, backTo: "/hotels" },
-    });
+    navigate("/hotels/new", { state: { backTo: "/hotels" } });
   };
-
-  const handleEdit = (hotel) => {
-    navigate(`/hotels/${hotel._id}/edit`, {
-      state: { user: hotel, fixedRole: "hotel", adminsList, backTo: "/hotels" },
-    });
-  };
+  const handleEdit = (hotel) => navigate(`/hotels/${hotel._id}/edit`, { state: { hotel, backTo: "/hotels" } });
+  const handleDelete = async (id) => { if (window.confirm(t("confirmDeleteHotel"))) await deleteUser(id); };
 
   const handleOpenAdminCreation = () => {
     setAdminRequiredModalOpen(false);
     setResumeHotelCreation(true);
-    navigate("/admins/new", {
-      state: { fixedRole: "admin", backTo: "/hotels" },
-    });
+    navigate("/admins/new", { state: { fixedRole: "admin", backTo: "/hotels", resumeHotelCreation: true } });
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm(t("areYouSureDeleteHotelAccount"))) {
-      await deleteUser(id);
-    }
+  if (isLoading) return <LoadingScreen label={t("loadingHotels")} tableRows={6} tableCols={4} />;
+  if (error) return <div className="card p-6 text-center text-rose-500">{t("errorLoadingHotels")}</div>;
+
+  const rows = hotels.filter((h) => !search || h.name?.toLowerCase().includes(search.toLowerCase()) || h.email?.toLowerCase().includes(search.toLowerCase()));
+
+  const exportCsv = () => {
+    const csv = ["Name,Email,Linked Admin,Created", ...rows.map((h) => { const admin = resolveLinkedAdmin(h); return `"${h.name}","${h.email}","${admin ? admin.name : ""}","${h.createdAt ? new Date(h.createdAt).toLocaleDateString() : ""}"` })] .join("\n");
+    const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" })); a.download = "hotels.csv"; a.click();
   };
-
-  if (!canViewHotels) {
-    return (
-      <div className="card text-center text-sm font-medium text-rose-500">
-        {t("error")} 403: Missing hotels:view permission
-      </div>
-    );
-  }
-
-  if (hotelsLoading)
-    return (
-      <div style={{ padding: 24 }}>
-        <SkeletonTable rows={5} cols={4} />
-      </div>
-    );
-
-  if (hotelsError)
-    return (
-      <div className="p-6 text-center text-red-500">
-        {t("errorLoadingData")}
-      </div>
-    );
 
   return (
-    <div style={{ padding: 24 }}>
-      {/* Loading bar — shows during refetch after create/update/delete */}
-      {(isBusy || adminsLoading) && (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            height: 3,
-            zIndex: 9999,
-            background:
-              "linear-gradient(90deg, #3b82f6 0%, #8b5cf6 50%, #3b82f6 100%)",
-            backgroundSize: "200% 100%",
-            animation: "shimmer 1.2s infinite linear",
-          }}
-        />
-      )}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 24,
-        }}
-      >
+    <div className="p-6">
+      {/* Header */}
+      <div className="flex items-start justify-between gap-4 mb-6">
         <div>
-          <h1 style={{ fontSize: 24, fontWeight: 700, margin: 0 }}>
-            {t("hotelAccounts")}
-          </h1>
-          <p style={{ color: "#9ca3af", fontSize: 14, marginTop: 4 }}>
-            {t("hotelAccountsSubtitle")}
-          </p>
+          <nav className="flex items-center gap-1.5 text-sm text-slate-400 mb-1">
+            <span>{t("dashboard")}</span><span>/</span><span className="text-slate-600 dark:text-slate-300">{t("allHotels")}</span>
+          </nav>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{t("allHotels")}</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">{t("hotelsSubtitle") || "Manage hotel accounts"}</p>
         </div>
-        <button
-          onClick={handleAddNew}
-          disabled={disableAddHotel}
-          style={{
-            background: disableAddHotel ? "#93c5fd" : "#3b82f6",
-            padding: "12px 24px",
-            borderRadius: 8,
-            border: "none",
-            color: "#fff",
-            fontWeight: 600,
-            cursor: disableAddHotel ? "not-allowed" : "pointer",
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            opacity: disableAddHotel ? 0.7 : 1,
-            transition: "all 0.2s",
-          }}
-        >
-          {isBusy ? (
-            <>
-              <span
-                style={{
-                  display: "inline-block",
-                  width: 16,
-                  height: 16,
-                  border: "2px solid #fff",
-                  borderTopColor: "transparent",
-                  borderRadius: "50%",
-                  animation: "spin 0.7s linear infinite",
-                }}
-              />
-              {t("saving")}
-            </>
-          ) : (
-            <>
-              <span style={{ fontSize: 18 }}>+</span> {t("addHotelAccount")}
-            </>
-          )}
+        <button onClick={handleAddNew} disabled={disableAddHotel} className="flex items-center gap-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-4 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition shrink-0 disabled:opacity-50">
+          <Plus size={16} /> {t("addHotel")}
         </button>
       </div>
 
-      {/* Stats */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-          gap: 16,
-          marginBottom: 24,
-        }}
-      >
-        <div
-          style={{
-            background: "#f8fafc",
-            borderRadius: 12,
-            padding: 16,
-            borderLeft: "4px solid #22c55e",
-          }}
-        >
-          <div style={{ fontSize: 24, marginBottom: 8 }}>🏨</div>
-          <div style={{ fontSize: 28, fontWeight: 700, color: "#22c55e" }}>
-            {hotelAccounts.length}
-          </div>
-          <div style={{ fontSize: 12, color: "#64748b" }}>
-            {t("hotelAccounts")}
-          </div>
+      {/* Search + Export */}
+      <div className="flex items-center gap-3 mb-4">
+        <div className="relative flex-1 max-w-sm">
+          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t("search") + "..."} className="input pl-9 py-2 text-sm w-full" />
         </div>
-        <div
-          style={{
-            background: "#f8fafc",
-            borderRadius: 12,
-            padding: 16,
-            borderLeft: "4px solid #60a5fa",
-          }}
-        >
-          <div style={{ fontSize: 24, marginBottom: 8 }}>🔗</div>
-          <div style={{ fontSize: 28, fontWeight: 700, color: "#60a5fa" }}>
-            {hotelAccounts.filter((h) => h.adminId).length}
-          </div>
-          <div style={{ fontSize: 12, color: "#64748b" }}>
-            {t("linkedToAdmin")}
-          </div>
-        </div>
+        <button onClick={exportCsv} className="flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition">
+          <Download size={15} /> {t("exportCsv")}
+        </button>
       </div>
 
-      {/* Hotel Accounts Grid */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
-          gap: 20,
-          marginBottom: 32,
-        }}
-      >
-        {hotelAccounts.map((hotel) => {
-          const linkedAdmin = resolveLinkedAdmin(hotel.adminId);
-          return (
-            <div
-              key={hotel._id}
-              style={{
-                background: "#ffffff",
-                borderRadius: 12,
-                overflow: "hidden",
-                border: "1px solid #e2e8f0",
-              }}
-            >
-              {/* Header */}
-              <div
-                style={{
-                  height: 185,
-                  background: hotel.logo
-                    ? `url(${hotel.logo}) center/cover no-repeat`
-                    : "linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  position: "relative",
-                }}
-              >
-                {!hotel.logo && <span style={{ fontSize: 56 }}>🏨</span>}
-                {!linkedAdmin && (
-                  <span
-                    style={{
-                      position: "absolute",
-                      top: 8,
-                      right: 8,
-                      background: "#ef4444",
-                      color: "#fff",
-                      padding: "4px 8px",
-                      borderRadius: 4,
-                      fontSize: 10,
-                      fontWeight: 600,
-                    }}
-                  >
-                    ⚠️ {t("noAdminWarning")}
-                  </span>
-                )}
-              </div>
-
-              {/* Info */}
-              <div style={{ padding: 16 }}>
-                {/* Row 1: name + admin badge */}
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    gap: 8,
-                    marginBottom: 4,
-                  }}
-                >
-                  <h3
-                    style={{
-                      margin: 0,
-                      fontSize: 15,
-                      fontWeight: 600,
-                      color: "#1e293b",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                      minWidth: 0,
-                    }}
-                  >
-                    {hotel.name}
-                  </h3>
-                  {linkedAdmin && (
-                    <span
-                      style={{
-                        flexShrink: 0,
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: 4,
-                        background: "#eff6ff",
-                        border: "1px solid #bfdbfe",
-                        padding: "3px 8px",
-                        borderRadius: 20,
-                        fontSize: 11,
-                        fontWeight: 600,
-                        color: "#2563eb",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      👔 {linkedAdmin.name}
-                    </span>
-                  )}
-                </div>
-                {/* Row 2: email */}
-                <p
-                  style={{
-                    margin: "0 0 14px 0",
-                    fontSize: 12,
-                    color: "#9ca3af",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {hotel.email}
-                </p>
-                {(canEditHotels || canDeleteHotels) && (
-                  <div style={{ display: "flex", gap: 8 }}>
-                    {canEditHotels && (
-                      <button
-                        onClick={() => handleEdit(hotel)}
-                        style={{
-                          flex: 1,
-                          padding: "8px 12px",
-                          background: "#3b82f6",
-                          border: "none",
-                          borderRadius: 6,
-                          color: "#fff",
-                          cursor: "pointer",
-                          fontSize: 13,
-                          fontWeight: 500,
-                        }}
-                      >
-                        {t("edit")}
-                      </button>
-                    )}
-                    {canDeleteHotels && (
-                      <button
-                        onClick={() => handleDelete(hotel._id)}
-                        style={{
-                          padding: "8px 12px",
-                          background: "#ef4444",
-                          border: "none",
-                          borderRadius: 6,
-                          color: "#fff",
-                          cursor: "pointer",
-                          fontSize: 13,
-                          fontWeight: 500,
-                        }}
-                      >
-                        {t("delete")}
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          );
-        })}
-
-        {hotelAccounts.length === 0 && (
-          <div
-            style={{
-              gridColumn: "1 / -1",
-              textAlign: "center",
-              padding: 48,
-              color: "#9ca3af",
-            }}
-          >
-            <div style={{ fontSize: 48, marginBottom: 12 }}>🏨</div>
-            <p>{t("noHotelAccountsYet")}</p>
-          </div>
-        )}
+      {/* Table */}
+      <div className="bg-white dark:bg-slate-800/70 rounded-2xl border border-slate-200 dark:border-slate-700/60 overflow-hidden">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-slate-100 dark:border-slate-700">
+              <th className="text-left px-5 py-3.5 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">{t("name")}</th>
+              <th className="text-left px-5 py-3.5 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">{t("linkedAdmin")}</th>
+              <th className="text-left px-5 py-3.5 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">{t("permissions")}</th>
+              <th className="text-left px-5 py-3.5 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">{t("createdAt")}</th>
+              <th className="px-5 py-3.5" />
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-50 dark:divide-slate-700/60">
+            {rows.length === 0 ? (
+              <tr><td colSpan={5} className="px-5 py-12 text-center text-slate-400 dark:text-slate-500">{t("noData")}</td></tr>
+            ) : rows.map((hotel) => {
+              const admin = resolveLinkedAdmin(hotel);
+              const bg = avatarColor(hotel.name);
+              return (
+                <tr key={hotel._id} className="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition">
+                  <td className="px-5 py-3.5">
+                    <div className="flex items-center gap-3">
+                      {hotel.logo ? <img src={hotel.logo} className="h-9 w-9 rounded-full object-cover shrink-0" alt="" /> : <div className="h-9 w-9 rounded-full shrink-0 grid place-items-center text-white text-xs font-bold" style={{ background: bg }}>{(hotel.name || "?")[0].toUpperCase()}</div>}
+                      <div><div className="font-medium text-slate-800 dark:text-slate-100">{hotel.name}</div><div className="text-xs text-slate-400 dark:text-slate-500">{hotel.email}</div></div>
+                    </div>
+                  </td>
+                  <td className="px-5 py-3.5">
+                    {admin ? (
+                      <div className="flex items-center gap-2">
+                        <div className="h-6 w-6 rounded-full grid place-items-center text-white text-[10px] font-bold" style={{ background: avatarColor(admin.name) }}>{(admin.name || "?")[0].toUpperCase()}</div>
+                        <span className="text-slate-700 dark:text-slate-300 text-xs">{admin.name}</span>
+                      </div>
+                    ) : <span className="text-slate-400 dark:text-slate-500 text-xs">—</span>}
+                  </td>
+                  <td className="px-5 py-3.5 text-slate-500 dark:text-slate-400">{(hotel.permissions || []).length} {t("permissionsSelected")}</td>
+                  <td className="px-5 py-3.5 text-slate-500 dark:text-slate-400">{hotel.createdAt ? new Date(hotel.createdAt).toLocaleDateString(lang === "ar" ? "ar-EG" : "en-US") : "—"}</td>
+                  <td className="px-5 py-3.5">
+                    <div className="flex items-center justify-end gap-1">
+                      <button onClick={() => handleEdit(hotel)} className="p-1.5 rounded-lg text-slate-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition"><Pencil size={15} /></button>
+                      <button onClick={() => handleDelete(hotel._id)} className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition"><Trash2 size={15} /></button>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
 
-      {/* Table View */}
-      <div className="card" style={{ marginTop: 32 }}>
-        <h3 style={{ marginBottom: 16, fontWeight: 600 }}>
-          {t("hotelAccountsTable")}
-        </h3>
-        <DataTable
-          columns={hotelColumns}
-          data={hotelAccounts}
-          editable={false}
-          exportFilename="hotel_accounts"
-        />
-      </div>
-
-      <Modal
-        open={adminRequiredModalOpen}
-        onClose={() => setAdminRequiredModalOpen(false)}
-        title={t("adminRequiredForHotelTitle")}
-      >
-        <p
-          style={{
-            margin: "0 0 20px 0",
-            color: "#64748b",
-            lineHeight: 1.7,
-            fontSize: 14,
-          }}
-        >
-          {t("adminRequiredForHotelMessage")}
-        </p>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "flex-end",
-            gap: 10,
-            flexWrap: "wrap",
-          }}
-        >
-          <button
-            className="btn"
-            onClick={() => setAdminRequiredModalOpen(false)}
-          >
-            {t("cancel")}
-          </button>
-          {isPlatformRole && canAddAdmins && (
-            <button
-              className="btn btn-primary"
-              onClick={handleOpenAdminCreation}
-            >
-              {t("createAdminNow")}
-            </button>
-          )}
+      {/* Admin Required Modal */}
+      <Modal open={adminRequiredModalOpen} onClose={() => setAdminRequiredModalOpen(false)} title={t("adminRequired")}>
+        <p className="text-sm text-slate-600 dark:text-slate-300 mb-5">{t("adminRequiredForHotelMessage")}</p>
+        <div className="flex justify-end gap-3">
+          <button onClick={() => setAdminRequiredModalOpen(false)} className="px-4 py-2 rounded-xl text-sm border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition">{t("cancel")}</button>
+          <button onClick={handleOpenAdminCreation} className="px-4 py-2 rounded-xl text-sm bg-indigo-600 text-white hover:bg-indigo-700 transition">{t("createAdminNow")}</button>
         </div>
       </Modal>
     </div>

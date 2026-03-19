@@ -14,10 +14,12 @@ export default function StatCard({
   const hasTrend = trend && trend !== "—";
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden flex flex-col">
+    <div className="bg-white dark:bg-slate-800/70 rounded-2xl border border-slate-100 dark:border-slate-700/60 shadow-sm overflow-hidden flex flex-col">
       <div className="p-5 pb-3 flex-1">
         <div className="flex items-start justify-between mb-3">
-          <span className="text-sm font-medium text-slate-500">{title}</span>
+          <span className="text-sm font-medium text-slate-500 dark:text-slate-400">
+            {title}
+          </span>
           {Icon && (
             <div
               className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
@@ -27,7 +29,7 @@ export default function StatCard({
             </div>
           )}
         </div>
-        <div className="text-3xl font-bold tracking-tight text-slate-800">
+        <div className="text-3xl font-bold tracking-tight text-slate-800 dark:text-slate-100">
           {value}
         </div>
         {hasTrend && (
@@ -38,7 +40,7 @@ export default function StatCard({
           >
             {isPositive ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
             <span>{trend}</span>
-            <span className="text-slate-400 font-normal text-xs">
+            <span className="text-slate-400 dark:text-slate-500 font-normal text-xs">
               vs last month
             </span>
           </div>

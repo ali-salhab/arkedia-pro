@@ -3,20 +3,22 @@ function GoalBar({ label, current, target, color = "#3b82f6", unit = "" }) {
   return (
     <div>
       <div className="flex justify-between items-center text-sm mb-1.5">
-        <span className="text-slate-600 font-medium">{label}</span>
-        <span className="text-slate-500 text-xs">
+        <span className="text-slate-600 dark:text-slate-300 font-medium">
+          {label}
+        </span>
+        <span className="text-slate-500 dark:text-slate-400 text-xs">
           {current}
           {unit} / {target}
           {unit}
         </span>
       </div>
-      <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+      <div className="h-2 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
         <div
           className="h-full rounded-full transition-all duration-700"
           style={{ width: `${pct}%`, background: color }}
         />
       </div>
-      <div className="text-right text-xs text-slate-400 mt-0.5">
+      <div className="text-right text-xs text-slate-400 dark:text-slate-500 mt-0.5">
         {pct.toFixed(0)}%
       </div>
     </div>
@@ -25,16 +27,18 @@ function GoalBar({ label, current, target, color = "#3b82f6", unit = "" }) {
 
 export default function MonthlyGoals({ goals = [] }) {
   return (
-    <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm">
-      <h3 className="text-base font-bold text-slate-800">Monthly Goals</h3>
-      <p className="text-sm text-slate-500 mt-0.5 mb-5">
+    <div className="bg-white dark:bg-slate-800/70 rounded-2xl p-6 border border-slate-100 dark:border-slate-700/60 shadow-sm">
+      <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">
+        Monthly Goals
+      </h3>
+      <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5 mb-5">
         Track progress toward targets
       </p>
       <div className="space-y-4">
         {goals.length > 0 ? (
           goals.map((g, i) => <GoalBar key={i} {...g} />)
         ) : (
-          <p className="text-sm text-slate-400 text-center py-4">
+          <p className="text-sm text-slate-400 dark:text-slate-500 text-center py-4">
             No active goals
           </p>
         )}

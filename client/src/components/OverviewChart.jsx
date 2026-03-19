@@ -26,9 +26,11 @@ function CustomTooltip({ active, payload, label, isMoney }) {
         : `$${v}`
     : v;
   return (
-    <div className="bg-white border border-slate-200 rounded-xl px-3 py-2 shadow-lg text-sm">
-      <div className="text-slate-500 mb-1">{label}</div>
-      <div className="font-semibold text-slate-800">{display}</div>
+    <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2 shadow-lg text-sm">
+      <div className="text-slate-500 dark:text-slate-400 mb-1">{label}</div>
+      <div className="font-semibold text-slate-800 dark:text-slate-100">
+        {display}
+      </div>
     </div>
   );
 }
@@ -66,23 +68,25 @@ export default function OverviewChart({
   };
 
   return (
-    <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm h-full">
+    <div className="bg-white dark:bg-slate-800/70 rounded-2xl p-6 border border-slate-100 dark:border-slate-700/60 shadow-sm h-full">
       <div className="flex items-start justify-between mb-5">
         <div>
-          <h3 className="text-base font-bold text-slate-800">Overview</h3>
-          <p className="text-sm text-slate-500 mt-0.5">
+          <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">
+            Overview
+          </h3>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
             Monthly performance for the current year
           </p>
         </div>
-        <div className="flex rounded-lg border border-slate-200 overflow-hidden">
+        <div className="flex rounded-lg border border-slate-200 dark:border-slate-600 overflow-hidden">
           {TABS.map((t) => (
             <button
               key={t.key}
               onClick={() => setTab(t.key)}
               className={`px-3.5 py-1.5 text-xs font-semibold transition ${
                 tab === t.key
-                  ? "bg-white text-slate-800"
-                  : "bg-slate-50 text-slate-500 hover:text-slate-700"
+                  ? "bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100"
+                  : "bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
               }`}
             >
               {tabLabels[t.key]}
@@ -104,7 +108,7 @@ export default function OverviewChart({
             </defs>
             <CartesianGrid
               strokeDasharray="3 3"
-              stroke="#f1f5f9"
+              stroke="#334155"
               vertical={false}
             />
             <XAxis

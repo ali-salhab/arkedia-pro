@@ -27,9 +27,15 @@ export default function DonutChart({
   };
 
   return (
-    <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm">
-      <h3 className="text-base font-bold text-slate-800">{title}</h3>
-      {subtitle && <p className="text-sm text-slate-500 mt-0.5">{subtitle}</p>}
+    <div className="bg-white dark:bg-slate-800/70 rounded-2xl p-6 border border-slate-100 dark:border-slate-700/60 shadow-sm">
+      <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">
+        {title}
+      </h3>
+      {subtitle && (
+        <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+          {subtitle}
+        </p>
+      )}
       <div className="flex items-center gap-5 mt-4">
         <div
           className="relative flex-shrink-0"
@@ -66,10 +72,12 @@ export default function DonutChart({
             </PieChart>
           </ResponsiveContainer>
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-            <div className="text-xl font-bold text-slate-800">
+            <div className="text-xl font-bold text-slate-800 dark:text-slate-100">
               {formatCenter()}
             </div>
-            <div className="text-xs text-slate-500">{centerLabel}</div>
+            <div className="text-xs text-slate-500 dark:text-slate-400">
+              {centerLabel}
+            </div>
           </div>
         </div>
         <div className="flex-1 space-y-2 min-w-0">
@@ -84,15 +92,19 @@ export default function DonutChart({
                     className="w-2.5 h-2.5 rounded-full flex-shrink-0"
                     style={{ background: COLORS[i % COLORS.length] }}
                   />
-                  <span className="text-slate-600 truncate">{d.name}</span>
+                  <span className="text-slate-600 dark:text-slate-300 truncate">
+                    {d.name}
+                  </span>
                 </div>
-                <span className="font-semibold text-slate-700 flex-shrink-0">
+                <span className="font-semibold text-slate-700 dark:text-slate-200 flex-shrink-0">
                   {((d.value / total) * 100).toFixed(0)}%
                 </span>
               </div>
             ))
           ) : (
-            <p className="text-sm text-slate-400">No data</p>
+            <p className="text-sm text-slate-400 dark:text-slate-500">
+              No data
+            </p>
           )}
         </div>
       </div>

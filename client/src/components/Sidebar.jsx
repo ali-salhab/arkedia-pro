@@ -209,16 +209,6 @@ export default function Sidebar({ mobileOpen = false, onClose }) {
                 e.target.style.display = "none";
               }}
             />
-            {!collapsed && (
-              <div className="min-w-0">
-                <p className="truncate text-sm font-bold text-white">
-                  Travky.com
-                </p>
-                <p className="truncate text-[10px] uppercase tracking-[0.15em] text-blue-100">
-                  Booking Platform
-                </p>
-              </div>
-            )}
           </div>
 
           <button
