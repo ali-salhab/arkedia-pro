@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import DataTable from "../components/DataTable";
 import { SkeletonTable } from "../components/SkeletonLoader";
-import UserFormModal from "../components/UserFormModal";
 import { useLanguage } from "../context/LanguageContext";
 import {
   useGetUsersQuery,
@@ -50,6 +50,7 @@ export default function RestaurantsPage() {
   const [createUser, { isLoading: isCreating }] = useCreateUserMutation();
   const [updateUser, { isLoading: isUpdating }] = useUpdateUserMutation();
   const [deleteUser, { isLoading: isDeleting }] = useDeleteUserMutation();
+  const navigate = useNavigate();
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editingRestaurant, setEditingRestaurant] = useState(null);
@@ -157,14 +158,20 @@ export default function RestaurantsPage() {
       window.alert(t("errorLoadingAdmins"));
       return;
     }
-
-    setEditingRestaurant(null);
-    setModalOpen(true);
+    navigate("/restaurants/new", {
+      state: { fixedRole: "restaurant", adminsList, backTo: "/restaurants" },
+    });
   };
 
   const handleEdit = (restaurant) => {
-    setEditingRestaurant(restaurant);
-    setModalOpen(true);
+    navigate(`/restaurants/${restaurant._id}/edit`, {
+      state: {
+        user: restaurant,
+        fixedRole: "restaurant",
+        adminsList,
+        backTo: "/restaurants",
+      },
+    });
   };
 
   const handleSave = async (data) => {
@@ -498,15 +505,6 @@ export default function RestaurantsPage() {
           exportFilename="restaurant_accounts"
         />
       </div>
-
-      <UserFormModal
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
-        onSave={handleSave}
-        user={editingRestaurant}
-        fixedRole="restaurant"
-        adminsList={adminsList}
-      />
     </div>
   );
 }

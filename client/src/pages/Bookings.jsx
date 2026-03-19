@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useLanguage } from "../context/LanguageContext";
 import LoadingScreen from "../components/LoadingScreen";
 import {
@@ -7,7 +8,6 @@ import {
   useUpdateBookingMutation,
   useDeleteBookingMutation,
 } from "../store/services/api";
-import BookingFormModal from "../components/BookingFormModal";
 import PermissionWrapper from "../components/PermissionWrapper";
 
 const STATUS_STYLE = {
@@ -38,6 +38,7 @@ function fmt(d) {
 
 export default function BookingsPage() {
   const { t } = useLanguage();
+  const navigate = useNavigate();
   const { data: bookings = [], isLoading } = useGetBookingsQuery();
   const [createBooking] = useCreateBookingMutation();
   const [updateBooking] = useUpdateBookingMutation();
@@ -88,12 +89,12 @@ export default function BookingsPage() {
   };
 
   const openAdd = () => {
-    setEditBooking(null);
-    setModalOpen(true);
+    navigate("/bookings/new", { state: { backTo: "/bookings" } });
   };
   const openEdit = (b) => {
-    setEditBooking(b);
-    setModalOpen(true);
+    navigate(`/bookings/${b._id}/edit`, {
+      state: { booking: b, backTo: "/bookings" },
+    });
   };
 
   if (isLoading)
@@ -439,14 +440,6 @@ export default function BookingsPage() {
           </table>
         </div>
       )}
-
-      {/* Booking form modal */}
-      <BookingFormModal
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
-        onSave={handleSave}
-        booking={editBooking}
-      />
 
       {/* Delete confirmation */}
       {confirmDelete && (

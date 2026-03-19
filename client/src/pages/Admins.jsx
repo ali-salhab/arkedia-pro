@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import DataTable from "../components/DataTable";
 import LoadingScreen from "../components/LoadingScreen";
-import UserFormModal from "../components/UserFormModal";
 import { useLanguage } from "../context/LanguageContext";
 import {
   useGetUsersQuery,
@@ -24,6 +24,7 @@ export default function AdminsPage() {
   const [updateUser] = useUpdateUserMutation();
   const [deleteUser] = useDeleteUserMutation();
 
+  const navigate = useNavigate();
   const [modalOpen, setModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const { t } = useLanguage();
@@ -48,13 +49,15 @@ export default function AdminsPage() {
   ];
 
   const handleAddNew = () => {
-    setEditingUser(null);
-    setModalOpen(true);
+    navigate("/admins/new", {
+      state: { fixedRole: "admin", backTo: "/admins" },
+    });
   };
 
   const handleEdit = (user) => {
-    setEditingUser(user);
-    setModalOpen(true);
+    navigate(`/admins/${user._id}/edit`, {
+      state: { user, fixedRole: "admin", backTo: "/admins" },
+    });
   };
 
   const handleSave = async (data) => {
@@ -439,14 +442,6 @@ export default function AdminsPage() {
           />
         </div>
       </div>
-
-      <UserFormModal
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
-        onSave={handleSave}
-        user={editingUser}
-        fixedRole="admin"
-      />
     </div>
   );
 }

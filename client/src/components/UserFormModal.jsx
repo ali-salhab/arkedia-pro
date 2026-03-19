@@ -355,6 +355,7 @@ export default function UserFormModal({
   fixedRole = null,
   adminsList = [],
   allowedRoles = null, // if set, restricts which roles appear in the dropdown
+  pageMode = false,
 }) {
   const currentUser = useSelector((s) => s.auth.user);
   const isPlatformRole = ["super_admin", "superadminuser"].includes(
@@ -435,7 +436,7 @@ export default function UserFormModal({
     }
   }, [user, open]);
 
-  if (!open) return null;
+  if (!open && !pageMode) return null;
 
   const handleChange = (field, value) => {
     setForm((prev) => {
@@ -589,6 +590,644 @@ export default function UserFormModal({
     return selected.length > 0 && selected.length < modulePerms.length;
   };
 
+  const innerContent = (
+    <div
+      className="card"
+      style={{
+        width: pageMode ? "100%" : "90%",
+        maxWidth: 900,
+        maxHeight: pageMode ? "none" : "90vh",
+        overflow: "auto",
+        background: "#ffffff",
+      }}
+    >
+      {/* Header */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: 20,
+          padding: "0 0 16px 0",
+          borderBottom: "1px solid #e2e8f0",
+        }}
+      >
+        <h2 style={{ margin: 0, color: "#1e293b" }}>
+          {user ? t("editUser") : t("createNewUser")}
+        </h2>
+        <button
+          className="btn"
+          onClick={onClose}
+          style={{ background: "#475569" }}
+        >
+          ✕
+        </button>
+      </div>
+
+      {/* Tabs */}
+      <div
+        style={{
+          display: "flex",
+          gap: 8,
+          marginBottom: 20,
+          borderBottom: "1px solid #e2e8f0",
+          paddingBottom: 12,
+        }}
+      >
+        <button
+          onClick={() => setActiveTab("basic")}
+          style={{
+            padding: "10px 20px",
+            background: activeTab === "basic" ? "#2563eb" : "#f1f5f9",
+            border: "none",
+            borderRadius: 8,
+            color: activeTab === "basic" ? "#fff" : "#64748b",
+            cursor: "pointer",
+            fontWeight: 500,
+          }}
+        >
+          👤 {t("basicInfoTab")}
+        </button>
+        <button
+          onClick={() => setActiveTab("permissions")}
+          style={{
+            padding: "10px 20px",
+            background: activeTab === "permissions" ? "#2563eb" : "#f1f5f9",
+            border: "none",
+            borderRadius: 8,
+            color: activeTab === "permissions" ? "#fff" : "#64748b",
+            cursor: "pointer",
+            fontWeight: 500,
+          }}
+        >
+          🔐 {t("permissionsTab")} ({(form.permissions || []).length})
+        </button>
+      </div>
+
+      {/* Basic Info Tab */}
+      {activeTab === "basic" && (
+        <div
+          style={{
+            padding: 16,
+            background: "#f8fafc",
+            borderRadius: 12,
+            border: "1px solid #e2e8f0",
+          }}
+        >
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(2, 1fr)",
+              gap: 16,
+            }}
+          >
+            <div>
+              <label style={labelStyle}>{t("fullName")} *</label>
+              <input
+                style={inputStyle}
+                value={form.name}
+                onChange={(e) => handleChange("name", e.target.value)}
+                placeholder="John Doe"
+              />
+            </div>
+            <div>
+              <label style={labelStyle}>{t("emailAddress")} *</label>
+              <input
+                style={inputStyle}
+                type="email"
+                value={form.email}
+                onChange={(e) => handleChange("email", e.target.value)}
+                placeholder="john@example.com"
+              />
+            </div>
+          </div>
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(2, 1fr)",
+              gap: 16,
+              marginTop: 16,
+            }}
+          >
+            <div>
+              <label style={labelStyle}>
+                {t("password")} {user ? t("leaveEmptyPassword") : "*"}
+              </label>
+              <input
+                style={inputStyle}
+                type="password"
+                value={form.password}
+                onChange={(e) => handleChange("password", e.target.value)}
+                placeholder={user ? "••••••••" : t("password")}
+              />
+            </div>
+            {fixedRole ? (
+              <div>
+                <label style={labelStyle}>{t("role")}</label>
+                <div
+                  style={{
+                    ...inputStyle,
+                    background: "#f1f5f9",
+                    color: "#475569",
+                    display: "flex",
+                    alignItems: "center",
+                    fontWeight: 600,
+                  }}
+                >
+                  {fixedRole === "super_admin" && "🔑 " + t("role_super_admin")}
+                  {fixedRole === "superadminuser" && "👤 Super Admin User"}
+                  {fixedRole === "admin" && "👔 " + t("role_admin")}
+                  {fixedRole === "adminuser" && "👤 Admin User"}
+                  {fixedRole === "hotel" && "🏨 " + t("role_hotel")}
+                  {fixedRole === "hoteluser" && "👤 Hotel User"}
+                  {fixedRole === "restaurant" && "🍽️ " + t("role_restaurant")}
+                  {fixedRole === "restaurantuser" && "👤 Restaurant User"}
+                  {fixedRole === "activity" && "🎯 " + t("role_activity")}
+                  {fixedRole === "activityuser" && "👤 Activity User"}
+                </div>
+              </div>
+            ) : (
+              <div>
+                <label style={labelStyle}>{t("role")} *</label>
+                <select
+                  style={inputStyle}
+                  value={form.role}
+                  onChange={(e) => handleChange("role", e.target.value)}
+                >
+                  {roleOptions.includes("super_admin") && (
+                    <option value="super_admin">
+                      🔑 {t("role_super_admin")}
+                    </option>
+                  )}
+                  {roleOptions.includes("superadminuser") && (
+                    <option value="superadminuser">👤 Super Admin User</option>
+                  )}
+                  {roleOptions.includes("admin") && (
+                    <option value="admin">👔 {t("role_admin")}</option>
+                  )}
+                  {roleOptions.includes("adminuser") && (
+                    <option value="adminuser">👤 Admin User</option>
+                  )}
+                  {roleOptions.includes("hotel") && (
+                    <option value="hotel">🏨 {t("role_hotel_manager")}</option>
+                  )}
+                  {roleOptions.includes("hoteluser") && (
+                    <option value="hoteluser">👤 Hotel User</option>
+                  )}
+                  {roleOptions.includes("restaurant") && (
+                    <option value="restaurant">
+                      🍽️ {t("role_restaurant_manager")}
+                    </option>
+                  )}
+                  {roleOptions.includes("restaurantuser") && (
+                    <option value="restaurantuser">👤 Restaurant User</option>
+                  )}
+                  {roleOptions.includes("activity") && (
+                    <option value="activity">
+                      🎯 {t("role_activity_manager")}
+                    </option>
+                  )}
+                  {roleOptions.includes("activityuser") && (
+                    <option value="activityuser">👤 Activity User</option>
+                  )}
+                </select>
+              </div>
+            )}
+          </div>
+
+          {/* Admin Selector — required for platform roles when creating hotel/restaurant/activity accounts */}
+          {isPlatformRole && ADMIN_OWNED_ROLES.has(fixedRole || form.role) && (
+            <div style={{ marginTop: 16 }}>
+              <label style={{ ...labelStyle, color: "#f59e0b" }}>
+                🔗 {t("linkedAdmin")} *
+              </label>
+              {adminsList.length === 0 ? (
+                <div
+                  style={{
+                    ...inputStyle,
+                    background: "#fef2f2",
+                    borderColor: "#ef4444",
+                    color: "#ef4444",
+                  }}
+                >
+                  ⚠️ No admins found — create an admin account first before
+                  adding hotel/restaurant/activity accounts.
+                </div>
+              ) : (
+                <>
+                  <select
+                    style={{
+                      ...inputStyle,
+                      borderColor: form.adminId ? "#22c55e" : "#ef4444",
+                    }}
+                    value={form.adminId}
+                    onChange={(e) => handleChange("adminId", e.target.value)}
+                  >
+                    <option value="">{t("selectAdmin")}</option>
+                    {adminsList.map((admin) => (
+                      <option key={admin._id} value={admin._id}>
+                        {admin.name} ({admin.email})
+                      </option>
+                    ))}
+                  </select>
+                  {!form.adminId && (
+                    <p
+                      style={{
+                        color: "#ef4444",
+                        fontSize: 12,
+                        marginTop: 4,
+                      }}
+                    >
+                      ⚠️ {t("adminRequired")}
+                    </p>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+
+          {/* Logo URL for hotel/restaurant/activity */}
+          {fixedRole &&
+            fixedRole !== "super_admin" &&
+            fixedRole !== "admin" && (
+              <div style={{ marginTop: 16 }}>
+                <label style={labelStyle}>🖼️ {t("logoUpload")}</label>
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  {form.logo && (
+                    <img
+                      src={form.logo}
+                      alt="logo"
+                      style={{
+                        width: 52,
+                        height: 52,
+                        borderRadius: "50%",
+                        objectFit: "cover",
+                        border: "2px solid #e2e8f0",
+                      }}
+                    />
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => logoInputRef.current?.click()}
+                    style={{
+                      padding: "10px 18px",
+                      background: "#f1f5f9",
+                      border: "1px dashed #94a3b8",
+                      borderRadius: 8,
+                      color: "#475569",
+                      cursor: "pointer",
+                      fontSize: 13,
+                      fontWeight: 500,
+                    }}
+                  >
+                    📂 {t("logoUpload")}
+                  </button>
+                  {form.logo && (
+                    <span style={{ color: "#22c55e", fontSize: 12 }}>
+                      {t("logoPreview")}
+                    </span>
+                  )}
+                </div>
+                <input
+                  ref={logoInputRef}
+                  type="file"
+                  accept="image/*"
+                  style={{ display: "none" }}
+                  onChange={handleLogoUpload}
+                />
+              </div>
+            )}
+
+          {/* Role Description */}
+          <div
+            style={{
+              marginTop: 20,
+              padding: 16,
+              background: "#eff6ff",
+              borderRadius: 8,
+              borderLeft: "4px solid #3b82f6",
+            }}
+          >
+            <h4 style={{ margin: "0 0 8px 0", color: "#2563eb", fontSize: 14 }}>
+              {t("roleDescription")}
+            </h4>
+            <p style={{ margin: 0, color: "#475569", fontSize: 13 }}>
+              {t("roleDesc_" + form.role)}
+            </p>
+          </div>
+
+          {/* Custom Permissions Toggle */}
+          <div
+            style={{
+              marginTop: 20,
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+            }}
+          >
+            <input
+              type="checkbox"
+              id="customPerms"
+              checked={useCustomPermissions}
+              onChange={(e) => {
+                setUseCustomPermissions(e.target.checked);
+                if (!e.target.checked) {
+                  applyRolePreset();
+                }
+              }}
+            />
+            <label htmlFor="customPerms" style={{ color: "#374151" }}>
+              {t("useCustomPerms")}
+            </label>
+          </div>
+        </div>
+      )}
+
+      {/* Permissions Tab */}
+      {activeTab === "permissions" && (
+        <div>
+          {/* Quick Actions */}
+          <div
+            style={{
+              display: "flex",
+              gap: 8,
+              marginBottom: 16,
+              flexWrap: "wrap",
+            }}
+          >
+            <button
+              onClick={selectAllPermissions}
+              style={{
+                padding: "8px 16px",
+                background: "#22c55e",
+                border: "none",
+                borderRadius: 6,
+                color: "#fff",
+                cursor: "pointer",
+                fontSize: 13,
+              }}
+            >
+              ✅ {t("selectAll")}
+            </button>
+            <button
+              onClick={clearAllPermissions}
+              style={{
+                padding: "8px 16px",
+                background: "#ef4444",
+                border: "none",
+                borderRadius: 6,
+                color: "#fff",
+                cursor: "pointer",
+                fontSize: 13,
+              }}
+            >
+              ❌ {t("clearAll")}
+            </button>
+            <button
+              onClick={applyRolePreset}
+              style={{
+                padding: "8px 16px",
+                background: "#8b5cf6",
+                border: "none",
+                borderRadius: 6,
+                color: "#fff",
+                cursor: "pointer",
+                fontSize: 13,
+              }}
+            >
+              🔄 {t("applyRolePreset")}
+            </button>
+            <span
+              style={{
+                color: "#6b7280",
+                fontSize: 13,
+                alignSelf: "center",
+                marginLeft: "auto",
+              }}
+            >
+              {(form.permissions || []).length} {t("permissionsSelected")}
+            </span>
+          </div>
+
+          {/* Permission Modules */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(2, 1fr)",
+              gap: 16,
+            }}
+          >
+            {visibleMatrix.map((module) => (
+              <div
+                key={module.module}
+                style={{
+                  background: "#f8fafc",
+                  borderRadius: 12,
+                  padding: 16,
+                  border: isModuleFullySelected(module.module)
+                    ? "2px solid #22c55e"
+                    : isModulePartiallySelected(module.module)
+                      ? "2px solid #f59e0b"
+                      : "2px solid #e2e8f0",
+                }}
+              >
+                {/* Module Header */}
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 10,
+                    marginBottom: 12,
+                    paddingBottom: 10,
+                    borderBottom: "1px solid #e2e8f0",
+                  }}
+                >
+                  <span style={{ fontSize: 24 }}>{module.icon}</span>
+                  <div style={{ flex: 1 }}>
+                    <h4 style={{ margin: 0, color: "#1e293b", fontSize: 15 }}>
+                      {t(`module_${module.module}`)}
+                    </h4>
+                  </div>
+                  <label
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                      cursor: "pointer",
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isModuleFullySelected(module.module)}
+                      onChange={(e) =>
+                        toggleModuleAll(module.module, e.target.checked)
+                      }
+                      style={{ width: 18, height: 18 }}
+                    />
+                    <span style={{ color: "#475569", fontSize: 12 }}>
+                      {t("allLabel")}
+                    </span>
+                  </label>
+                </div>
+
+                {/* Module Actions */}
+                <div
+                  style={{ display: "flex", flexDirection: "column", gap: 8 }}
+                >
+                  {module.actions.map((action) => {
+                    const perm = `${module.module}:${action.key}`;
+                    const isSelected = (form.permissions || []).includes(perm);
+                    return (
+                      <label
+                        key={perm}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 10,
+                          padding: "8px 12px",
+                          background: isSelected ? "#dcfce7" : "#ffffff",
+                          borderRadius: 6,
+                          cursor: "pointer",
+                          border: isSelected
+                            ? "1px solid #86efac"
+                            : "1px solid #e2e8f0",
+                          transition: "all 0.15s",
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => togglePermission(perm)}
+                          style={{ width: 16, height: 16 }}
+                        />
+                        <span
+                          style={{
+                            color: isSelected ? "#16a34a" : "#4b5563",
+                            fontSize: 13,
+                          }}
+                        >
+                          {t(`action_${action.key}_${module.module}`)}
+                        </span>
+                        {action.key === "delete" && (
+                          <span
+                            style={{
+                              marginLeft: "auto",
+                              fontSize: 10,
+                              background: "#fee2e2",
+                              color: "#ef4444",
+                              padding: "2px 6px",
+                              borderRadius: 4,
+                            }}
+                          >
+                            {t("dangerLabel")}
+                          </span>
+                        )}
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Permission Summary */}
+          <div
+            style={{
+              marginTop: 20,
+              padding: 16,
+              background: "#f8fafc",
+              borderRadius: 12,
+              border: "1px solid #e2e8f0",
+            }}
+          >
+            <h4
+              style={{ margin: "0 0 12px 0", color: "#1e293b", fontSize: 14 }}
+            >
+              📋 {t("permSummary")}
+            </h4>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+              {(form.permissions || []).length === 0 ? (
+                <span style={{ color: "#9ca3af", fontSize: 13 }}>
+                  {t("noPermsSelected")}
+                </span>
+              ) : (
+                (form.permissions || []).map((p) => (
+                  <span
+                    key={p}
+                    style={{
+                      padding: "4px 10px",
+                      background: "#e2e8f0",
+                      borderRadius: 20,
+                      fontSize: 11,
+                      color: "#475569",
+                    }}
+                  >
+                    {p}
+                  </span>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Error Banner */}
+      {saveError && (
+        <div
+          style={{
+            marginTop: 16,
+            padding: "12px 16px",
+            background: "#fef2f2",
+            border: "1px solid #fca5a5",
+            borderRadius: 8,
+            color: "#dc2626",
+            fontSize: 13,
+            fontWeight: 500,
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+          }}
+        >
+          ⚠️ {saveError}
+        </div>
+      )}
+
+      {/* Footer */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "flex-end",
+          gap: 12,
+          marginTop: 20,
+          paddingTop: 16,
+          borderTop: "1px solid #e2e8f0",
+        }}
+      >
+        <button
+          className="btn"
+          onClick={onClose}
+          style={{ background: "#475569" }}
+        >
+          {t("cancel")}
+        </button>
+        <button
+          className="btn btn-primary"
+          onClick={handleSubmit}
+          disabled={loading || !form.name || !form.email}
+          style={{
+            background: loading ? "#475569" : "#3b82f6",
+            opacity: !form.name || !form.email ? 0.5 : 1,
+          }}
+        >
+          {loading ? t("saving") : user ? t("updateUser") : t("createUser")}
+        </button>
+      </div>
+    </div>
+  );
+
+  if (pageMode) return innerContent;
+
   return (
     <div
       style={{
@@ -603,653 +1242,7 @@ export default function UserFormModal({
       }}
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div
-        className="card"
-        style={{
-          width: "90%",
-          maxWidth: 900,
-          maxHeight: "90vh",
-          overflow: "auto",
-          background: "#ffffff",
-        }}
-      >
-        {/* Header */}
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: 20,
-            padding: "0 0 16px 0",
-            borderBottom: "1px solid #e2e8f0",
-          }}
-        >
-          <h2 style={{ margin: 0, color: "#1e293b" }}>
-            {user ? t("editUser") : t("createNewUser")}
-          </h2>
-          <button
-            className="btn"
-            onClick={onClose}
-            style={{ background: "#475569" }}
-          >
-            ✕
-          </button>
-        </div>
-
-        {/* Tabs */}
-        <div
-          style={{
-            display: "flex",
-            gap: 8,
-            marginBottom: 20,
-            borderBottom: "1px solid #e2e8f0",
-            paddingBottom: 12,
-          }}
-        >
-          <button
-            onClick={() => setActiveTab("basic")}
-            style={{
-              padding: "10px 20px",
-              background: activeTab === "basic" ? "#2563eb" : "#f1f5f9",
-              border: "none",
-              borderRadius: 8,
-              color: activeTab === "basic" ? "#fff" : "#64748b",
-              cursor: "pointer",
-              fontWeight: 500,
-            }}
-          >
-            👤 {t("basicInfoTab")}
-          </button>
-          <button
-            onClick={() => setActiveTab("permissions")}
-            style={{
-              padding: "10px 20px",
-              background: activeTab === "permissions" ? "#2563eb" : "#f1f5f9",
-              border: "none",
-              borderRadius: 8,
-              color: activeTab === "permissions" ? "#fff" : "#64748b",
-              cursor: "pointer",
-              fontWeight: 500,
-            }}
-          >
-            🔐 {t("permissionsTab")} ({(form.permissions || []).length})
-          </button>
-        </div>
-
-        {/* Basic Info Tab */}
-        {activeTab === "basic" && (
-          <div
-            style={{
-              padding: 16,
-              background: "#f8fafc",
-              borderRadius: 12,
-              border: "1px solid #e2e8f0",
-            }}
-          >
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(2, 1fr)",
-                gap: 16,
-              }}
-            >
-              <div>
-                <label style={labelStyle}>{t("fullName")} *</label>
-                <input
-                  style={inputStyle}
-                  value={form.name}
-                  onChange={(e) => handleChange("name", e.target.value)}
-                  placeholder="John Doe"
-                />
-              </div>
-              <div>
-                <label style={labelStyle}>{t("emailAddress")} *</label>
-                <input
-                  style={inputStyle}
-                  type="email"
-                  value={form.email}
-                  onChange={(e) => handleChange("email", e.target.value)}
-                  placeholder="john@example.com"
-                />
-              </div>
-            </div>
-
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(2, 1fr)",
-                gap: 16,
-                marginTop: 16,
-              }}
-            >
-              <div>
-                <label style={labelStyle}>
-                  {t("password")} {user ? t("leaveEmptyPassword") : "*"}
-                </label>
-                <input
-                  style={inputStyle}
-                  type="password"
-                  value={form.password}
-                  onChange={(e) => handleChange("password", e.target.value)}
-                  placeholder={user ? "••••••••" : t("password")}
-                />
-              </div>
-              {fixedRole ? (
-                <div>
-                  <label style={labelStyle}>{t("role")}</label>
-                  <div
-                    style={{
-                      ...inputStyle,
-                      background: "#f1f5f9",
-                      color: "#475569",
-                      display: "flex",
-                      alignItems: "center",
-                      fontWeight: 600,
-                    }}
-                  >
-                    {fixedRole === "super_admin" &&
-                      "🔑 " + t("role_super_admin")}
-                    {fixedRole === "superadminuser" && "👤 Super Admin User"}
-                    {fixedRole === "admin" && "👔 " + t("role_admin")}
-                    {fixedRole === "adminuser" && "👤 Admin User"}
-                    {fixedRole === "hotel" && "🏨 " + t("role_hotel")}
-                    {fixedRole === "hoteluser" && "👤 Hotel User"}
-                    {fixedRole === "restaurant" && "🍽️ " + t("role_restaurant")}
-                    {fixedRole === "restaurantuser" && "👤 Restaurant User"}
-                    {fixedRole === "activity" && "🎯 " + t("role_activity")}
-                    {fixedRole === "activityuser" && "👤 Activity User"}
-                  </div>
-                </div>
-              ) : (
-                <div>
-                  <label style={labelStyle}>{t("role")} *</label>
-                  <select
-                    style={inputStyle}
-                    value={form.role}
-                    onChange={(e) => handleChange("role", e.target.value)}
-                  >
-                    {roleOptions.includes("super_admin") && (
-                      <option value="super_admin">
-                        🔑 {t("role_super_admin")}
-                      </option>
-                    )}
-                    {roleOptions.includes("superadminuser") && (
-                      <option value="superadminuser">
-                        👤 Super Admin User
-                      </option>
-                    )}
-                    {roleOptions.includes("admin") && (
-                      <option value="admin">👔 {t("role_admin")}</option>
-                    )}
-                    {roleOptions.includes("adminuser") && (
-                      <option value="adminuser">👤 Admin User</option>
-                    )}
-                    {roleOptions.includes("hotel") && (
-                      <option value="hotel">
-                        🏨 {t("role_hotel_manager")}
-                      </option>
-                    )}
-                    {roleOptions.includes("hoteluser") && (
-                      <option value="hoteluser">👤 Hotel User</option>
-                    )}
-                    {roleOptions.includes("restaurant") && (
-                      <option value="restaurant">
-                        🍽️ {t("role_restaurant_manager")}
-                      </option>
-                    )}
-                    {roleOptions.includes("restaurantuser") && (
-                      <option value="restaurantuser">👤 Restaurant User</option>
-                    )}
-                    {roleOptions.includes("activity") && (
-                      <option value="activity">
-                        🎯 {t("role_activity_manager")}
-                      </option>
-                    )}
-                    {roleOptions.includes("activityuser") && (
-                      <option value="activityuser">👤 Activity User</option>
-                    )}
-                  </select>
-                </div>
-              )}
-            </div>
-
-            {/* Admin Selector — required for platform roles when creating hotel/restaurant/activity accounts */}
-            {isPlatformRole &&
-              ADMIN_OWNED_ROLES.has(fixedRole || form.role) && (
-                <div style={{ marginTop: 16 }}>
-                  <label style={{ ...labelStyle, color: "#f59e0b" }}>
-                    🔗 {t("linkedAdmin")} *
-                  </label>
-                  {adminsList.length === 0 ? (
-                    <div
-                      style={{
-                        ...inputStyle,
-                        background: "#fef2f2",
-                        borderColor: "#ef4444",
-                        color: "#ef4444",
-                      }}
-                    >
-                      ⚠️ No admins found — create an admin account first before
-                      adding hotel/restaurant/activity accounts.
-                    </div>
-                  ) : (
-                    <>
-                      <select
-                        style={{
-                          ...inputStyle,
-                          borderColor: form.adminId ? "#22c55e" : "#ef4444",
-                        }}
-                        value={form.adminId}
-                        onChange={(e) =>
-                          handleChange("adminId", e.target.value)
-                        }
-                      >
-                        <option value="">{t("selectAdmin")}</option>
-                        {adminsList.map((admin) => (
-                          <option key={admin._id} value={admin._id}>
-                            {admin.name} ({admin.email})
-                          </option>
-                        ))}
-                      </select>
-                      {!form.adminId && (
-                        <p
-                          style={{
-                            color: "#ef4444",
-                            fontSize: 12,
-                            marginTop: 4,
-                          }}
-                        >
-                          ⚠️ {t("adminRequired")}
-                        </p>
-                      )}
-                    </>
-                  )}
-                </div>
-              )}
-
-            {/* Logo URL for hotel/restaurant/activity */}
-            {fixedRole &&
-              fixedRole !== "super_admin" &&
-              fixedRole !== "admin" && (
-                <div style={{ marginTop: 16 }}>
-                  <label style={labelStyle}>🖼️ {t("logoUpload")}</label>
-                  <div
-                    style={{ display: "flex", alignItems: "center", gap: 12 }}
-                  >
-                    {form.logo && (
-                      <img
-                        src={form.logo}
-                        alt="logo"
-                        style={{
-                          width: 52,
-                          height: 52,
-                          borderRadius: "50%",
-                          objectFit: "cover",
-                          border: "2px solid #e2e8f0",
-                        }}
-                      />
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => logoInputRef.current?.click()}
-                      style={{
-                        padding: "10px 18px",
-                        background: "#f1f5f9",
-                        border: "1px dashed #94a3b8",
-                        borderRadius: 8,
-                        color: "#475569",
-                        cursor: "pointer",
-                        fontSize: 13,
-                        fontWeight: 500,
-                      }}
-                    >
-                      📂 {t("logoUpload")}
-                    </button>
-                    {form.logo && (
-                      <span style={{ color: "#22c55e", fontSize: 12 }}>
-                        {t("logoPreview")}
-                      </span>
-                    )}
-                  </div>
-                  <input
-                    ref={logoInputRef}
-                    type="file"
-                    accept="image/*"
-                    style={{ display: "none" }}
-                    onChange={handleLogoUpload}
-                  />
-                </div>
-              )}
-
-            {/* Role Description */}
-            <div
-              style={{
-                marginTop: 20,
-                padding: 16,
-                background: "#eff6ff",
-                borderRadius: 8,
-                borderLeft: "4px solid #3b82f6",
-              }}
-            >
-              <h4
-                style={{ margin: "0 0 8px 0", color: "#2563eb", fontSize: 14 }}
-              >
-                {t("roleDescription")}
-              </h4>
-              <p style={{ margin: 0, color: "#475569", fontSize: 13 }}>
-                {t("roleDesc_" + form.role)}
-              </p>
-            </div>
-
-            {/* Custom Permissions Toggle */}
-            <div
-              style={{
-                marginTop: 20,
-                display: "flex",
-                alignItems: "center",
-                gap: 12,
-              }}
-            >
-              <input
-                type="checkbox"
-                id="customPerms"
-                checked={useCustomPermissions}
-                onChange={(e) => {
-                  setUseCustomPermissions(e.target.checked);
-                  if (!e.target.checked) {
-                    applyRolePreset();
-                  }
-                }}
-              />
-              <label htmlFor="customPerms" style={{ color: "#374151" }}>
-                {t("useCustomPerms")}
-              </label>
-            </div>
-          </div>
-        )}
-
-        {/* Permissions Tab */}
-        {activeTab === "permissions" && (
-          <div>
-            {/* Quick Actions */}
-            <div
-              style={{
-                display: "flex",
-                gap: 8,
-                marginBottom: 16,
-                flexWrap: "wrap",
-              }}
-            >
-              <button
-                onClick={selectAllPermissions}
-                style={{
-                  padding: "8px 16px",
-                  background: "#22c55e",
-                  border: "none",
-                  borderRadius: 6,
-                  color: "#fff",
-                  cursor: "pointer",
-                  fontSize: 13,
-                }}
-              >
-                ✅ {t("selectAll")}
-              </button>
-              <button
-                onClick={clearAllPermissions}
-                style={{
-                  padding: "8px 16px",
-                  background: "#ef4444",
-                  border: "none",
-                  borderRadius: 6,
-                  color: "#fff",
-                  cursor: "pointer",
-                  fontSize: 13,
-                }}
-              >
-                ❌ {t("clearAll")}
-              </button>
-              <button
-                onClick={applyRolePreset}
-                style={{
-                  padding: "8px 16px",
-                  background: "#8b5cf6",
-                  border: "none",
-                  borderRadius: 6,
-                  color: "#fff",
-                  cursor: "pointer",
-                  fontSize: 13,
-                }}
-              >
-                🔄 {t("applyRolePreset")}
-              </button>
-              <span
-                style={{
-                  color: "#6b7280",
-                  fontSize: 13,
-                  alignSelf: "center",
-                  marginLeft: "auto",
-                }}
-              >
-                {(form.permissions || []).length} {t("permissionsSelected")}
-              </span>
-            </div>
-
-            {/* Permission Modules */}
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(2, 1fr)",
-                gap: 16,
-              }}
-            >
-              {visibleMatrix.map((module) => (
-                <div
-                  key={module.module}
-                  style={{
-                    background: "#f8fafc",
-                    borderRadius: 12,
-                    padding: 16,
-                    border: isModuleFullySelected(module.module)
-                      ? "2px solid #22c55e"
-                      : isModulePartiallySelected(module.module)
-                        ? "2px solid #f59e0b"
-                        : "2px solid #e2e8f0",
-                  }}
-                >
-                  {/* Module Header */}
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 10,
-                      marginBottom: 12,
-                      paddingBottom: 10,
-                      borderBottom: "1px solid #e2e8f0",
-                    }}
-                  >
-                    <span style={{ fontSize: 24 }}>{module.icon}</span>
-                    <div style={{ flex: 1 }}>
-                      <h4 style={{ margin: 0, color: "#1e293b", fontSize: 15 }}>
-                        {t(`module_${module.module}`)}
-                      </h4>
-                    </div>
-                    <label
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 6,
-                        cursor: "pointer",
-                      }}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={isModuleFullySelected(module.module)}
-                        onChange={(e) =>
-                          toggleModuleAll(module.module, e.target.checked)
-                        }
-                        style={{ width: 18, height: 18 }}
-                      />
-                      <span style={{ color: "#475569", fontSize: 12 }}>
-                        {t("allLabel")}
-                      </span>
-                    </label>
-                  </div>
-
-                  {/* Module Actions */}
-                  <div
-                    style={{ display: "flex", flexDirection: "column", gap: 8 }}
-                  >
-                    {module.actions.map((action) => {
-                      const perm = `${module.module}:${action.key}`;
-                      const isSelected = (form.permissions || []).includes(
-                        perm,
-                      );
-                      return (
-                        <label
-                          key={perm}
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 10,
-                            padding: "8px 12px",
-                            background: isSelected ? "#dcfce7" : "#ffffff",
-                            borderRadius: 6,
-                            cursor: "pointer",
-                            border: isSelected
-                              ? "1px solid #86efac"
-                              : "1px solid #e2e8f0",
-                            transition: "all 0.15s",
-                          }}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={isSelected}
-                            onChange={() => togglePermission(perm)}
-                            style={{ width: 16, height: 16 }}
-                          />
-                          <span
-                            style={{
-                              color: isSelected ? "#16a34a" : "#4b5563",
-                              fontSize: 13,
-                            }}
-                          >
-                            {t(`action_${action.key}_${module.module}`)}
-                          </span>
-                          {action.key === "delete" && (
-                            <span
-                              style={{
-                                marginLeft: "auto",
-                                fontSize: 10,
-                                background: "#fee2e2",
-                                color: "#ef4444",
-                                padding: "2px 6px",
-                                borderRadius: 4,
-                              }}
-                            >
-                              {t("dangerLabel")}
-                            </span>
-                          )}
-                        </label>
-                      );
-                    })}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Permission Summary */}
-            <div
-              style={{
-                marginTop: 20,
-                padding: 16,
-                background: "#f8fafc",
-                borderRadius: 12,
-                border: "1px solid #e2e8f0",
-              }}
-            >
-              <h4
-                style={{ margin: "0 0 12px 0", color: "#1e293b", fontSize: 14 }}
-              >
-                📋 {t("permSummary")}
-              </h4>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                {(form.permissions || []).length === 0 ? (
-                  <span style={{ color: "#9ca3af", fontSize: 13 }}>
-                    {t("noPermsSelected")}
-                  </span>
-                ) : (
-                  (form.permissions || []).map((p) => (
-                    <span
-                      key={p}
-                      style={{
-                        padding: "4px 10px",
-                        background: "#e2e8f0",
-                        borderRadius: 20,
-                        fontSize: 11,
-                        color: "#475569",
-                      }}
-                    >
-                      {p}
-                    </span>
-                  ))
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Error Banner */}
-        {saveError && (
-          <div
-            style={{
-              marginTop: 16,
-              padding: "12px 16px",
-              background: "#fef2f2",
-              border: "1px solid #fca5a5",
-              borderRadius: 8,
-              color: "#dc2626",
-              fontSize: 13,
-              fontWeight: 500,
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-            }}
-          >
-            ⚠️ {saveError}
-          </div>
-        )}
-
-        {/* Footer */}
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "flex-end",
-            gap: 12,
-            marginTop: 20,
-            paddingTop: 16,
-            borderTop: "1px solid #e2e8f0",
-          }}
-        >
-          <button
-            className="btn"
-            onClick={onClose}
-            style={{ background: "#475569" }}
-          >
-            {t("cancel")}
-          </button>
-          <button
-            className="btn btn-primary"
-            onClick={handleSubmit}
-            disabled={loading || !form.name || !form.email}
-            style={{
-              background: loading ? "#475569" : "#3b82f6",
-              opacity: !form.name || !form.email ? 0.5 : 1,
-            }}
-          >
-            {loading ? t("saving") : user ? t("updateUser") : t("createUser")}
-          </button>
-        </div>
-      </div>
+      {innerContent}
     </div>
   );
 }

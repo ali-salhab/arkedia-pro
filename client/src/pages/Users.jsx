@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import DataTable from "../components/DataTable";
 import LoadingScreen from "../components/LoadingScreen";
-import UserFormModal from "../components/UserFormModal";
 import { useLanguage } from "../context/LanguageContext";
 import {
   useGetUsersQuery,
@@ -115,6 +115,7 @@ export default function UsersPage() {
   const [updateUser] = useUpdateUserMutation();
   const [deleteUser] = useDeleteUserMutation();
 
+  const navigate = useNavigate();
   const [modalOpen, setModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
 
@@ -233,13 +234,15 @@ export default function UsersPage() {
   ];
 
   const handleAddNew = () => {
-    setEditingUser(null);
-    setModalOpen(true);
+    navigate("/users/new", {
+      state: { fixedRole: config.teamRole, backTo: "/users" },
+    });
   };
 
   const handleEdit = (user) => {
-    setEditingUser(user);
-    setModalOpen(true);
+    navigate(`/users/${user._id}/edit`, {
+      state: { user, fixedRole: config.teamRole, backTo: "/users" },
+    });
   };
 
   const handleSave = async (data) => {
@@ -603,15 +606,6 @@ export default function UsersPage() {
           exportFilename="team_users"
         />
       </div>
-
-      {/* User Form Modal */}
-      <UserFormModal
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
-        onSave={handleSave}
-        user={editingUser}
-        fixedRole={config.teamRole}
-      />
     </div>
   );
 }

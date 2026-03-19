@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useLanguage } from "../context/LanguageContext";
 import LoadingScreen from "../components/LoadingScreen";
 import {
@@ -7,7 +8,6 @@ import {
   useUpdateRoomMutation,
   useDeleteRoomMutation,
 } from "../store/services/api";
-import RoomFormModal from "../components/RoomFormModal";
 import PermissionWrapper from "../components/PermissionWrapper";
 
 const STATUS_STYLE = {
@@ -28,6 +28,7 @@ const TYPE_ICON = {
 
 export default function RoomsPage() {
   const { t } = useLanguage();
+  const navigate = useNavigate();
   const { data: rooms = [], isLoading } = useGetRoomsQuery();
   const [createRoom] = useCreateRoomMutation();
   const [updateRoom] = useUpdateRoomMutation();
@@ -65,12 +66,10 @@ export default function RoomsPage() {
   };
 
   const openAdd = () => {
-    setEditRoom(null);
-    setModalOpen(true);
+    navigate("/rooms/new", { state: { backTo: "/rooms" } });
   };
   const openEdit = (r) => {
-    setEditRoom(r);
-    setModalOpen(true);
+    navigate(`/rooms/${r._id}/edit`, { state: { room: r, backTo: "/rooms" } });
   };
 
   const stats = {
@@ -401,14 +400,6 @@ export default function RoomsPage() {
           ))}
         </div>
       )}
-
-      {/* Room form modal */}
-      <RoomFormModal
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
-        onSave={handleSave}
-        room={editRoom}
-      />
 
       {/* Delete confirmation */}
       {confirmDelete && (

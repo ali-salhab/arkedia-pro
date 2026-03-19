@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import DataTable from "../components/DataTable";
 import Modal from "../components/Modal";
 import { SkeletonTable } from "../components/SkeletonLoader";
-import UserFormModal from "../components/UserFormModal";
 import { useLanguage } from "../context/LanguageContext";
 import {
   useGetUsersQuery,
@@ -52,6 +52,7 @@ export default function HotelsPage() {
   const [createUser, { isLoading: isCreating }] = useCreateUserMutation();
   const [updateUser, { isLoading: isUpdating }] = useUpdateUserMutation();
   const [deleteUser, { isLoading: isDeleting }] = useDeleteUserMutation();
+  const navigate = useNavigate();
 
   const [modalOpen, setModalOpen] = useState(false);
   const [adminModalOpen, setAdminModalOpen] = useState(false);
@@ -153,8 +154,9 @@ export default function HotelsPage() {
     if (resumeHotelCreation && adminsList.length > 0) {
       setResumeHotelCreation(false);
       setAdminModalOpen(false);
-      setEditingHotel(null);
-      setModalOpen(true);
+      navigate("/hotels/new", {
+        state: { fixedRole: "hotel", adminsList, backTo: "/hotels" },
+      });
     }
   }, [adminsList.length, resumeHotelCreation]);
 
@@ -170,43 +172,27 @@ export default function HotelsPage() {
       return;
     }
 
-    setEditingHotel(null);
     if (isPlatformRole && adminsList.length === 0) {
       setAdminRequiredModalOpen(true);
       return;
     }
-    setModalOpen(true);
+    navigate("/hotels/new", {
+      state: { fixedRole: "hotel", adminsList, backTo: "/hotels" },
+    });
   };
 
   const handleEdit = (hotel) => {
-    setEditingHotel(hotel);
-    setModalOpen(true);
-  };
-
-  const handleSave = async (data) => {
-    if (data._id) {
-      await updateUser({ _id: data._id, ...data }).unwrap();
-    } else {
-      await createUser({ ...data, role: "hotel" }).unwrap();
-    }
-  };
-
-  const handleAdminSave = async (data) => {
-    if (!canAddAdmins) {
-      throw new Error("Missing admins:add permission");
-    }
-    await createUser({ ...data, role: "admin" }).unwrap();
+    navigate(`/hotels/${hotel._id}/edit`, {
+      state: { user: hotel, fixedRole: "hotel", adminsList, backTo: "/hotels" },
+    });
   };
 
   const handleOpenAdminCreation = () => {
     setAdminRequiredModalOpen(false);
     setResumeHotelCreation(true);
-    setAdminModalOpen(true);
-  };
-
-  const handleCloseAdminModal = () => {
-    setAdminModalOpen(false);
-    setResumeHotelCreation(false);
+    navigate("/admins/new", {
+      state: { fixedRole: "admin", backTo: "/hotels" },
+    });
   };
 
   const handleDelete = async (id) => {
@@ -542,15 +528,6 @@ export default function HotelsPage() {
         />
       </div>
 
-      <UserFormModal
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
-        onSave={handleSave}
-        user={editingHotel}
-        fixedRole="hotel"
-        adminsList={adminsList}
-      />
-
       <Modal
         open={adminRequiredModalOpen}
         onClose={() => setAdminRequiredModalOpen(false)}
@@ -590,13 +567,6 @@ export default function HotelsPage() {
           )}
         </div>
       </Modal>
-
-      <UserFormModal
-        open={adminModalOpen}
-        onClose={handleCloseAdminModal}
-        onSave={handleAdminSave}
-        fixedRole="admin"
-      />
     </div>
   );
 }

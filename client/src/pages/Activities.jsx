@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import DataTable from "../components/DataTable";
 import { SkeletonTable } from "../components/SkeletonLoader";
-import UserFormModal from "../components/UserFormModal";
 import { useLanguage } from "../context/LanguageContext";
 import {
   useGetUsersQuery,
@@ -50,6 +50,7 @@ export default function ActivitiesPage() {
   const [createUser, { isLoading: isCreating }] = useCreateUserMutation();
   const [updateUser, { isLoading: isUpdating }] = useUpdateUserMutation();
   const [deleteUser, { isLoading: isDeleting }] = useDeleteUserMutation();
+  const navigate = useNavigate();
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editingActivity, setEditingActivity] = useState(null);
@@ -157,14 +158,20 @@ export default function ActivitiesPage() {
       window.alert(t("errorLoadingAdmins"));
       return;
     }
-
-    setEditingActivity(null);
-    setModalOpen(true);
+    navigate("/activities/new", {
+      state: { fixedRole: "activity", adminsList, backTo: "/activities" },
+    });
   };
 
   const handleEdit = (activity) => {
-    setEditingActivity(activity);
-    setModalOpen(true);
+    navigate(`/activities/${activity._id}/edit`, {
+      state: {
+        user: activity,
+        fixedRole: "activity",
+        adminsList,
+        backTo: "/activities",
+      },
+    });
   };
 
   const handleSave = async (data) => {
@@ -497,15 +504,6 @@ export default function ActivitiesPage() {
           exportFilename="activity_accounts"
         />
       </div>
-
-      <UserFormModal
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
-        onSave={handleSave}
-        user={editingActivity}
-        fixedRole="activity"
-        adminsList={adminsList}
-      />
     </div>
   );
 }
