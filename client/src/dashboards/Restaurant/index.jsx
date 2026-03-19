@@ -211,11 +211,3 @@ export default function RestaurantDashboard() {
     </div>
   );
 }
-import { useLanguage } from "../../context/LanguageContext";
-import {
-  useGetUsersQuery,
-  useGetRoomsQuery,
-  useGetBookingsQuery,
-  useGetFinanceQuery,
-  useGetReportsQuery,
-} from "../../store/services/api";

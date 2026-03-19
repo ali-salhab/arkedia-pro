@@ -197,12 +197,3 @@ export default function AdminDashboard() {
     </div>
   );
 }
-import {
-  useGetUsersQuery,
-  useGetHotelsQuery,
-  useGetRestaurantsQuery,
-  useGetActivitiesQuery,
-  useGetBookingsQuery,
-  useGetFinanceQuery,
-  useGetReportsQuery,
-} from "../../store/services/api";

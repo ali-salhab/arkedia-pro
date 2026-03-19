@@ -240,42 +240,6 @@ export default function Sidebar({ mobileOpen = false, onClose }) {
           </button>
         </div>
 
-        {!collapsed && currentUser && (
-          <div className="border-b border-slate-200/80 px-4 py-3 dark:border-slate-700">
-            <div className="flex items-center gap-3">
-              <div
-                className="grid h-9 w-9 place-items-center rounded-full border-2 text-sm font-bold"
-                style={{
-                  background: roleBadge?.bg || "#3b82f620",
-                  borderColor: roleBadge?.color || "#3b82f6",
-                  color: roleBadge?.color || "#3b82f6",
-                }}
-              >
-                {currentUser.name?.charAt(0).toUpperCase() || "?"}
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">
-                  {currentUser.name}
-                </p>
-                <div className="mt-1 flex items-center gap-2">
-                  <span
-                    className="rounded-full px-2.5 py-1 text-[10px] font-bold tracking-wide"
-                    style={{
-                      background: roleBadge?.bg || "#3b82f620",
-                      color: roleBadge?.color || "#3b82f6",
-                    }}
-                  >
-                    {roleBadge?.label || currentUser.role}
-                  </span>
-                  <span className="text-[10px] text-slate-500 dark:text-slate-300">
-                    {userPerms.length} perms
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
         <nav className="flex-1 space-y-1 overflow-y-auto px-2 py-3">
           {menu.map((item) => (
             <NavLink

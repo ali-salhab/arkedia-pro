@@ -24,6 +24,10 @@ import HotelDashboard from "./dashboards/Hotel";
 import RestaurantDashboard from "./dashboards/Restaurant";
 import ActivityDashboard from "./dashboards/Activity";
 import GlobalErrorModal from "./components/GlobalErrorModal";
+import NotificationsPage from "./pages/Notifications";
+import UserFormPage from "./pages/forms/UserFormPage";
+import BookingFormPage from "./pages/forms/BookingFormPage";
+import RoomFormPage from "./pages/forms/RoomFormPage";
 
 const ALL_ROLES = [
   "super_admin",
@@ -153,6 +157,66 @@ export default function App() {
           <Route
             path="/settings"
             element={<DashboardRoute element={<SettingsPage />} />}
+          />
+          <Route
+            path="/notifications"
+            element={<DashboardRoute element={<NotificationsPage />} />}
+          />
+          <Route
+            path="/users/new"
+            element={<DashboardRoute element={<UserFormPage />} />}
+          />
+          <Route
+            path="/users/:id/edit"
+            element={<DashboardRoute element={<UserFormPage />} />}
+          />
+          <Route
+            path="/admins/new"
+            element={<DashboardRoute element={<UserFormPage />} />}
+          />
+          <Route
+            path="/admins/:id/edit"
+            element={<DashboardRoute element={<UserFormPage />} />}
+          />
+          <Route
+            path="/hotels/new"
+            element={<DashboardRoute element={<UserFormPage />} />}
+          />
+          <Route
+            path="/hotels/:id/edit"
+            element={<DashboardRoute element={<UserFormPage />} />}
+          />
+          <Route
+            path="/restaurants/new"
+            element={<DashboardRoute element={<UserFormPage />} />}
+          />
+          <Route
+            path="/restaurants/:id/edit"
+            element={<DashboardRoute element={<UserFormPage />} />}
+          />
+          <Route
+            path="/activities/new"
+            element={<DashboardRoute element={<UserFormPage />} />}
+          />
+          <Route
+            path="/activities/:id/edit"
+            element={<DashboardRoute element={<UserFormPage />} />}
+          />
+          <Route
+            path="/bookings/new"
+            element={<DashboardRoute element={<BookingFormPage />} />}
+          />
+          <Route
+            path="/bookings/:id/edit"
+            element={<DashboardRoute element={<BookingFormPage />} />}
+          />
+          <Route
+            path="/rooms/new"
+            element={<DashboardRoute element={<RoomFormPage />} />}
+          />
+          <Route
+            path="/rooms/:id/edit"
+            element={<DashboardRoute element={<RoomFormPage />} />}
           />
         </Route>
 

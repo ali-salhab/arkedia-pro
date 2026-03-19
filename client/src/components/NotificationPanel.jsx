@@ -1,11 +1,13 @@
 import { useState, useRef, useEffect } from "react";
 import { Bell } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { useLanguage } from "../context/LanguageContext";
 
 export default function NotificationPanel({ notifications = [], onClear }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
   const { t, theme, dir } = useLanguage();
+  const navigate = useNavigate();
   const isDark = theme === "dark";
 
   useEffect(() => {
@@ -96,21 +98,39 @@ export default function NotificationPanel({ notifications = [], onClear }) {
             <span style={{ fontWeight: 600, fontSize: 14, color: textColor }}>
               {t("notifications")}
             </span>
-            {unread > 0 && (
+            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              {unread > 0 && (
+                <button
+                  onClick={onClear}
+                  style={{
+                    fontSize: 12,
+                    color: "#3b82f6",
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    fontWeight: 500,
+                  }}
+                >
+                  {t("clearAll")}
+                </button>
+              )}
               <button
-                onClick={onClear}
+                onClick={() => {
+                  setOpen(false);
+                  navigate("/notifications");
+                }}
                 style={{
                   fontSize: 12,
-                  color: "#3b82f6",
+                  color: "#64748b",
                   background: "none",
                   border: "none",
                   cursor: "pointer",
                   fontWeight: 500,
                 }}
               >
-                {t("clearAll")}
+                View all
               </button>
-            )}
+            </div>
           </div>
 
           {notifications.length === 0 ? (

@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useCallback, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import Sidebar from "../components/Sidebar";
@@ -7,12 +7,16 @@ import { useLanguage } from "../context/LanguageContext";
 import { getSocket } from "../hooks/useSocket";
 import { setCredentials } from "../store/slices/authSlice";
 import { useRefreshMutation } from "../store/services/api";
+import {
+  addNotification,
+  clearNotifications,
+} from "../store/slices/notificationsSlice";
 
 export default function MainLayout({ children }) {
   const { dir, t } = useLanguage();
   const location = useLocation();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
-  const [notifications, setNotifications] = useState([]);
+  const notifications = useSelector((s) => s.notifications.items);
   const user = useSelector((s) => s.auth.user);
   const refreshToken = useSelector((s) => s.auth.refreshToken);
   const dispatch = useDispatch();
@@ -33,15 +37,14 @@ export default function MainLayout({ children }) {
 
     const handlePermissionsUpdated = async ({ permissions }) => {
       // Push notification
-      setNotifications((prev) => [
-        {
+      dispatch(
+        addNotification({
           type: "permissions",
           title: t("notif_permissionsUpdated"),
           body: t("notif_permissionsUpdatedBody"),
           time: new Date().toLocaleTimeString(),
-        },
-        ...prev,
-      ]);
+        }),
+      );
       // Update Redux so PermissionWrapper re-evaluates in real-time
       dispatch(
         setCredentials({
@@ -66,14 +69,17 @@ export default function MainLayout({ children }) {
     };
   }, [dispatch, refresh, refreshToken, t, user]);
 
-  const clearNotifications = useCallback(() => setNotifications([]), []);
+  const clearAllNotifications = useCallback(
+    () => dispatch(clearNotifications()),
+    [dispatch],
+  );
 
   return (
     <>
       <Navbar
         onToggleSidebar={() => setMobileSidebarOpen((v) => !v)}
         notifications={notifications}
-        onClearNotifications={clearNotifications}
+        onClearNotifications={clearAllNotifications}
       />
       <div className="layout h-screen pt-[60px]" dir={dir}>
         <Sidebar

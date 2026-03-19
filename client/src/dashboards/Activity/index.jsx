@@ -202,11 +202,3 @@ export default function ActivityDashboard() {
     </div>
   );
 }
-import { useLanguage } from "../../context/LanguageContext";
-import {
-  useGetUsersQuery,
-  useGetActivitiesQuery,
-  useGetBookingsQuery,
-  useGetFinanceQuery,
-  useGetReportsQuery,
-} from "../../store/services/api";
