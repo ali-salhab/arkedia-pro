@@ -28,6 +28,12 @@ import NotificationsPage from "./pages/Notifications";
 import UserFormPage from "./pages/forms/UserFormPage";
 import BookingFormPage from "./pages/forms/BookingFormPage";
 import RoomFormPage from "./pages/forms/RoomFormPage";
+import HotelMainDetailsStep from "./pages/hotel-details/MainDetailsStep";
+import HotelDescriptionStep from "./pages/hotel-details/DescriptionStep";
+import HotelIconsStep from "./pages/hotel-details/IconsStep";
+import HotelPolicyStep from "./pages/hotel-details/PolicyStep";
+import HotelPhotosStep from "./pages/hotel-details/PhotosStep";
+import HotelDetailsView from "./pages/hotel-details/HotelDetailsView";
 
 const ALL_ROLES = [
   "super_admin",
@@ -94,6 +100,34 @@ export default function App() {
           <Route
             path="/hotel"
             element={<DashboardRoute element={<HotelDashboard />} />}
+          />
+          <Route
+            path="/hotel/details"
+            element={<Navigate to="/hotel/details/main" replace />}
+          />
+          <Route
+            path="/hotel/details/main"
+            element={<DashboardRoute element={<HotelMainDetailsStep />} />}
+          />
+          <Route
+            path="/hotel/details/description"
+            element={<DashboardRoute element={<HotelDescriptionStep />} />}
+          />
+          <Route
+            path="/hotel/details/icons"
+            element={<DashboardRoute element={<HotelIconsStep />} />}
+          />
+          <Route
+            path="/hotel/details/policy"
+            element={<DashboardRoute element={<HotelPolicyStep />} />}
+          />
+          <Route
+            path="/hotel/details/photos"
+            element={<DashboardRoute element={<HotelPhotosStep />} />}
+          />
+          <Route
+            path="/hotel/details/view"
+            element={<DashboardRoute element={<HotelDetailsView />} />}
           />
         </Route>
 

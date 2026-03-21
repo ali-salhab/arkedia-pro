@@ -1,4 +1,5 @@
 import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import {
   useGetUsersQuery,
   useGetRoomsQuery,
@@ -17,13 +18,14 @@ import StatCard from "../../components/StatCard";
 import OverviewChart from "../../components/OverviewChart";
 import DonutChart from "../../components/DonutChart";
 import MonthlyGoals from "../../components/MonthlyGoals";
-import { DollarSign, Users, CalendarDays, BedDouble } from "lucide-react";
+import { DollarSign, Users, CalendarDays, BedDouble, Eye } from "lucide-react";
 
 export default function HotelDashboard() {
   const user = useSelector((state) => state.auth.user);
   const perms = useSelector((state) => state.auth.user?.permissions || []);
   const has = (permission) => perms.includes(permission);
   const { t, lang } = useLanguage();
+  const navigate = useNavigate();
 
   const { data: usersData } = useGetUsersQuery(undefined, {
     skip: !has("users:view"),
@@ -135,17 +137,33 @@ export default function HotelDashboard() {
 
   return (
     <div className="space-y-6 pb-6">
-      <div>
-        <h1
-          className="text-2xl font-bold"
-          style={{ color: "var(--text-primary)" }}
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1
+            className="text-2xl font-bold"
+            style={{ color: "var(--text-primary)" }}
+          >
+            {t("dashboard")}
+          </h1>
+          <p
+            className="mt-1 text-sm"
+            style={{ color: "var(--text-secondary)" }}
+          >
+            {t("dashboardWelcomeLine")} {user?.name}.{" "}
+            {t("dashboardBusinessOverview")}
+          </p>
+        </div>
+        <button
+          onClick={() => navigate("/hotel/details/view")}
+          className="flex items-center gap-2 h-9 px-4 rounded-xl text-sm font-semibold flex-shrink-0"
+          style={{
+            backgroundColor: "var(--sidebar-active-text)",
+            color: "#fff",
+          }}
         >
-          {t("dashboard")}
-        </h1>
-        <p className="mt-1 text-sm" style={{ color: "var(--text-secondary)" }}>
-          {t("dashboardWelcomeLine")} {user?.name}.{" "}
-          {t("dashboardBusinessOverview")}
-        </p>
+          <Eye size={15} />
+          Preview Hotel
+        </button>
       </div>
 
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">

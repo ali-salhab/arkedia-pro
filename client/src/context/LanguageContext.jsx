@@ -177,6 +177,7 @@ const translations = {
     roomsTables: "Rooms/Tables",
     finance: "Finance",
     reports: "Reports",
+    hotelMainDetails: "Hotel Main Details",
     unifiedBookingPlatform: "Unified Booking Platform",
     // Form fields
     basicInfo: "Basic Information",
@@ -794,6 +795,7 @@ const translations = {
     bookings: "الحجوزات",
     finance: "المالية",
     reports: "التقارير",
+    hotelMainDetails: "البيانات الرئيسية للفندق",
     unifiedBookingPlatform: "منصة الحجز الموحّدة",
     // Form fields
     basicInfo: "المعلومات الأساسية",

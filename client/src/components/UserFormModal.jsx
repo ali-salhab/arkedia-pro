@@ -107,6 +107,12 @@ const permissionMatrix = [
       { key: "edit", label: "Edit Settings" },
     ],
   },
+  {
+    module: "hotel",
+    label: "Hotel Details (Wizard)",
+    icon: "🏩",
+    actions: [{ key: "details", label: "Manage Hotel Main Details" }],
+  },
 ];
 
 // Modules visible per role context (mirrors sidebar items)
@@ -155,8 +161,24 @@ const roleModules = {
     "reports",
     "settings",
   ],
-  hotel: ["users", "rooms", "bookings", "finance", "reports", "settings"],
-  hoteluser: ["users", "rooms", "bookings", "finance", "reports", "settings"],
+  hotel: [
+    "users",
+    "rooms",
+    "bookings",
+    "finance",
+    "reports",
+    "settings",
+    "hotel",
+  ],
+  hoteluser: [
+    "users",
+    "rooms",
+    "bookings",
+    "finance",
+    "reports",
+    "settings",
+    "hotel",
+  ],
   restaurant: ["users", "rooms", "bookings", "finance", "reports", "settings"],
   restaurantuser: [
     "users",
@@ -270,9 +292,16 @@ const rolePresets = {
     "finance:view",
     "reports:view",
     "settings:view",
+    "hotel:details",
   ],
   // hotel staff — only room & booking operations by default
-  hoteluser: ["rooms:view", "bookings:view", "bookings:add", "bookings:edit"],
+  hoteluser: [
+    "rooms:view",
+    "bookings:view",
+    "bookings:add",
+    "bookings:edit",
+    "hotel:details",
+  ],
   restaurant: [
     "users:view",
     "users:add",

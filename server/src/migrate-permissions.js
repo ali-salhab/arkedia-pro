@@ -95,8 +95,15 @@ const roleDefaults = {
     "finance:view",
     "reports:view",
     "settings:view",
+    "hotel:details",
   ],
-  hoteluser: ["rooms:view", "bookings:view", "bookings:add", "bookings:edit"],
+  hoteluser: [
+    "rooms:view",
+    "bookings:view",
+    "bookings:add",
+    "bookings:edit",
+    "hotel:details",
+  ],
   restaurant: [
     "users:view",
     "users:add",

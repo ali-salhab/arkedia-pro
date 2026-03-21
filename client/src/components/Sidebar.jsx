@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { useLanguage } from "../context/LanguageContext";
 import { logout } from "../store/slices/authSlice";
@@ -19,7 +19,14 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Circle,
+  ClipboardList,
+  FileSearch,
+  AlignLeft,
+  Tag,
+  ShieldCheck,
+  Images,
 } from "lucide-react";
 
 const ROLE_MENUS = {
@@ -59,6 +66,30 @@ const ROLE_MENUS = {
     { name: "Finance", route: "/finance", perm: "finance:view" },
     { name: "Reports", route: "/reports", perm: "reports:view" },
     { name: "Settings", route: "/settings", perm: "settings:view" },
+    {
+      name: "Hotel Main Details",
+      perm: null,
+      matchPrefix: "/hotel/details",
+      children: [
+        {
+          name: "Main Details",
+          route: "/hotel/details/main",
+          Icon: FileSearch,
+        },
+        {
+          name: "Hotel Description",
+          route: "/hotel/details/description",
+          Icon: AlignLeft,
+        },
+        { name: "Hotel Icons", route: "/hotel/details/icons", Icon: Tag },
+        {
+          name: "Hotel Policy",
+          route: "/hotel/details/policy",
+          Icon: ShieldCheck,
+        },
+        { name: "Photos", route: "/hotel/details/photos", Icon: Images },
+      ],
+    },
   ],
   restaurant: [
     { name: "Dashboard", route: "/restaurant", perm: null },
@@ -89,6 +120,7 @@ const ROLE_MENU_ALIASES = {
 };
 
 const SIDEBAR_NAME_MAP = {
+  "Hotel Main Details": "hotelMainDetails",
   Dashboard: "dashboard",
   Users: "users",
   Admins: "admins",
@@ -112,6 +144,7 @@ const SIDEBAR_NAME_MAP = {
 };
 
 const ICON_MAP = {
+  "Hotel Main Details": <ClipboardList size={17} />,
   Dashboard: <LayoutDashboard size={17} />,
   Users: <Users size={17} />,
   Admins: <UserCheck size={17} />,
@@ -144,15 +177,20 @@ export default function Sidebar({ mobileOpen = false, onClose }) {
   const { t, dir } = useLanguage();
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const currentUser = useSelector((s) => s.auth.user);
   const userPerms = currentUser?.permissions || [];
   const [collapsed, setCollapsed] = useState(false);
+  const [expandedItems, setExpandedItems] = useState({});
 
   const isRtl = dir === "rtl";
   const menu = useMemo(
     () => buildMenu(currentUser?.role, userPerms),
     [currentUser?.role, userPerms],
   );
+
+  const toggleExpand = (name) =>
+    setExpandedItems((prev) => ({ ...prev, [name]: !prev[name] }));
 
   const handleLogout = () => {
     dispatch(api.util.resetApiState());
@@ -225,52 +263,187 @@ export default function Sidebar({ mobileOpen = false, onClose }) {
 
         {/* Nav items */}
         <nav className="flex-1 overflow-y-auto px-2 pb-3 pt-2 space-y-0.5">
-          {menu.map((item) => (
-            <NavLink
-              key={item.route}
-              to={item.route}
-              onClick={closeMobile}
-              title={
-                collapsed ? t(SIDEBAR_NAME_MAP[item.name] || item.name) : ""
-              }
-              className={({ isActive }) =>
-                `sidebar-item ${collapsed ? "justify-center" : "gap-3"} ${
-                  isActive ? "active" : ""
-                }`
-              }
-              style={({ isActive }) =>
-                isActive
-                  ? {
-                      borderLeft: isRtl
-                        ? "none"
-                        : "2px solid var(--sidebar-active-border)",
-                      borderRight: isRtl
-                        ? "2px solid var(--sidebar-active-border)"
-                        : "none",
-                      paddingLeft: isRtl
-                        ? undefined
-                        : collapsed
-                          ? undefined
-                          : "calc(0.75rem - 2px)",
-                      paddingRight: isRtl
-                        ? collapsed
-                          ? undefined
-                          : "calc(0.75rem - 2px)"
-                        : undefined,
+          {menu.map((item) => {
+            if (item.children) {
+              const isChildActive = item.matchPrefix
+                ? pathname.startsWith(item.matchPrefix)
+                : item.children.some((c) => pathname.startsWith(c.route));
+              const isOpen = expandedItems[item.name] ?? isChildActive;
+
+              return (
+                <div key={item.name}>
+                  {/* Parent toggle button */}
+                  <button
+                    onClick={() => {
+                      if (collapsed) {
+                        // When collapsed, navigate to first child directly
+                        navigate(item.children[0].route);
+                        closeMobile();
+                      } else {
+                        toggleExpand(item.name);
+                      }
+                    }}
+                    title={
+                      collapsed
+                        ? t(SIDEBAR_NAME_MAP[item.name] || item.name)
+                        : ""
                     }
-                  : undefined
-              }
-            >
-              <span className="shrink-0" style={{ opacity: 0.85 }}>
-                {ICON_MAP[item.name] || <Circle size={17} />}
-              </span>
-              {!collapsed && (
-                <span className="truncate">
-                  {t(SIDEBAR_NAME_MAP[item.name] || item.name)}
+                    className={`sidebar-item w-full ${collapsed ? "justify-center" : "gap-3"} ${
+                      isChildActive ? "active" : ""
+                    }`}
+                    style={
+                      isChildActive
+                        ? {
+                            backgroundColor: "var(--sidebar-active-bg)",
+                            color: "var(--sidebar-active-text)",
+                            borderLeft: isRtl
+                              ? "none"
+                              : "2px solid var(--sidebar-active-border)",
+                            borderRight: isRtl
+                              ? "2px solid var(--sidebar-active-border)"
+                              : "none",
+                            paddingLeft: isRtl
+                              ? undefined
+                              : collapsed
+                                ? undefined
+                                : "calc(0.75rem - 2px)",
+                            paddingRight: isRtl
+                              ? collapsed
+                                ? undefined
+                                : "calc(0.75rem - 2px)"
+                              : undefined,
+                          }
+                        : undefined
+                    }
+                  >
+                    <span className="shrink-0" style={{ opacity: 0.85 }}>
+                      {ICON_MAP[item.name] || <Circle size={17} />}
+                    </span>
+                    {!collapsed && (
+                      <>
+                        <span className="truncate flex-1 text-left">
+                          {t(SIDEBAR_NAME_MAP[item.name] || item.name)}
+                        </span>
+                        <ChevronDown
+                          size={14}
+                          className="shrink-0 transition-transform duration-200"
+                          style={{
+                            transform: isOpen
+                              ? "rotate(180deg)"
+                              : "rotate(0deg)",
+                          }}
+                        />
+                      </>
+                    )}
+                  </button>
+
+                  {/* Sub-items */}
+                  {!collapsed && isOpen && (
+                    <div className="mt-0.5 space-y-0.5 pl-4">
+                      {item.children.map((child, stepIdx) => {
+                        const isActive = pathname === child.route;
+                        const StepIcon = child.Icon;
+                        return (
+                          <NavLink
+                            key={child.route}
+                            to={child.route}
+                            onClick={closeMobile}
+                            className={`sidebar-item gap-2.5 ${isActive ? "active" : ""}`}
+                            style={
+                              isActive
+                                ? {
+                                    backgroundColor: "var(--sidebar-active-bg)",
+                                    color: "var(--sidebar-active-text)",
+                                    borderLeft: isRtl
+                                      ? "none"
+                                      : "2px solid var(--sidebar-active-border)",
+                                    borderRight: isRtl
+                                      ? "2px solid var(--sidebar-active-border)"
+                                      : "none",
+                                    paddingLeft: isRtl
+                                      ? undefined
+                                      : "calc(0.75rem - 2px)",
+                                    paddingRight: isRtl
+                                      ? "calc(0.75rem - 2px)"
+                                      : undefined,
+                                  }
+                                : undefined
+                            }
+                          >
+                            {/* Step number badge */}
+                            <span
+                              className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold"
+                              style={{
+                                backgroundColor: isActive
+                                  ? "var(--sidebar-active-text)"
+                                  : "var(--bg-raised)",
+                                color: isActive
+                                  ? "#ffffff"
+                                  : "var(--text-muted)",
+                                border: `1px solid ${isActive ? "var(--sidebar-active-border)" : "var(--border)"}`,
+                              }}
+                            >
+                              {stepIdx + 1}
+                            </span>
+                            <span className="truncate text-xs">
+                              {child.name}
+                            </span>
+                          </NavLink>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            }
+
+            return (
+              <NavLink
+                key={item.route}
+                to={item.route}
+                onClick={closeMobile}
+                title={
+                  collapsed ? t(SIDEBAR_NAME_MAP[item.name] || item.name) : ""
+                }
+                className={({ isActive }) =>
+                  `sidebar-item ${collapsed ? "justify-center" : "gap-3"} ${
+                    isActive ? "active" : ""
+                  }`
+                }
+                style={({ isActive }) =>
+                  isActive
+                    ? {
+                        borderLeft: isRtl
+                          ? "none"
+                          : "2px solid var(--sidebar-active-border)",
+                        borderRight: isRtl
+                          ? "2px solid var(--sidebar-active-border)"
+                          : "none",
+                        paddingLeft: isRtl
+                          ? undefined
+                          : collapsed
+                            ? undefined
+                            : "calc(0.75rem - 2px)",
+                        paddingRight: isRtl
+                          ? collapsed
+                            ? undefined
+                            : "calc(0.75rem - 2px)"
+                          : undefined,
+                      }
+                    : undefined
+                }
+              >
+                <span className="shrink-0" style={{ opacity: 0.85 }}>
+                  {ICON_MAP[item.name] || <Circle size={17} />}
                 </span>
-              )}
-            </NavLink>
-          ))}
+                {!collapsed && (
+                  <span className="truncate">
+                    {t(SIDEBAR_NAME_MAP[item.name] || item.name)}
+                  </span>
+                )}
+              </NavLink>
+            );
+          })}
         </nav>
 
         {/* Logout */}

@@ -3,6 +3,7 @@ const permissionMatrix = [
   { module: "admins", actions: ["view", "add", "edit", "delete"] },
   { module: "roles", actions: ["view", "add", "edit", "delete"] },
   { module: "hotels", actions: ["view", "add", "edit", "delete"] },
+  { module: "hotel", actions: ["details"] },
   { module: "restaurants", actions: ["view", "add", "edit", "delete"] },
   { module: "activities", actions: ["view", "add", "edit", "delete"] },
   { module: "bookings", actions: ["view", "add", "edit", "delete"] },

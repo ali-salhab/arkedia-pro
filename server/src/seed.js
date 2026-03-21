@@ -82,6 +82,7 @@ const roleDefinitions = {
     "finance:view",
     "reports:view",
     "settings:view",
+    "hotel:details",
   ],
   restaurant: [
     "users:view",
