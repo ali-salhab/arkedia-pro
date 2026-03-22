@@ -88,6 +88,17 @@ const roleDefaults = {
     "rooms:view",
     "rooms:add",
     "rooms:edit",
+    "channel_manager:view",
+    "channel_manager_travky:view",
+    "channel_manager_external:view",
+    "guest_groups:view",
+    "meal_plans:view",
+    "periods:view",
+    "supplements:view",
+    "refund_policies:view",
+    "channel_manager_rooms:view",
+    "rates:view",
+    "availability:view",
     "rooms:delete",
     "bookings:view",
     "bookings:add",
@@ -154,14 +165,20 @@ async function run() {
   let updated = 0;
 
   for (const user of users) {
-    const defaults = roleDefaults[user.role];
+    const defaults = [...new Set(roleDefaults[user.role] || [])];
     if (!defaults) continue;
 
     const current = new Set(user.permissions || []);
     const missing = defaults.filter((p) => !current.has(p));
+    const dedupedPermissions = [
+      ...new Set([...(user.permissions || []), ...missing]),
+    ];
 
-    if (missing.length > 0) {
-      user.permissions = [...current, ...missing];
+    if (
+      missing.length > 0 ||
+      dedupedPermissions.length !== (user.permissions || []).length
+    ) {
+      user.permissions = dedupedPermissions;
       await user.save();
       console.log(
         `Updated [${user.role}] ${user.email} — added: ${missing.join(", ")}`,

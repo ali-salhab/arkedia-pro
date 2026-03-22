@@ -23,6 +23,7 @@ const bookingRoutes = require("./routes/bookings");
 const roomRoutes = require("./routes/rooms");
 const financeRoutes = require("./routes/finance");
 const reportRoutes = require("./routes/reports");
+const iconRoutes = require("./routes/icons");
 const { notFound, errorHandler } = require("./middleware/errorHandler");
 const socketStore = require("./utils/socketStore");
 
@@ -97,6 +98,7 @@ app.use("/api/bookings", bookingRoutes);
 app.use("/api/rooms", roomRoutes);
 app.use("/api/finance", financeRoutes);
 app.use("/api/reports", reportRoutes);
+app.use("/api/icons", iconRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

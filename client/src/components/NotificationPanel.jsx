@@ -3,10 +3,68 @@ import { Bell } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "../context/LanguageContext";
 
+function resolveNotification(notification, t) {
+  if (notification.type === "permissions") {
+    return {
+      title: t("notif_permissionsUpdated"),
+      body: t("notif_permissionsUpdatedBody"),
+    };
+  }
+
+  if (notification.type === "icon_requested") {
+    const legacyMatch = String(notification.body || "").match(
+      /^(.*?) requested a new icon: "(.*)"$/,
+    );
+    const params = notification.params || {
+      hotelName: legacyMatch?.[1] || "",
+      label: legacyMatch?.[2] || "",
+    };
+
+    return {
+      title: t("notif_iconRequestedTitle", params),
+      body: t("notif_iconRequestedBody", params),
+    };
+  }
+
+  if (notification.type === "icon_designed") {
+    const legacyMatch = String(notification.body || "").match(/"(.*)"/);
+    const params = notification.params || {
+      label: legacyMatch?.[1] || "",
+    };
+
+    return {
+      title: t("notif_iconDesignedTitle", params),
+      body: t("notif_iconDesignedBody", params),
+    };
+  }
+
+  return {
+    title: notification.titleKey
+      ? t(notification.titleKey, notification.params)
+      : notification.title,
+    body: notification.bodyKey
+      ? t(notification.bodyKey, notification.params)
+      : notification.body || notification.message || notification.text || "",
+  };
+}
+
+function formatNotificationTime(value, lang) {
+  if (!value) return "";
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return value;
+
+  return parsed.toLocaleTimeString(lang === "ar" ? "ar-EG" : "en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  });
+}
+
 export default function NotificationPanel({ notifications = [], onClear }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
-  const { t, dir } = useLanguage();
+  const { t, dir, lang } = useLanguage();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -17,7 +75,9 @@ export default function NotificationPanel({ notifications = [], onClear }) {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  const unread = notifications.length;
+  const unread = notifications.filter(
+    (notification) => !notification.read,
+  ).length;
 
   return (
     <div style={{ position: "relative" }} ref={ref}>
@@ -128,7 +188,7 @@ export default function NotificationPanel({ notifications = [], onClear }) {
                   fontWeight: 500,
                 }}
               >
-                View all
+                {t("viewAll")}
               </button>
             </div>
           </div>
@@ -147,68 +207,88 @@ export default function NotificationPanel({ notifications = [], onClear }) {
             </div>
           ) : (
             <div style={{ maxHeight: 320, overflowY: "auto" }}>
-              {notifications.map((n, i) => (
-                <div
-                  key={i}
-                  style={{
-                    padding: "12px 16px",
-                    borderBottom:
-                      i < notifications.length - 1
-                        ? "1px solid var(--border)"
-                        : "none",
-                    display: "flex",
-                    gap: 10,
-                    alignItems: "flex-start",
-                  }}
-                >
+              {notifications.map((n, i) => {
+                const content = resolveNotification(n, t);
+
+                return (
                   <div
+                    key={n.id || i}
                     style={{
-                      width: 36,
-                      height: 36,
-                      borderRadius: 10,
-                      background:
-                        n.type === "permissions"
-                          ? "var(--brand-muted)"
-                          : "var(--bg-raised)",
+                      padding: "12px 16px",
+                      backgroundColor: n.read
+                        ? "transparent"
+                        : "rgba(37, 99, 235, 0.05)",
+                      borderBottom:
+                        i < notifications.length - 1
+                          ? "1px solid var(--border)"
+                          : "none",
                       display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      fontSize: 16,
-                      flexShrink: 0,
+                      gap: 10,
+                      alignItems: "flex-start",
                     }}
                   >
-                    {n.type === "permissions" ? "🔐" : "🔔"}
-                  </div>
-                  <div style={{ flex: 1 }}>
                     <div
                       style={{
-                        fontWeight: 600,
-                        fontSize: 13,
-                        color: "var(--text-primary)",
-                        marginBottom: 2,
+                        width: 36,
+                        height: 36,
+                        borderRadius: 10,
+                        background:
+                          n.type === "permissions"
+                            ? "var(--brand-muted)"
+                            : "var(--bg-raised)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontSize: 16,
+                        flexShrink: 0,
                       }}
                     >
-                      {n.title}
+                      {n.type === "permissions" ? "🔐" : "🔔"}
                     </div>
-                    <div
-                      style={{ fontSize: 12, color: "var(--text-secondary)" }}
-                    >
-                      {n.body}
-                    </div>
-                    {n.time && (
+                    <div style={{ flex: 1 }}>
                       <div
                         style={{
-                          fontSize: 11,
-                          color: "var(--text-muted)",
-                          marginTop: 4,
+                          fontWeight: 600,
+                          fontSize: 13,
+                          color: "var(--text-primary)",
+                          marginBottom: 2,
                         }}
                       >
-                        {n.time}
+                        {content.title}
+                        {!n.read && (
+                          <span
+                            style={{
+                              display: "inline-block",
+                              width: 7,
+                              height: 7,
+                              borderRadius: "50%",
+                              marginInlineStart: 8,
+                              backgroundColor: "var(--brand)",
+                              verticalAlign: "middle",
+                            }}
+                          />
+                        )}
                       </div>
-                    )}
+                      <div
+                        style={{ fontSize: 12, color: "var(--text-secondary)" }}
+                      >
+                        {content.body}
+                      </div>
+                      {n.time && (
+                        <div
+                          style={{
+                            fontSize: 11,
+                            color: "var(--text-muted)",
+                            marginTop: 4,
+                          }}
+                        >
+                          {formatNotificationTime(n.time, lang)}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

@@ -100,6 +100,7 @@ export const api = createApi({
     "Finance",
     "Report",
     "Sidebar",
+    "Icon",
   ],
   endpoints: (builder) => ({
     login: builder.mutation({
@@ -251,6 +252,44 @@ export const api = createApi({
       query: () => "/reports",
       providesTags: ["Report"],
     }),
+    // Icons library
+    getIcons: builder.query({
+      query: () => "/icons",
+      providesTags: ["Icon"],
+    }),
+    getIconRequests: builder.query({
+      query: () => "/icons/requests",
+      providesTags: ["Icon"],
+    }),
+    createIcon: builder.mutation({
+      query: (body) => ({ url: "/icons", method: "POST", body }),
+      invalidatesTags: ["Icon"],
+    }),
+    updateIcon: builder.mutation({
+      query: ({ _id, ...body }) => ({
+        url: `/icons/${_id}`,
+        method: "PUT",
+        body,
+      }),
+      invalidatesTags: ["Icon"],
+    }),
+    deleteIcon: builder.mutation({
+      query: (id) => ({ url: `/icons/${id}`, method: "DELETE" }),
+      invalidatesTags: ["Icon"],
+    }),
+    requestIcon: builder.mutation({
+      query: (body) => ({ url: "/icons/request", method: "POST", body }),
+      invalidatesTags: ["Icon"],
+    }),
+    // Hotel selected icons
+    updateHotelIcons: builder.mutation({
+      query: ({ hotelId, selectedIcons }) => ({
+        url: `/hotels/${hotelId}`,
+        method: "PUT",
+        body: { selectedIcons },
+      }),
+      invalidatesTags: ["Hotel"],
+    }),
   }),
 });
 
@@ -291,4 +330,12 @@ export const {
   // Finance & Reports
   useGetFinanceQuery,
   useGetReportsQuery,
+  // Icons
+  useGetIconsQuery,
+  useGetIconRequestsQuery,
+  useCreateIconMutation,
+  useUpdateIconMutation,
+  useDeleteIconMutation,
+  useRequestIconMutation,
+  useUpdateHotelIconsMutation,
 } = api;

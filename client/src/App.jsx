@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { Routes, Route, Navigate } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute";
+import PermissionWrapper from "./components/PermissionWrapper";
 import MainLayout from "./layouts/MainLayout";
 import { useRefreshMutation } from "./store/services/api";
 import { setCredentials } from "./store/slices/authSlice";
@@ -25,6 +26,7 @@ import RestaurantDashboard from "./dashboards/Restaurant";
 import ActivityDashboard from "./dashboards/Activity";
 import GlobalErrorModal from "./components/GlobalErrorModal";
 import NotificationsPage from "./pages/Notifications";
+import SuperAdminIconsPage from "./pages/SuperAdminIcons";
 import UserFormPage from "./pages/forms/UserFormPage";
 import BookingFormPage from "./pages/forms/BookingFormPage";
 import RoomFormPage from "./pages/forms/RoomFormPage";
@@ -34,6 +36,7 @@ import HotelIconsStep from "./pages/hotel-details/IconsStep";
 import HotelPolicyStep from "./pages/hotel-details/PolicyStep";
 import HotelPhotosStep from "./pages/hotel-details/PhotosStep";
 import HotelDetailsView from "./pages/hotel-details/HotelDetailsView";
+import HotelChannelManagerPage from "./pages/hotel-channel/ChannelManagerPage";
 
 const ALL_ROLES = [
   "super_admin",
@@ -72,6 +75,17 @@ function DashboardRoute({ element }) {
   return <MainLayout>{element}</MainLayout>;
 }
 
+function PermissionRoute({ permission, element, fallbackTo = "/hotel" }) {
+  return (
+    <PermissionWrapper
+      permission={permission}
+      fallback={<Navigate to={fallbackTo} replace />}
+    >
+      {element}
+    </PermissionWrapper>
+  );
+}
+
 export default function App() {
   return (
     <>
@@ -86,6 +100,10 @@ export default function App() {
           <Route
             path="/super-admin"
             element={<DashboardRoute element={<SuperAdminDashboard />} />}
+          />
+          <Route
+            path="/super-admin/icons"
+            element={<DashboardRoute element={<SuperAdminIconsPage />} />}
           />
         </Route>
 
@@ -128,6 +146,146 @@ export default function App() {
           <Route
             path="/hotel/details/view"
             element={<DashboardRoute element={<HotelDetailsView />} />}
+          />
+          <Route
+            path="/hotel/channel-manager"
+            element={
+              <Navigate
+                to="/hotel/channel-manager/travky/guest-groups"
+                replace
+              />
+            }
+          />
+          <Route
+            path="/hotel/channel-manager/travky/guest-groups"
+            element={
+              <DashboardRoute
+                element={
+                  <PermissionRoute
+                    permission="guest_groups:view"
+                    element={
+                      <HotelChannelManagerPage sectionKey="guest_groups" />
+                    }
+                  />
+                }
+              />
+            }
+          />
+          <Route
+            path="/hotel/channel-manager/travky/meal-plans"
+            element={
+              <DashboardRoute
+                element={
+                  <PermissionRoute
+                    permission="meal_plans:view"
+                    element={
+                      <HotelChannelManagerPage sectionKey="meal_plans" />
+                    }
+                  />
+                }
+              />
+            }
+          />
+          <Route
+            path="/hotel/channel-manager/travky/periods"
+            element={
+              <DashboardRoute
+                element={
+                  <PermissionRoute
+                    permission="periods:view"
+                    element={<HotelChannelManagerPage sectionKey="periods" />}
+                  />
+                }
+              />
+            }
+          />
+          <Route
+            path="/hotel/channel-manager/travky/supplements"
+            element={
+              <DashboardRoute
+                element={
+                  <PermissionRoute
+                    permission="supplements:view"
+                    element={
+                      <HotelChannelManagerPage sectionKey="supplements" />
+                    }
+                  />
+                }
+              />
+            }
+          />
+          <Route
+            path="/hotel/channel-manager/travky/refund-policies"
+            element={
+              <DashboardRoute
+                element={
+                  <PermissionRoute
+                    permission="refund_policies:view"
+                    element={
+                      <HotelChannelManagerPage sectionKey="refund_policies" />
+                    }
+                  />
+                }
+              />
+            }
+          />
+          <Route
+            path="/hotel/channel-manager/travky/rooms"
+            element={
+              <DashboardRoute
+                element={
+                  <PermissionRoute
+                    permission="channel_manager_rooms:view"
+                    element={
+                      <HotelChannelManagerPage sectionKey="channel_manager_rooms" />
+                    }
+                  />
+                }
+              />
+            }
+          />
+          <Route
+            path="/hotel/channel-manager/travky/rates"
+            element={
+              <DashboardRoute
+                element={
+                  <PermissionRoute
+                    permission="rates:view"
+                    element={<HotelChannelManagerPage sectionKey="rates" />}
+                  />
+                }
+              />
+            }
+          />
+          <Route
+            path="/hotel/channel-manager/travky/availability"
+            element={
+              <DashboardRoute
+                element={
+                  <PermissionRoute
+                    permission="availability:view"
+                    element={
+                      <HotelChannelManagerPage sectionKey="availability" />
+                    }
+                  />
+                }
+              />
+            }
+          />
+          <Route
+            path="/hotel/channel-manager/external"
+            element={
+              <DashboardRoute
+                element={
+                  <PermissionRoute
+                    permission="channel_manager_external:view"
+                    element={
+                      <HotelChannelManagerPage sectionKey="channel_manager_external" />
+                    }
+                  />
+                }
+              />
+            }
           />
         </Route>
 

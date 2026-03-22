@@ -12,6 +12,8 @@ import {
   clearNotifications,
 } from "../store/slices/notificationsSlice";
 
+const getNotificationTime = () => new Date().toISOString();
+
 export default function MainLayout({ children }) {
   const { dir, t } = useLanguage();
   const location = useLocation();
@@ -40,9 +42,9 @@ export default function MainLayout({ children }) {
       dispatch(
         addNotification({
           type: "permissions",
-          title: t("notif_permissionsUpdated"),
-          body: t("notif_permissionsUpdatedBody"),
-          time: new Date().toLocaleTimeString(),
+          titleKey: "notif_permissionsUpdated",
+          bodyKey: "notif_permissionsUpdatedBody",
+          time: getNotificationTime(),
         }),
       );
       // Update Redux so PermissionWrapper re-evaluates in real-time
@@ -63,9 +65,37 @@ export default function MainLayout({ children }) {
       }
     };
 
+    const handleIconRequested = ({ label, hotelName, time }) => {
+      dispatch(
+        addNotification({
+          type: "icon_requested",
+          titleKey: "notif_iconRequestedTitle",
+          bodyKey: "notif_iconRequestedBody",
+          params: { hotelName, label },
+          time: time ? new Date(time).toISOString() : getNotificationTime(),
+        }),
+      );
+    };
+
+    const handleIconDesigned = ({ label }) => {
+      dispatch(
+        addNotification({
+          type: "icon_designed",
+          titleKey: "notif_iconDesignedTitle",
+          bodyKey: "notif_iconDesignedBody",
+          params: { label },
+          time: getNotificationTime(),
+        }),
+      );
+    };
+
     socket.on("permissions:updated", handlePermissionsUpdated);
+    socket.on("icon:requested", handleIconRequested);
+    socket.on("icon:designed", handleIconDesigned);
     return () => {
       socket.off("permissions:updated", handlePermissionsUpdated);
+      socket.off("icon:requested", handleIconRequested);
+      socket.off("icon:designed", handleIconDesigned);
     };
   }, [dispatch, refresh, refreshToken, t, user]);
 

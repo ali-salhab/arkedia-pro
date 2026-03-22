@@ -162,7 +162,7 @@ export default function HotelDashboard() {
           }}
         >
           <Eye size={15} />
-          Preview Hotel
+          {t("hotelPreview")}
         </button>
       </div>
 

@@ -1,47 +1,169 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Check, X } from "lucide-react";
+import { Plus, Check, X, Image as ImageIcon } from "lucide-react";
 import HotelDetailsStepBar from "../../components/HotelDetailsStepBar";
+import { useLanguage } from "../../context/LanguageContext";
+import {
+  useGetIconsQuery,
+  useRequestIconMutation,
+} from "../../store/services/api";
 
-const DEFAULT_ICONS = [
-  { id: "pool", label: "Swimming Pool", emoji: "🏊" },
-  { id: "spa", label: "Spa", emoji: "🌿" },
-  { id: "parking", label: "Free Parking", emoji: "🅿️" },
-  { id: "meal", label: "Meal Plan", emoji: "🍽️" },
-  { id: "wifi", label: "Free Wi-Fi", emoji: "📶" },
-  { id: "gym", label: "Gym", emoji: "💪" },
-  { id: "bar", label: "Bar / Lounge", emoji: "🍹" },
-  { id: "ac", label: "Air Conditioning", emoji: "❄️" },
-  { id: "pets", label: "Pet Friendly", emoji: "🐾" },
-  { id: "laundry", label: "Laundry", emoji: "👕" },
-  { id: "concierge", label: "Concierge", emoji: "🛎️" },
-  { id: "shuttle", label: "Airport Shuttle", emoji: "🚐" },
-  { id: "beach", label: "Beach Access", emoji: "🏖️" },
-  { id: "childcare", label: "Childcare", emoji: "🧒" },
-  { id: "rooftop", label: "Rooftop", emoji: "🌆" },
-  { id: "breakfast", label: "Breakfast", emoji: "🥐" },
-  { id: "minibar", label: "Mini Bar", emoji: "🧊" },
-  { id: "safe", label: "In-Room Safe", emoji: "🔒" },
-];
+const COPY = {
+  en: {
+    title: "Hotel Amenities",
+    subtitle:
+      "Select the amenities your property offers. Can't find one? Request it below.",
+    selected: "selected",
+    requestIcon: "Request Icon",
+    cancel: "Cancel",
+    categories: {
+      hotel: "Hotels",
+      room: "Rooms",
+      activity: "Activities",
+      other: "Other",
+    },
+    requestHint:
+      "Request a new icon and the super admin can design it for your hotel and the shared library.",
+    iconNameEn: "Icon name (English) *",
+    iconNameAr: "Icon name (Arabic)",
+    sending: "Sending...",
+    send: "Send Request",
+    loading: "Loading icons...",
+    noIcons: "No icons in this category yet.",
+    requestNew: "Request a new icon",
+    pendingRequests: "Pending Design Requests",
+    awaitingDesign: "Awaiting Design",
+    requestFailed: "Failed to send request. Please try again.",
+    selectRequired: "Please select or request at least one amenity icon",
+    next: "Next -> Policy",
+  },
+  ar: {
+    title: "مرافق الفندق",
+    subtitle:
+      "اختر المرافق المتاحة في الفندق. إذا لم تجد ما يناسبك يمكنك طلب أيقونة جديدة من هنا.",
+    selected: "تم اختيارها",
+    requestIcon: "طلب أيقونة",
+    cancel: "إلغاء",
+    categories: {
+      hotel: "الفندق",
+      room: "الغرف",
+      activity: "الأنشطة",
+      other: "أخرى",
+    },
+    requestHint:
+      "اطلب أيقونة جديدة وسيتمكن السوبر أدمن من تصميمها لهذا الفندق وللمكتبة المشتركة.",
+    iconNameEn: "اسم الأيقونة بالإنجليزية *",
+    iconNameAr: "اسم الأيقونة بالعربية",
+    sending: "جارٍ الإرسال...",
+    send: "إرسال الطلب",
+    loading: "جارٍ تحميل الأيقونات...",
+    noIcons: "لا توجد أيقونات في هذا القسم حالياً.",
+    requestNew: "اطلب أيقونة جديدة",
+    pendingRequests: "طلبات التصميم المعلقة",
+    awaitingDesign: "بانتظار التصميم",
+    requestFailed: "تعذر إرسال الطلب. حاول مرة أخرى.",
+    selectRequired: "اختر أو اطلب أيقونة واحدة على الأقل",
+    next: "التالي -> السياسة",
+  },
+};
+
+function DefaultIconPlaceholder({ isRequested = false, size = 40 }) {
+  return (
+    <div
+      className="flex items-center justify-center rounded-xl flex-shrink-0"
+      style={{
+        width: size,
+        height: size,
+        backgroundColor: isRequested ? "#fef3c7" : "var(--bg-raised)",
+        border: `1px dashed ${isRequested ? "#f59e0b" : "var(--border)"}`,
+      }}
+    >
+      {isRequested ? (
+        <Check size={size * 0.4} style={{ color: "#d97706" }} />
+      ) : (
+        <ImageIcon size={size * 0.38} style={{ color: "var(--text-muted)" }} />
+      )}
+    </div>
+  );
+}
 
 export default function HotelIconsStep() {
   const navigate = useNavigate();
+  const { lang } = useLanguage();
+  const copy = COPY[lang] || COPY.en;
 
-  const [selected, setSelected] = useState(() => {
-    const saved = JSON.parse(
-      sessionStorage.getItem("hotel_details_icons") || "null",
-    );
-    return new Set(saved?.selectedIcons || []);
-  });
-  const [icons, setIcons] = useState(() => {
-    const saved = JSON.parse(
-      sessionStorage.getItem("hotel_details_icons") || "null",
-    );
-    return saved?.allIcons || DEFAULT_ICONS;
-  });
-  const [showAddPanel, setShowAddPanel] = useState(false);
+  const { data: icons = [], isLoading } = useGetIconsQuery();
+  const [requestIcon, { isLoading: requesting }] = useRequestIconMutation();
+
+  const [activeCategory, setActiveCategory] = useState("hotel");
+  const [selected, setSelected] = useState(new Set());
+  const [showRequestForm, setShowRequestForm] = useState(false);
   const [newLabel, setNewLabel] = useState("");
+  const [newLabelAr, setNewLabelAr] = useState("");
   const [error, setError] = useState("");
+  const [requestedItems, setRequestedItems] = useState([]);
+
+  useEffect(() => {
+    const saved = JSON.parse(
+      sessionStorage.getItem("hotel_details_icons") || "null",
+    );
+    if (saved?.selectedIcons?.length) {
+      setSelected(new Set(saved.selectedIcons));
+    }
+    if (saved?.requestedItems) {
+      setRequestedItems(saved.requestedItems);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!icons.length) return;
+
+    setRequestedItems((prev) => {
+      if (!prev.length) return prev;
+
+      const normalized = (value) =>
+        String(value || "")
+          .trim()
+          .toLowerCase();
+
+      const next = prev.filter((requestItem) => {
+        const matchedDesignedIcon = icons.some((icon) => {
+          if (icon.status !== "designed") return false;
+
+          const requestCategory = requestItem.category || icon.category;
+
+          const sameId = String(icon._id) === String(requestItem.id);
+          const sameLabel =
+            normalized(icon.label) === normalized(requestItem.label) &&
+            normalized(icon.category) === normalized(requestCategory);
+          const sameArabicLabel =
+            requestItem.labelAr &&
+            normalized(icon.labelAr) === normalized(requestItem.labelAr) &&
+            normalized(icon.category) === normalized(requestCategory);
+
+          return sameId || sameLabel || sameArabicLabel;
+        });
+
+        return !matchedDesignedIcon;
+      });
+
+      if (next.length !== prev.length) {
+        sessionStorage.setItem(
+          "hotel_details_icons",
+          JSON.stringify({
+            selectedIcons: [...selected],
+            requestedItems: next,
+          }),
+        );
+      }
+
+      return next;
+    });
+  }, [icons, selected]);
+
+  const filteredIcons = icons.filter(
+    (icon) => icon.category === activeCategory && icon.status === "designed",
+  );
 
   const toggle = (id) => {
     setSelected((prev) => {
@@ -52,25 +174,45 @@ export default function HotelIconsStep() {
     setError("");
   };
 
-  const handleAdd = () => {
+  const handleRequest = async () => {
     if (!newLabel.trim()) return;
-    const id = `custom_${Date.now()}`;
-    const newIcon = { id, label: newLabel.trim(), emoji: "✨" };
-    setIcons((prev) => [...prev, newIcon]);
-    setSelected((prev) => new Set([...prev, id]));
-    setNewLabel("");
-    setShowAddPanel(false);
+
+    try {
+      const result = await requestIcon({
+        label: newLabel.trim(),
+        labelAr: newLabelAr.trim(),
+        category: activeCategory,
+      }).unwrap();
+
+      setRequestedItems((prev) => [
+        ...prev,
+        {
+          id: result._id,
+          label: result.label,
+          labelAr: result.labelAr,
+          category: result.category || activeCategory,
+        },
+      ]);
+      setNewLabel("");
+      setNewLabelAr("");
+      setShowRequestForm(false);
+    } catch {
+      setError(copy.requestFailed);
+    }
   };
 
-  const handleNext = () => {
-    if (selected.size === 0) {
-      setError("Please select at least one amenity");
+  const handleNext = async () => {
+    if (selected.size === 0 && requestedItems.length === 0) {
+      setError(copy.selectRequired);
       return;
     }
+
+    const selectedIcons = [...selected];
     sessionStorage.setItem(
       "hotel_details_icons",
-      JSON.stringify({ selectedIcons: [...selected], allIcons: icons }),
+      JSON.stringify({ selectedIcons, requestedItems }),
     );
+
     navigate("/hotel/details/policy");
   };
 
@@ -78,150 +220,290 @@ export default function HotelIconsStep() {
     <div className="page-shell">
       <HotelDetailsStepBar />
 
-      <div className="flex items-center justify-between mb-5">
-        <div>
+      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
           <h2
             className="text-lg font-bold"
             style={{ color: "var(--sidebar-active-text)" }}
           >
-            Hotel Amenities
+            {copy.title}
           </h2>
-          <p className="text-sm mt-0.5" style={{ color: "var(--text-muted)" }}>
-            Select all amenities & services available at your property
+          <p className="mt-0.5 text-sm" style={{ color: "var(--text-muted)" }}>
+            {copy.subtitle}
           </p>
         </div>
-        <div className="flex items-center gap-3">
+
+        <div className="flex flex-wrap items-center gap-3">
           {selected.size > 0 && (
             <span
-              className="text-xs font-semibold px-2.5 py-1 rounded-full"
+              className="rounded-full px-2.5 py-1 text-xs font-semibold"
               style={{
                 backgroundColor: "rgba(29,78,216,0.1)",
                 color: "var(--sidebar-active-text)",
               }}
             >
-              {selected.size} selected
+              {selected.size} {copy.selected}
             </span>
           )}
+
           <button
-            onClick={() => setShowAddPanel((v) => !v)}
-            className="flex items-center gap-1.5 h-8 px-3 rounded-xl text-xs font-semibold transition-all"
+            onClick={() => setShowRequestForm((value) => !value)}
+            className="flex h-9 items-center gap-1.5 rounded-xl px-3 text-xs font-semibold transition-all"
             style={{
-              backgroundColor: showAddPanel
+              backgroundColor: showRequestForm
                 ? "var(--bg-raised)"
                 : "var(--sidebar-active-text)",
-              color: showAddPanel ? "var(--text-secondary)" : "#fff",
-              border: `1px solid ${showAddPanel ? "var(--border)" : "var(--sidebar-active-text)"}`,
+              color: showRequestForm ? "var(--text-secondary)" : "#fff",
+              border: `1px solid ${showRequestForm ? "var(--border)" : "var(--sidebar-active-text)"}`,
             }}
           >
-            {showAddPanel ? <X size={14} /> : <Plus size={14} />}
-            {showAddPanel ? "Cancel" : "Add Custom"}
+            {showRequestForm ? <X size={14} /> : <Plus size={14} />}
+            {showRequestForm ? copy.cancel : copy.requestIcon}
           </button>
         </div>
       </div>
 
-      {/* Add custom icon panel */}
-      {showAddPanel && (
+      <div
+        className="mb-5 flex w-full gap-1 overflow-x-auto rounded-2xl p-1 sm:w-fit"
+        style={{ backgroundColor: "var(--bg-raised)" }}
+      >
+        {Object.entries(copy.categories).map(([value, label]) => (
+          <button
+            key={value}
+            onClick={() => setActiveCategory(value)}
+            className="h-8 whitespace-nowrap rounded-xl px-4 text-xs font-medium transition-all"
+            style={{
+              backgroundColor:
+                activeCategory === value
+                  ? "var(--sidebar-active-text)"
+                  : "transparent",
+              color:
+                activeCategory === value ? "#fff" : "var(--text-secondary)",
+            }}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {showRequestForm && (
         <div
-          className="rounded-2xl p-4 mb-5 flex items-center gap-3"
+          className="mb-5 rounded-2xl p-4"
           style={{
             backgroundColor: "var(--bg-surface)",
             border: "1px dashed var(--border)",
           }}
         >
-          <span className="text-2xl">✨</span>
-          <input
-            className="input flex-1"
-            placeholder="Custom amenity name (e.g. Private Cinema)"
-            value={newLabel}
-            onChange={(e) => setNewLabel(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleAdd()}
-          />
-          <button
-            onClick={handleAdd}
-            className="btn btn-primary px-4 py-2 rounded-xl text-sm"
-            style={{ backgroundColor: "var(--sidebar-active-text)" }}
+          <p
+            className="mb-3 text-xs font-semibold"
+            style={{ color: "var(--text-secondary)" }}
           >
-            Add
-          </button>
+            {copy.requestHint}
+          </p>
+
+          <div className="flex flex-col gap-2 md:flex-row">
+            <input
+              className="input h-10 flex-1 text-sm"
+              placeholder={copy.iconNameEn}
+              value={newLabel}
+              onChange={(event) => setNewLabel(event.target.value)}
+              dir="ltr"
+              onKeyDown={(event) => event.key === "Enter" && handleRequest()}
+            />
+            <input
+              className="input h-10 flex-1 text-sm"
+              placeholder={copy.iconNameAr}
+              value={newLabelAr}
+              onChange={(event) => setNewLabelAr(event.target.value)}
+              dir="rtl"
+            />
+            <button
+              onClick={handleRequest}
+              disabled={!newLabel.trim() || requesting}
+              className="h-10 rounded-xl px-5 text-sm font-semibold"
+              style={{
+                backgroundColor: newLabel.trim()
+                  ? "var(--sidebar-active-text)"
+                  : "var(--bg-raised)",
+                color: newLabel.trim() ? "#fff" : "var(--text-muted)",
+              }}
+            >
+              {requesting ? copy.sending : copy.send}
+            </button>
+          </div>
         </div>
       )}
 
-      {/* Icons grid */}
-      <div
-        className="rounded-2xl p-5 mb-4"
-        style={{
-          backgroundColor: "var(--bg-surface)",
-          border: "1px solid var(--border)",
-        }}
-      >
-        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-6 gap-4">
-          {icons.map((icon) => {
-            const isSelected = selected.has(icon.id);
+      {isLoading ? (
+        <div
+          className="py-12 text-center text-sm"
+          style={{ color: "var(--text-muted)" }}
+        >
+          {copy.loading}
+        </div>
+      ) : filteredIcons.length === 0 ? (
+        <div
+          className="flex flex-col items-center gap-3 rounded-2xl py-12"
+          style={{
+            backgroundColor: "var(--bg-surface)",
+            border: "1px dashed var(--border)",
+          }}
+        >
+          <ImageIcon size={32} style={{ color: "var(--text-muted)" }} />
+          <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+            {copy.noIcons}
+          </p>
+          <button
+            onClick={() => setShowRequestForm(true)}
+            className="text-xs font-semibold underline"
+            style={{ color: "var(--sidebar-active-text)" }}
+          >
+            {copy.requestNew}
+          </button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
+          {filteredIcons.map((icon) => {
+            const isSelected = selected.has(icon._id);
+            const primaryLabel =
+              lang === "ar" && icon.labelAr ? icon.labelAr : icon.label;
+            const secondaryLabel = lang === "ar" ? icon.label : icon.labelAr;
+
             return (
               <button
-                key={icon.id}
-                onClick={() => toggle(icon.id)}
-                className="flex flex-col items-center gap-2 p-2 rounded-xl transition-all"
+                key={icon._id}
+                onClick={() => toggle(icon._id)}
+                className="flex items-center gap-3 rounded-xl px-4 py-3 text-left transition-all"
                 style={{
                   backgroundColor: isSelected
-                    ? "rgba(29,78,216,0.08)"
-                    : "transparent",
-                  border: `1.5px solid ${isSelected ? "var(--sidebar-active-text)" : "transparent"}`,
+                    ? "rgba(29,78,216,0.06)"
+                    : "var(--bg-surface)",
+                  border: `1.5px solid ${isSelected ? "var(--sidebar-active-text)" : "var(--border)"}`,
                 }}
               >
-                <div
-                  className="h-14 w-14 flex items-center justify-center rounded-full text-2xl transition-all"
-                  style={{
-                    backgroundColor: isSelected
-                      ? "rgba(29,78,216,0.15)"
-                      : "var(--bg-raised)",
-                    boxShadow: isSelected
-                      ? "0 0 0 3px rgba(29,78,216,0.12)"
-                      : "none",
-                  }}
-                >
-                  {icon.emoji}
+                {icon.imageUrl ? (
+                  <img
+                    src={icon.imageUrl}
+                    alt={primaryLabel}
+                    className="h-10 w-10 flex-shrink-0 rounded-xl object-contain"
+                  />
+                ) : (
+                  <DefaultIconPlaceholder />
+                )}
+
+                <div className="min-w-0 flex-1">
+                  <p
+                    className="truncate text-sm font-semibold"
+                    style={{
+                      color: isSelected
+                        ? "var(--sidebar-active-text)"
+                        : "var(--text-primary)",
+                    }}
+                    dir={lang === "ar" ? "rtl" : "ltr"}
+                  >
+                    {primaryLabel}
+                  </p>
+                  {secondaryLabel && (
+                    <p
+                      className="mt-0.5 truncate text-xs"
+                      style={{ color: "var(--text-muted)" }}
+                      dir={lang === "ar" ? "ltr" : "rtl"}
+                    >
+                      {secondaryLabel}
+                    </p>
+                  )}
                 </div>
-                <span
-                  className="text-[11px] text-center leading-tight font-medium w-full truncate px-1"
-                  style={{
-                    color: isSelected
-                      ? "var(--sidebar-active-text)"
-                      : "var(--text-secondary)",
-                  }}
-                >
-                  {icon.label}
-                </span>
+
                 <div
-                  className="h-4 w-4 flex items-center justify-center rounded border transition-all"
+                  className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full"
                   style={{
                     backgroundColor: isSelected
                       ? "var(--sidebar-active-text)"
-                      : "var(--bg-surface)",
-                    borderColor: isSelected
-                      ? "var(--sidebar-active-text)"
-                      : "var(--border)",
+                      : "var(--bg-raised)",
+                    border: `2px solid ${isSelected ? "var(--sidebar-active-text)" : "var(--border)"}`,
                   }}
                 >
                   {isSelected && (
-                    <Check size={10} className="text-white" strokeWidth={3} />
+                    <Check
+                      size={11}
+                      strokeWidth={3}
+                      style={{ color: "#fff" }}
+                    />
                   )}
                 </div>
               </button>
             );
           })}
         </div>
+      )}
+
+      {requestedItems.length > 0 && (
+        <div className="mt-6">
+          <p
+            className="mb-2 text-xs font-semibold uppercase tracking-wide"
+            style={{ color: "var(--text-muted)" }}
+          >
+            {copy.pendingRequests}
+          </p>
+
+          <div className="flex flex-col gap-2">
+            {requestedItems.map((item) => {
+              const primaryLabel =
+                lang === "ar" && item.labelAr ? item.labelAr : item.label;
+              const secondaryLabel = lang === "ar" ? item.label : item.labelAr;
+
+              return (
+                <div
+                  key={item.id}
+                  className="flex items-center gap-3 rounded-xl px-4 py-3"
+                  style={{
+                    backgroundColor: "#fffff0",
+                    border: "1px dashed #f59e0b",
+                  }}
+                >
+                  <DefaultIconPlaceholder isRequested size={38} />
+                  <div className="min-w-0 flex-1">
+                    <p
+                      className="truncate text-sm font-semibold"
+                      style={{ color: "#92400e" }}
+                      dir={lang === "ar" ? "rtl" : "ltr"}
+                    >
+                      {primaryLabel}
+                    </p>
+                    {secondaryLabel && (
+                      <p
+                        className="mt-0.5 truncate text-xs"
+                        style={{ color: "#b45309" }}
+                        dir={lang === "ar" ? "ltr" : "rtl"}
+                      >
+                        {secondaryLabel}
+                      </p>
+                    )}
+                  </div>
+                  <span
+                    className="whitespace-nowrap rounded-full px-2 py-1 text-[10px] font-semibold"
+                    style={{ backgroundColor: "#fef3c7", color: "#92400e" }}
+                  >
+                    {copy.awaitingDesign}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {error && <p className="input-error mb-2 mt-4">{error}</p>}
+
+      <div className="mt-8">
+        <button
+          onClick={handleNext}
+          className="btn btn-primary w-full rounded-2xl py-3 text-base"
+          style={{ backgroundColor: "var(--sidebar-active-text)" }}
+        >
+          {copy.next}
+        </button>
       </div>
-
-      {error && <p className="input-error mb-3">{error}</p>}
-
-      <button
-        onClick={handleNext}
-        className="btn btn-primary w-full text-base py-3 rounded-2xl"
-        style={{ backgroundColor: "var(--sidebar-active-text)" }}
-      >
-        Next → Policy
-      </button>
     </div>
   );
 }

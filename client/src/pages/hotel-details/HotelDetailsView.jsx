@@ -8,7 +8,10 @@ import {
   Trash2,
   ChevronLeft,
   ChevronRight,
+  Image as ImageIcon,
 } from "lucide-react";
+import { useLanguage } from "../../context/LanguageContext";
+import { useGetIconsQuery } from "../../store/services/api";
 
 const STORAGE_KEYS = [
   "hotel_details_main",
@@ -17,6 +20,62 @@ const STORAGE_KEYS = [
   "hotel_details_policy",
   "hotel_details_photos",
 ];
+
+const COPY = {
+  en: {
+    emptyTitle: "No hotel details yet",
+    emptySubtitle: "Complete the setup wizard to see your hotel profile here.",
+    start: "Start Adding Details",
+    deleteConfirm:
+      "This will delete all hotel details and restart the wizard. Continue?",
+    edit: "Edit",
+    delete: "Delete",
+    starSuffix: "Star",
+    sectionDescription: "Description",
+    sectionAmenities: "Amenities",
+    sectionLocation: "Location on Map",
+    sectionPolicy: "Hotel Policy",
+    noDescription: "No description added.",
+    noAmenities: "No amenities added.",
+    noPolicy: "No policy added.",
+    mapLoading: "Loading map...",
+    mapUnavailable: "Map unavailable",
+    openMap: "Open in OpenStreetMap",
+    pendingRequested: "Pending icon requests",
+    awaitingDesign: "Awaiting Design",
+  },
+  ar: {
+    emptyTitle: "لا توجد بيانات للفندق بعد",
+    emptySubtitle: "أكمل خطوات الإعداد حتى تظهر معاينة الفندق هنا.",
+    start: "ابدأ بإضافة التفاصيل",
+    deleteConfirm:
+      "سيؤدي هذا إلى حذف كل بيانات الفندق وإعادة بدء الخطوات. هل تريد المتابعة؟",
+    edit: "تعديل",
+    delete: "حذف",
+    starSuffix: "نجوم",
+    sectionDescription: "الوصف",
+    sectionAmenities: "المرافق",
+    sectionLocation: "الموقع على الخريطة",
+    sectionPolicy: "سياسة الفندق",
+    noDescription: "لم تتم إضافة وصف بعد.",
+    noAmenities: "لم تتم إضافة مرافق بعد.",
+    noPolicy: "لم تتم إضافة سياسة بعد.",
+    mapLoading: "جارٍ تحميل الخريطة...",
+    mapUnavailable: "الخريطة غير متاحة",
+    openMap: "فتح في OpenStreetMap",
+    pendingRequested: "طلبات الأيقونات المعلقة",
+    awaitingDesign: "بانتظار التصميم",
+  },
+};
+
+const CATEGORY_LABELS = {
+  Hotel: { en: "Hotel", ar: "فندق" },
+  Resort: { en: "Resort", ar: "منتجع" },
+  Boutique: { en: "Boutique", ar: "بوتيك" },
+  Hostel: { en: "Hostel", ar: "نزل" },
+  Motel: { en: "Motel", ar: "موتيل" },
+  Villa: { en: "Villa", ar: "فيلا" },
+};
 
 function readSession() {
   return {
@@ -34,128 +93,100 @@ function readSession() {
   };
 }
 
-/* ── Photo Slider ───────────────────────────────────────── */
 function PhotoSlider({ photos }) {
-  const [idx, setIdx] = useState(0);
+  const [index, setIndex] = useState(0);
+
   if (!photos?.length) return null;
 
-  const prev = () => setIdx((i) => (i - 1 + photos.length) % photos.length);
-  const next = () => setIdx((i) => (i + 1) % photos.length);
+  const prev = () =>
+    setIndex((value) => (value - 1 + photos.length) % photos.length);
+  const next = () => setIndex((value) => (value + 1) % photos.length);
 
   return (
     <div
-      className="relative w-full rounded-2xl overflow-hidden"
-      style={{ aspectRatio: "21/8", backgroundColor: "#000" }}
+      className="relative w-full overflow-hidden rounded-2xl"
+      style={{ aspectRatio: "16 / 9", backgroundColor: "#000" }}
     >
       <img
-        src={photos[idx]}
-        alt={`photo-${idx}`}
-        className="w-full h-full object-cover"
-        style={{ transition: "opacity .25s" }}
+        src={photos[index]}
+        alt={`photo-${index + 1}`}
+        className="h-full w-full object-cover"
       />
 
-      {/* bottom gradient */}
       <div
-        className="absolute inset-0 pointer-events-none"
+        className="pointer-events-none absolute inset-0"
         style={{
           background:
             "linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.55))",
         }}
       />
 
-      {/* counter badge */}
-      <div className="absolute top-3 right-3 text-xs font-semibold text-white bg-black/40 backdrop-blur-sm px-2.5 py-1 rounded-full">
-        {idx + 1} / {photos.length}
+      <div className="absolute right-3 top-3 rounded-full bg-black/40 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur-sm">
+        {index + 1} / {photos.length}
       </div>
 
       {photos.length > 1 && (
         <>
           <button
             onClick={prev}
-            className="absolute left-3 top-1/2 -translate-y-1/2 h-9 w-9 flex items-center justify-center rounded-full bg-black/40 backdrop-blur-sm text-white hover:bg-black/65 transition-all"
+            className="absolute left-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm transition-all hover:bg-black/65"
           >
             <ChevronLeft size={18} />
           </button>
           <button
             onClick={next}
-            className="absolute right-3 top-1/2 -translate-y-1/2 h-9 w-9 flex items-center justify-center rounded-full bg-black/40 backdrop-blur-sm text-white hover:bg-black/65 transition-all"
+            className="absolute right-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm transition-all hover:bg-black/65"
           >
             <ChevronRight size={18} />
           </button>
 
-          {/* pill dots */}
-          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5">
-            {photos.map((_, i) => (
+          <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 items-center gap-1.5">
+            {photos.map((_, dotIndex) => (
               <button
-                key={i}
-                onClick={() => setIdx(i)}
+                key={dotIndex}
+                onClick={() => setIndex(dotIndex)}
                 className="rounded-full transition-all"
                 style={{
-                  width: i === idx ? 22 : 6,
+                  width: dotIndex === index ? 22 : 6,
                   height: 6,
                   backgroundColor:
-                    i === idx ? "#fff" : "rgba(255,255,255,0.45)",
+                    dotIndex === index ? "#fff" : "rgba(255,255,255,0.45)",
                 }}
               />
             ))}
           </div>
         </>
       )}
-
-      {/* thumbnail strip */}
-      {photos.length > 1 && (
-        <div className="absolute bottom-12 right-3 flex gap-1.5">
-          {photos.slice(0, 5).map((url, i) => (
-            <button
-              key={i}
-              onClick={() => setIdx(i)}
-              className="rounded-lg overflow-hidden transition-all"
-              style={{
-                width: 44,
-                height: 32,
-                outline:
-                  i === idx
-                    ? "2px solid #fff"
-                    : "2px solid rgba(255,255,255,0)",
-                opacity: i === idx ? 1 : 0.65,
-              }}
-            >
-              <img src={url} alt="" className="w-full h-full object-cover" />
-            </button>
-          ))}
-        </div>
-      )}
     </div>
   );
 }
 
-/* ── OpenStreetMap via Nominatim ────────────────────────── */
-function OsmMap({ city, country, lat: savedLat, lng: savedLng }) {
+function OsmMap({ city, country, lat: savedLat, lng: savedLng, copy }) {
   const [coords, setCoords] = useState(
     savedLat != null ? { lat: savedLat, lon: savedLng } : null,
   );
   const [status, setStatus] = useState(savedLat != null ? "ready" : "loading");
 
   useEffect(() => {
-    /* If user already pinned an exact location, use it directly */
     if (savedLat != null) {
       setCoords({ lat: savedLat, lon: savedLng });
       setStatus("ready");
       return;
     }
 
-    const q = [city, country].filter(Boolean).join(", ");
-    if (!q) {
+    const query = [city, country].filter(Boolean).join(", ");
+    if (!query) {
       setStatus("error");
       return;
     }
 
     let cancelled = false;
+
     fetch(
-      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=1`,
+      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`,
       { headers: { "Accept-Language": "en" } },
     )
-      .then((r) => r.json())
+      .then((response) => response.json())
       .then((data) => {
         if (cancelled) return;
         if (data[0]) {
@@ -168,7 +199,9 @@ function OsmMap({ city, country, lat: savedLat, lng: savedLng }) {
           setStatus("error");
         }
       })
-      .catch(() => !cancelled && setStatus("error"));
+      .catch(() => {
+        if (!cancelled) setStatus("error");
+      });
 
     return () => {
       cancelled = true;
@@ -178,18 +211,18 @@ function OsmMap({ city, country, lat: savedLat, lng: savedLng }) {
   if (status === "loading") {
     return (
       <div
-        className="w-full h-56 rounded-xl flex flex-col items-center justify-center gap-2"
+        className="flex h-56 w-full flex-col items-center justify-center gap-2 rounded-xl"
         style={{ backgroundColor: "var(--bg-raised)" }}
       >
         <div
-          className="h-6 w-6 rounded-full border-2 border-t-transparent animate-spin"
+          className="h-6 w-6 animate-spin rounded-full border-2 border-t-transparent"
           style={{
             borderColor: "var(--sidebar-active-text)",
             borderTopColor: "transparent",
           }}
         />
         <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-          Loading map…
+          {copy.mapLoading}
         </p>
       </div>
     );
@@ -198,20 +231,20 @@ function OsmMap({ city, country, lat: savedLat, lng: savedLng }) {
   if (status === "error" || !coords) {
     return (
       <div
-        className="w-full h-56 rounded-xl flex items-center justify-center gap-2"
+        className="flex h-56 w-full items-center justify-center gap-2 rounded-xl"
         style={{ backgroundColor: "var(--bg-raised)" }}
       >
         <MapPin size={18} style={{ color: "var(--text-muted)" }} />
         <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-          Map unavailable
+          {copy.mapUnavailable}
         </p>
       </div>
     );
   }
 
   const { lat, lon } = coords;
-  const d = 0.045;
-  const bbox = `${lon - d},${lat - d},${lon + d},${lat + d}`;
+  const delta = 0.045;
+  const bbox = `${lon - delta},${lat - delta},${lon + delta},${lat + delta}`;
   const src = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${lat},${lon}`;
 
   return (
@@ -219,13 +252,12 @@ function OsmMap({ city, country, lat: savedLat, lng: savedLng }) {
       title="Hotel Location"
       src={src}
       loading="lazy"
-      className="w-full h-56 rounded-xl"
+      className="h-56 w-full rounded-xl"
       style={{ border: "1px solid var(--border)" }}
     />
   );
 }
 
-/* ── Section Card ────────────────────────────────────────── */
 function SectionCard({ title, icon, children, className = "" }) {
   return (
     <div
@@ -235,7 +267,7 @@ function SectionCard({ title, icon, children, className = "" }) {
         border: "1px solid var(--border)",
       }}
     >
-      <div className="flex items-center gap-2 mb-4">
+      <div className="mb-4 flex items-center gap-2">
         <span className="text-base leading-none">{icon}</span>
         <h3
           className="text-[11px] font-bold uppercase tracking-widest"
@@ -249,71 +281,108 @@ function SectionCard({ title, icon, children, className = "" }) {
   );
 }
 
-/* ── Main Component ──────────────────────────────────────── */
+function AmenityChip({ icon, label }) {
+  return (
+    <span
+      className="inline-flex items-center gap-2 rounded-full px-2.5 py-1.5 text-xs font-medium"
+      style={{
+        backgroundColor: "rgba(29,78,216,0.08)",
+        color: "var(--sidebar-active-text)",
+        border: "1px solid rgba(29,78,216,0.15)",
+      }}
+    >
+      {icon?.imageUrl ? (
+        <img
+          src={icon.imageUrl}
+          alt={label}
+          className="h-4 w-4 rounded object-contain"
+        />
+      ) : (
+        <ImageIcon size={14} />
+      )}
+      {label}
+    </span>
+  );
+}
+
 export default function HotelDetailsView() {
   const navigate = useNavigate();
+  const { lang } = useLanguage();
+  const copy = COPY[lang] || COPY.en;
+  const { data: allIcons = [] } = useGetIconsQuery();
   const { main, description, icons, policy, photos } = readSession();
 
   const handleEdit = () => navigate("/hotel/details/main");
   const handleDelete = () => {
-    if (
-      !window.confirm(
-        "This will delete all hotel details and restart the wizard. Continue?",
-      )
-    )
-      return;
-    STORAGE_KEYS.forEach((k) => sessionStorage.removeItem(k));
+    if (!window.confirm(copy.deleteConfirm)) return;
+    STORAGE_KEYS.forEach((key) => sessionStorage.removeItem(key));
     navigate("/hotel/details/main");
   };
 
-  /* ── empty state ── */
   if (!main) {
     return (
-      <div className="page-shell flex flex-col items-center justify-center gap-6 min-h-[60vh]">
+      <div className="page-shell flex min-h-[60vh] flex-col items-center justify-center gap-6">
         <div
-          className="h-20 w-20 rounded-full flex items-center justify-center"
+          className="flex h-20 w-20 items-center justify-center rounded-full"
           style={{ backgroundColor: "var(--bg-raised)" }}
         >
           <Building2 size={36} style={{ color: "var(--text-muted)" }} />
         </div>
         <div className="text-center">
           <p
-            className="text-xl font-bold mb-2"
+            className="mb-2 text-xl font-bold"
             style={{ color: "var(--text-primary)" }}
           >
-            No hotel details yet
+            {copy.emptyTitle}
           </p>
           <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-            Complete the setup wizard to see your hotel profile here.
+            {copy.emptySubtitle}
           </p>
         </div>
         <button
           onClick={() => navigate("/hotel/details/main")}
-          className="btn btn-primary px-8 py-3 rounded-2xl text-sm font-semibold"
+          className="btn btn-primary rounded-2xl px-8 py-3 text-sm font-semibold"
           style={{ backgroundColor: "var(--sidebar-active-text)" }}
         >
-          Start Adding Details
+          {copy.start}
         </button>
       </div>
     );
   }
 
   const stars = main.stars || 0;
-  const selectedIconIds = new Set(icons?.selectedIcons || []);
-  const allIcons = icons?.allIcons || [];
-  const selectedIconObjs = allIcons.filter((ic) => selectedIconIds.has(ic.id));
-
+  const selectedIds = new Set((icons?.selectedIcons || []).map(String));
+  const selectedIconObjs = allIcons.filter((icon) =>
+    selectedIds.has(String(icon._id)),
+  );
+  const pendingRequested = icons?.requestedItems || [];
   const allPhotos = [
     ...(photos?.mainPhotoDataUrl ? [photos.mainPhotoDataUrl] : []),
     ...(photos?.galleryDataUrls || []),
   ];
 
+  const primaryName =
+    lang === "ar" && main.nameAr
+      ? main.nameAr
+      : main.nameEn || main.nameAr || "—";
+  const secondaryName = lang === "ar" ? main.nameEn : main.nameAr;
+  const primaryDescription =
+    lang === "ar" && description?.descriptionAr
+      ? description.descriptionAr
+      : description?.descriptionEn;
+  const secondaryDescription =
+    lang === "ar" ? description?.descriptionEn : description?.descriptionAr;
+  const primaryPolicy =
+    lang === "ar" && policy?.policyAr ? policy.policyAr : policy?.policyEn;
+  const secondaryPolicy = lang === "ar" ? policy?.policyEn : policy?.policyAr;
+  const localizedCategory = main.category
+    ? CATEGORY_LABELS[main.category]?.[lang] || main.category
+    : "";
+
   return (
     <div className="page-shell space-y-5">
-      {/* ── 1. Photo Slider ── */}
       {allPhotos.length > 0 && <PhotoSlider photos={allPhotos} />}
 
-      {/* ── 2. Hotel Identity Card ── */}
       <div
         className="rounded-2xl p-5"
         style={{
@@ -321,10 +390,9 @@ export default function HotelDetailsView() {
           border: "1px solid var(--border)",
         }}
       >
-        <div className="flex items-start gap-4">
-          {/* Logo */}
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
           <div
-            className="h-[72px] w-[72px] flex-shrink-0 rounded-2xl overflow-hidden"
+            className="flex h-[72px] w-[72px] flex-shrink-0 items-center justify-center overflow-hidden rounded-2xl"
             style={{
               backgroundColor: "var(--bg-raised)",
               border: "2px solid var(--border)",
@@ -337,85 +405,82 @@ export default function HotelDetailsView() {
                 className="h-full w-full object-cover"
               />
             ) : (
-              <div className="h-full w-full flex items-center justify-center">
-                <Building2 size={26} style={{ color: "var(--text-muted)" }} />
-              </div>
+              <Building2 size={26} style={{ color: "var(--text-muted)" }} />
             )}
           </div>
 
-          {/* Text info */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
               <div className="min-w-0">
                 <h1
-                  className="text-xl font-extrabold leading-tight truncate"
+                  className="truncate text-xl font-extrabold leading-tight"
                   style={{ color: "var(--text-primary)" }}
+                  dir={lang === "ar" ? "rtl" : "ltr"}
                 >
-                  {main.nameEn || "—"}
+                  {primaryName}
                 </h1>
-                {main.nameAr && (
+                {secondaryName && (
                   <p
-                    className="text-sm mt-0.5 font-medium"
-                    dir="rtl"
+                    className="mt-0.5 text-sm font-medium"
+                    dir={lang === "ar" ? "ltr" : "rtl"}
                     style={{ color: "var(--text-secondary)" }}
                   >
-                    {main.nameAr}
+                    {secondaryName}
                   </p>
                 )}
               </div>
 
-              {/* Edit / Delete */}
-              <div className="flex items-center gap-2 flex-shrink-0">
+              <div className="flex flex-wrap items-center gap-2">
                 <button
                   onClick={handleEdit}
-                  className="flex items-center gap-1.5 h-8 px-3 rounded-xl text-xs font-semibold"
+                  className="flex h-9 items-center gap-1.5 rounded-xl px-3 text-xs font-semibold"
                   style={{
                     backgroundColor: "var(--sidebar-active-text)",
                     color: "#fff",
                   }}
                 >
-                  <Edit3 size={13} /> Edit
+                  <Edit3 size={13} />
+                  {copy.edit}
                 </button>
                 <button
                   onClick={handleDelete}
-                  className="flex items-center gap-1.5 h-8 px-3 rounded-xl text-xs font-semibold"
+                  className="flex h-9 items-center gap-1.5 rounded-xl px-3 text-xs font-semibold"
                   style={{
                     backgroundColor: "var(--bg-raised)",
                     color: "var(--danger)",
                     border: "1px solid var(--border)",
                   }}
                 >
-                  <Trash2 size={13} /> Delete
+                  <Trash2 size={13} />
+                  {copy.delete}
                 </button>
               </div>
             </div>
 
-            {/* Stars */}
             {stars > 0 && (
-              <div className="flex items-center gap-0.5 mt-2">
-                {Array.from({ length: stars }).map((_, i) => (
-                  <Star key={i} size={15} fill="#f59e0b" stroke="#f59e0b" />
+              <div className="mt-2 flex items-center gap-0.5">
+                {Array.from({ length: stars }).map((_, index) => (
+                  <Star key={index} size={15} fill="#f59e0b" stroke="#f59e0b" />
                 ))}
                 <span
                   className="ml-1.5 text-xs font-medium"
                   style={{ color: "var(--text-muted)" }}
                 >
-                  {stars}-Star
+                  {stars} {copy.starSuffix}
                 </span>
               </div>
             )}
 
-            {/* Meta badges */}
-            <div className="flex flex-wrap items-center gap-2 mt-2.5">
-              {main.category && (
+            <div className="mt-2.5 flex flex-wrap items-center gap-2">
+              {localizedCategory && (
                 <span
-                  className="text-xs font-semibold px-2.5 py-1 rounded-full"
+                  className="rounded-full px-2.5 py-1 text-xs font-semibold"
                   style={{
                     backgroundColor: "rgba(29,78,216,0.1)",
                     color: "var(--sidebar-active-text)",
                   }}
                 >
-                  {main.category}
+                  {localizedCategory}
                 </span>
               )}
               {(main.city || main.country) && (
@@ -441,53 +506,54 @@ export default function HotelDetailsView() {
         </div>
       </div>
 
-      {/* ── 3. Description + Amenities ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        <SectionCard title="Description" icon="📝" className="lg:col-span-2">
-          {description?.descriptionEn ? (
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+        <SectionCard
+          title={copy.sectionDescription}
+          icon="📝"
+          className="lg:col-span-2"
+        >
+          {primaryDescription ? (
             <p
               className="text-sm leading-relaxed"
               style={{ color: "var(--text-primary)" }}
+              dir={lang === "ar" ? "rtl" : "ltr"}
             >
-              {description.descriptionEn}
+              {primaryDescription}
             </p>
           ) : (
             <p
               className="text-sm italic"
               style={{ color: "var(--text-muted)" }}
             >
-              No description added.
+              {copy.noDescription}
             </p>
           )}
-          {description?.descriptionAr && (
+
+          {secondaryDescription && (
             <p
-              className="text-sm leading-relaxed mt-3 pt-3"
-              dir="rtl"
+              className="mt-3 border-t pt-3 text-sm leading-relaxed"
+              dir={lang === "ar" ? "ltr" : "rtl"}
               style={{
                 color: "var(--text-secondary)",
                 borderTop: "1px solid var(--border)",
               }}
             >
-              {description.descriptionAr}
+              {secondaryDescription}
             </p>
           )}
         </SectionCard>
 
-        <SectionCard title="Amenities" icon="🏷️">
+        <SectionCard title={copy.sectionAmenities} icon="🏷️">
           {selectedIconObjs.length > 0 ? (
             <div className="flex flex-wrap gap-2">
-              {selectedIconObjs.map((ic) => (
-                <span
-                  key={ic.id}
-                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium"
-                  style={{
-                    backgroundColor: "rgba(29,78,216,0.08)",
-                    color: "var(--sidebar-active-text)",
-                    border: "1px solid rgba(29,78,216,0.15)",
-                  }}
-                >
-                  {ic.emoji} {ic.label}
-                </span>
+              {selectedIconObjs.map((icon) => (
+                <AmenityChip
+                  key={icon._id}
+                  icon={icon}
+                  label={
+                    lang === "ar" && icon.labelAr ? icon.labelAr : icon.label
+                  }
+                />
               ))}
             </div>
           ) : (
@@ -495,23 +561,53 @@ export default function HotelDetailsView() {
               className="text-sm italic"
               style={{ color: "var(--text-muted)" }}
             >
-              No amenities added.
+              {copy.noAmenities}
             </p>
+          )}
+
+          {pendingRequested.length > 0 && (
+            <div
+              className="mt-4 border-t pt-4"
+              style={{ borderTop: "1px solid var(--border)" }}
+            >
+              <p
+                className="mb-2 text-xs font-semibold"
+                style={{ color: "var(--text-muted)" }}
+              >
+                {copy.pendingRequested}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {pendingRequested.map((item) => (
+                  <span
+                    key={item.id}
+                    className="inline-flex items-center gap-2 rounded-full px-2.5 py-1.5 text-xs font-medium"
+                    style={{
+                      backgroundColor: "#fff7ed",
+                      color: "#9a3412",
+                      border: "1px dashed #fdba74",
+                    }}
+                  >
+                    <ImageIcon size={14} />
+                    {lang === "ar" && item.labelAr ? item.labelAr : item.label}
+                    <span className="text-[10px]">{copy.awaitingDesign}</span>
+                  </span>
+                ))}
+              </div>
+            </div>
           )}
         </SectionCard>
       </div>
 
-      {/* ── 4. Map + Policy ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <SectionCard title="Location on Map" icon="📍">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+        <SectionCard title={copy.sectionLocation} icon="📍">
           {(main.city || main.country) && (
             <p
-              className="text-xs mb-3 font-medium"
+              className="mb-3 text-xs font-medium"
               style={{ color: "var(--text-secondary)" }}
             >
               <MapPin
                 size={11}
-                className="inline mr-1"
+                className="mr-1 inline"
                 style={{ color: "var(--sidebar-active-text)" }}
               />
               {[main.city, main.location, main.country]
@@ -524,44 +620,47 @@ export default function HotelDetailsView() {
             country={main.country}
             lat={main.lat ?? null}
             lng={main.lng ?? null}
+            copy={copy}
           />
           <a
             href={`https://www.openstreetmap.org/search?query=${encodeURIComponent([main.city, main.country].filter(Boolean).join(", "))}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-2 text-xs inline-flex items-center gap-1 hover:underline"
+            className="mt-2 inline-flex items-center gap-1 text-xs hover:underline"
             style={{ color: "var(--sidebar-active-text)" }}
           >
-            Open in OpenStreetMap ↗
+            {copy.openMap} ↗
           </a>
         </SectionCard>
 
-        <SectionCard title="Hotel Policy" icon="🛡️">
-          {policy?.policyEn ? (
+        <SectionCard title={copy.sectionPolicy} icon="🛡️">
+          {primaryPolicy ? (
             <p
               className="text-sm leading-relaxed"
               style={{ color: "var(--text-primary)" }}
+              dir={lang === "ar" ? "rtl" : "ltr"}
             >
-              {policy.policyEn}
+              {primaryPolicy}
             </p>
           ) : (
             <p
               className="text-sm italic"
               style={{ color: "var(--text-muted)" }}
             >
-              No policy added.
+              {copy.noPolicy}
             </p>
           )}
-          {policy?.policyAr && (
+
+          {secondaryPolicy && (
             <p
-              className="text-sm leading-relaxed mt-3 pt-3"
-              dir="rtl"
+              className="mt-3 border-t pt-3 text-sm leading-relaxed"
+              dir={lang === "ar" ? "ltr" : "rtl"}
               style={{
                 color: "var(--text-secondary)",
                 borderTop: "1px solid var(--border)",
               }}
             >
-              {policy.policyAr}
+              {secondaryPolicy}
             </p>
           )}
         </SectionCard>

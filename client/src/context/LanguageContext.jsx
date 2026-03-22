@@ -109,9 +109,15 @@ const translations = {
     permissionsCountLabel: "permissions granted",
     notifications: "Notifications",
     noNotifications: "No notifications yet",
+    viewAll: "View all",
     notif_permissionsUpdated: "Permissions updated",
     notif_permissionsUpdatedBody:
       "Your permissions were updated. Refreshing your access now.",
+    notif_iconRequestedTitle: "New Icon Request",
+    notif_iconRequestedBody: '{{hotelName}} requested a new icon: "{{label}}"',
+    notif_iconDesignedTitle: "Icon Ready",
+    notif_iconDesignedBody:
+      'Your requested icon "{{label}}" has been designed and is now available.',
     // Users page
     loadingUsers: "Loading users...",
     errorLoadingUsers: "Error loading users",
@@ -178,6 +184,24 @@ const translations = {
     finance: "Finance",
     reports: "Reports",
     hotelMainDetails: "Hotel Main Details",
+    iconsLibrary: "Icons Library",
+    channelManager: "Channel Manager",
+    travky: "Travky",
+    external: "External",
+    guestGroups: "Guest Groups",
+    mealPlans: "Meal Plans",
+    periods: "Periods",
+    supplements: "Supplement",
+    refundPolicies: "Refund Policy",
+    channelManagerRooms: "Rooms",
+    rates: "Rates",
+    availability: "Availability",
+    hotelPreview: "Preview Hotel",
+    hotelStepMain: "Main Details",
+    hotelStepDescription: "Description",
+    hotelStepIcons: "Icons",
+    hotelStepPolicy: "Policy",
+    hotelStepPhotos: "Photos",
     unifiedBookingPlatform: "Unified Booking Platform",
     // Form fields
     basicInfo: "Basic Information",
@@ -245,6 +269,18 @@ const translations = {
     module_users: "Users Management",
     module_admins: "Admins Management",
     module_hotels: "Hotels",
+    module_hotel: "Hotel Details",
+    module_channel_manager: "Channel Manager",
+    module_channel_manager_travky: "Travky",
+    module_channel_manager_external: "External",
+    module_guest_groups: "Guest Groups",
+    module_meal_plans: "Meal Plans",
+    module_periods: "Periods",
+    module_supplements: "Supplements",
+    module_refund_policies: "Refund Policies",
+    module_channel_manager_rooms: "Channel Manager Rooms",
+    module_rates: "Rates",
+    module_availability: "Availability",
     module_restaurants: "Restaurants",
     module_activities: "Activities",
     module_bookings: "Bookings",
@@ -288,6 +324,18 @@ const translations = {
     action_view_reports: "View Reports",
     action_view_settings: "View Settings",
     action_edit_settings: "Edit Settings",
+    action_details_hotel: "Manage Hotel Main Details",
+    action_view_channel_manager: "View Channel Manager",
+    action_view_channel_manager_travky: "View Travky",
+    action_view_channel_manager_external: "View External Channels",
+    action_view_guest_groups: "View Guest Groups",
+    action_view_meal_plans: "View Meal Plans",
+    action_view_periods: "View Periods",
+    action_view_supplements: "View Supplements",
+    action_view_refund_policies: "View Refund Policies",
+    action_view_channel_manager_rooms: "View Channel Rooms",
+    action_view_rates: "View Rates",
+    action_view_availability: "View Availability",
     dangerLabel: "DANGER",
     allLabel: "All",
     // Admins page
@@ -722,9 +770,15 @@ const translations = {
     permissionsCountLabel: "صلاحية ممنوحة",
     notifications: "الإشعارات",
     noNotifications: "لا توجد إشعارات بعد",
+    viewAll: "عرض الكل",
     notif_permissionsUpdated: "تم تحديث الصلاحيات",
     notif_permissionsUpdatedBody:
       "تم تحديث صلاحياتك. يتم الآن تحديث وصولك تلقائياً.",
+    notif_iconRequestedTitle: "طلب أيقونة جديد",
+    notif_iconRequestedBody: 'طلب {{hotelName}} أيقونة جديدة: "{{label}}"',
+    notif_iconDesignedTitle: "الأيقونة جاهزة",
+    notif_iconDesignedBody:
+      'تم تصميم الأيقونة المطلوبة "{{label}}" وهي متاحة الآن.',
     // Users page
     loadingUsers: "جارٍ تحميل المستخدمين...",
     errorLoadingUsers: "خطأ في تحميل المستخدمين",
@@ -796,6 +850,24 @@ const translations = {
     finance: "المالية",
     reports: "التقارير",
     hotelMainDetails: "البيانات الرئيسية للفندق",
+    iconsLibrary: "مكتبة الأيقونات",
+    channelManager: "مدير القنوات",
+    travky: "Travky",
+    external: "خارجي",
+    guestGroups: "مجموعات النزلاء",
+    mealPlans: "خطط الوجبات",
+    periods: "الفترات",
+    supplements: "الإضافات",
+    refundPolicies: "سياسة الاسترداد",
+    channelManagerRooms: "الغرف",
+    rates: "الأسعار",
+    availability: "الإتاحة",
+    hotelPreview: "معاينة الفندق",
+    hotelStepMain: "البيانات الرئيسية",
+    hotelStepDescription: "الوصف",
+    hotelStepIcons: "الأيقونات",
+    hotelStepPolicy: "السياسة",
+    hotelStepPhotos: "الصور",
     unifiedBookingPlatform: "منصة الحجز الموحّدة",
     // Form fields
     basicInfo: "المعلومات الأساسية",
@@ -862,6 +934,18 @@ const translations = {
     module_users: "إدارة المستخدمين",
     module_admins: "إدارة المدراء",
     module_hotels: "الفنادق",
+    module_hotel: "بيانات الفندق",
+    module_channel_manager: "مدير القنوات",
+    module_channel_manager_travky: "Travky",
+    module_channel_manager_external: "خارجي",
+    module_guest_groups: "مجموعات النزلاء",
+    module_meal_plans: "خطط الوجبات",
+    module_periods: "الفترات",
+    module_supplements: "الإضافات",
+    module_refund_policies: "سياسات الاسترداد",
+    module_channel_manager_rooms: "غرف مدير القنوات",
+    module_rates: "الأسعار",
+    module_availability: "الإتاحة",
     module_restaurants: "المطاعم",
     module_activities: "الأنشطة",
     module_bookings: "الحجوزات",
@@ -905,6 +989,18 @@ const translations = {
     action_view_reports: "عرض التقارير",
     action_view_settings: "عرض الإعدادات",
     action_edit_settings: "تعديل الإعدادات",
+    action_details_hotel: "إدارة البيانات الرئيسية للفندق",
+    action_view_channel_manager: "عرض مدير القنوات",
+    action_view_channel_manager_travky: "عرض Travky",
+    action_view_channel_manager_external: "عرض القنوات الخارجية",
+    action_view_guest_groups: "عرض مجموعات النزلاء",
+    action_view_meal_plans: "عرض خطط الوجبات",
+    action_view_periods: "عرض الفترات",
+    action_view_supplements: "عرض الإضافات",
+    action_view_refund_policies: "عرض سياسات الاسترداد",
+    action_view_channel_manager_rooms: "عرض غرف مدير القنوات",
+    action_view_rates: "عرض الأسعار",
+    action_view_availability: "عرض الإتاحة",
     dangerLabel: "خطر",
     allLabel: "الكل",
     // Admins page
@@ -1256,7 +1352,14 @@ export function LanguageProvider({ children }) {
   const toggleLang = () => setLang((l) => (l === "en" ? "ar" : "en"));
   const toggleTheme = () => setTheme((t) => (t === "light" ? "dark" : "light"));
 
-  const t = (key) => translations[lang][key] || key;
+  const t = (key, params) => {
+    const template = translations[lang][key] || key;
+    if (!params) return template;
+
+    return Object.entries(params).reduce((result, [paramKey, value]) => {
+      return result.replaceAll(`{{${paramKey}}}`, String(value ?? ""));
+    }, template);
+  };
 
   return (
     <LanguageContext.Provider

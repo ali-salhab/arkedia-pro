@@ -27,11 +27,14 @@ import {
   Tag,
   ShieldCheck,
   Images,
+  Link2,
+  Globe,
 } from "lucide-react";
 
 const ROLE_MENUS = {
   super_admin: [
     { name: "Dashboard", route: "/super-admin", perm: null },
+    { name: "Icons Library", route: "/super-admin/icons", perm: null },
     { name: "Users", route: "/users", perm: "users:view" },
     { name: "Admins", route: "/admins", perm: "admins:view" },
     { name: "All Hotels", route: "/hotels", perm: "hotels:view" },
@@ -90,6 +93,74 @@ const ROLE_MENUS = {
         { name: "Photos", route: "/hotel/details/photos", Icon: Images },
       ],
     },
+    {
+      name: "Channel Manager",
+      perm: "channel_manager:view",
+      matchPrefix: "/hotel/channel-manager",
+      children: [
+        {
+          name: "Travky",
+          perm: "channel_manager_travky:view",
+          matchPrefix: "/hotel/channel-manager/travky",
+          children: [
+            {
+              name: "Guest Groups",
+              route: "/hotel/channel-manager/travky/guest-groups",
+              perm: "guest_groups:view",
+              Icon: Users,
+            },
+            {
+              name: "Meal Plans",
+              route: "/hotel/channel-manager/travky/meal-plans",
+              perm: "meal_plans:view",
+              Icon: UtensilsCrossed,
+            },
+            {
+              name: "Periods",
+              route: "/hotel/channel-manager/travky/periods",
+              perm: "periods:view",
+              Icon: CalendarDays,
+            },
+            {
+              name: "Supplement",
+              route: "/hotel/channel-manager/travky/supplements",
+              perm: "supplements:view",
+              Icon: ClipboardList,
+            },
+            {
+              name: "Refund Policy",
+              route: "/hotel/channel-manager/travky/refund-policies",
+              perm: "refund_policies:view",
+              Icon: ShieldCheck,
+            },
+            {
+              name: "Channel Rooms",
+              route: "/hotel/channel-manager/travky/rooms",
+              perm: "channel_manager_rooms:view",
+              Icon: BedDouble,
+            },
+            {
+              name: "Rates",
+              route: "/hotel/channel-manager/travky/rates",
+              perm: "rates:view",
+              Icon: DollarSign,
+            },
+            {
+              name: "Availability",
+              route: "/hotel/channel-manager/travky/availability",
+              perm: "availability:view",
+              Icon: BarChart2,
+            },
+          ],
+        },
+        {
+          name: "External",
+          route: "/hotel/channel-manager/external",
+          perm: "channel_manager_external:view",
+          Icon: Globe,
+        },
+      ],
+    },
   ],
   restaurant: [
     { name: "Dashboard", route: "/restaurant", perm: null },
@@ -121,6 +192,23 @@ const ROLE_MENU_ALIASES = {
 
 const SIDEBAR_NAME_MAP = {
   "Hotel Main Details": "hotelMainDetails",
+  "Icons Library": "iconsLibrary",
+  "Channel Manager": "channelManager",
+  Travky: "travky",
+  External: "external",
+  "Guest Groups": "guestGroups",
+  "Meal Plans": "mealPlans",
+  Periods: "periods",
+  Supplement: "supplements",
+  "Refund Policy": "refundPolicies",
+  "Channel Rooms": "channelManagerRooms",
+  Rates: "rates",
+  Availability: "availability",
+  "Main Details": "hotelStepMain",
+  "Hotel Description": "hotelStepDescription",
+  "Hotel Icons": "hotelStepIcons",
+  "Hotel Policy": "hotelStepPolicy",
+  Photos: "hotelStepPhotos",
   Dashboard: "dashboard",
   Users: "users",
   Admins: "admins",
@@ -145,6 +233,7 @@ const SIDEBAR_NAME_MAP = {
 
 const ICON_MAP = {
   "Hotel Main Details": <ClipboardList size={17} />,
+  "Channel Manager": <Link2 size={17} />,
   Dashboard: <LayoutDashboard size={17} />,
   Users: <Users size={17} />,
   Admins: <UserCheck size={17} />,
@@ -167,10 +256,41 @@ const ICON_MAP = {
   Settings: <Settings size={17} />,
 };
 
+function filterMenuItems(items, permissions) {
+  return items.reduce((acc, item) => {
+    if (item.perm && !permissions.includes(item.perm)) return acc;
+
+    if (item.children) {
+      const children = filterMenuItems(item.children, permissions);
+      if (children.length === 0 && !item.route) return acc;
+      acc.push({ ...item, children });
+      return acc;
+    }
+
+    acc.push(item);
+    return acc;
+  }, []);
+}
+
 function buildMenu(role, permissions) {
   const resolvedRole = ROLE_MENU_ALIASES[role] || role;
   const items = ROLE_MENUS[resolvedRole] || ROLE_MENUS.admin;
-  return items.filter((item) => !item.perm || permissions.includes(item.perm));
+  return filterMenuItems(items, permissions);
+}
+
+function itemIsActive(item, pathname) {
+  if (item.matchPrefix && pathname.startsWith(item.matchPrefix)) return true;
+  if (item.route && pathname === item.route) return true;
+  return (item.children || []).some((child) => itemIsActive(child, pathname));
+}
+
+function getFirstNavigableRoute(item) {
+  if (item.route) return item.route;
+  for (const child of item.children || []) {
+    const route = getFirstNavigableRoute(child);
+    if (route) return route;
+  }
+  return null;
 }
 
 export default function Sidebar({ mobileOpen = false, onClose }) {
@@ -191,6 +311,207 @@ export default function Sidebar({ mobileOpen = false, onClose }) {
 
   const toggleExpand = (name) =>
     setExpandedItems((prev) => ({ ...prev, [name]: !prev[name] }));
+
+  const renderMenuItems = (
+    items,
+    { depth = 0, indexed = false, parentKey = "root" } = {},
+  ) =>
+    items.map((item, index) => {
+      const key = item.route || item.matchPrefix || `${parentKey}-${item.name}`;
+      const isActive = itemIsActive(item, pathname);
+
+      if (item.children) {
+        const isOpen = expandedItems[key] ?? isActive;
+        const firstRoute = getFirstNavigableRoute(item);
+
+        return (
+          <div key={key}>
+            <button
+              onClick={() => {
+                if (collapsed) {
+                  if (firstRoute) navigate(firstRoute);
+                  closeMobile();
+                } else {
+                  toggleExpand(key);
+                }
+              }}
+              title={
+                collapsed ? t(SIDEBAR_NAME_MAP[item.name] || item.name) : ""
+              }
+              className={`sidebar-item w-full ${collapsed ? "justify-center" : "gap-3"} ${
+                isActive ? "active" : ""
+              }`}
+              style={
+                isActive
+                  ? {
+                      backgroundColor: "var(--sidebar-active-bg)",
+                      color: "var(--sidebar-active-text)",
+                      borderLeft: isRtl
+                        ? "none"
+                        : "2px solid var(--sidebar-active-border)",
+                      borderRight: isRtl
+                        ? "2px solid var(--sidebar-active-border)"
+                        : "none",
+                      paddingLeft: isRtl
+                        ? undefined
+                        : collapsed
+                          ? undefined
+                          : "calc(0.75rem - 2px)",
+                      paddingRight: isRtl
+                        ? collapsed
+                          ? undefined
+                          : "calc(0.75rem - 2px)"
+                        : undefined,
+                    }
+                  : undefined
+              }
+            >
+              <span className="shrink-0" style={{ opacity: 0.85 }}>
+                {item.Icon ? (
+                  <item.Icon size={17} />
+                ) : (
+                  ICON_MAP[item.name] || <Circle size={17} />
+                )}
+              </span>
+              {!collapsed && (
+                <>
+                  <span className="truncate flex-1 text-left">
+                    {t(SIDEBAR_NAME_MAP[item.name] || item.name)}
+                  </span>
+                  <ChevronDown
+                    size={14}
+                    className="shrink-0 transition-transform duration-200"
+                    style={{
+                      transform: isOpen ? "rotate(180deg)" : "rotate(0deg)",
+                    }}
+                  />
+                </>
+              )}
+            </button>
+
+            {!collapsed && isOpen && (
+              <div
+                className="mt-0.5 space-y-0.5"
+                style={{ marginInlineStart: depth === 0 ? 16 : 12 }}
+              >
+                {renderMenuItems(item.children, {
+                  depth: depth + 1,
+                  indexed: item.name === "Hotel Main Details",
+                  parentKey: key,
+                })}
+              </div>
+            )}
+          </div>
+        );
+      }
+
+      if (depth > 0) {
+        const ItemIcon = item.Icon || Circle;
+
+        return (
+          <NavLink
+            key={key}
+            to={item.route}
+            onClick={closeMobile}
+            className={`sidebar-item gap-2.5 ${isActive ? "active" : ""}`}
+            style={
+              isActive
+                ? {
+                    backgroundColor: "var(--sidebar-active-bg)",
+                    color: "var(--sidebar-active-text)",
+                    borderLeft: isRtl
+                      ? "none"
+                      : "2px solid var(--sidebar-active-border)",
+                    borderRight: isRtl
+                      ? "2px solid var(--sidebar-active-border)"
+                      : "none",
+                    paddingLeft: isRtl ? undefined : "calc(0.75rem - 2px)",
+                    paddingRight: isRtl ? "calc(0.75rem - 2px)" : undefined,
+                  }
+                : undefined
+            }
+          >
+            {indexed ? (
+              <span
+                className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold"
+                style={{
+                  backgroundColor: isActive
+                    ? "var(--sidebar-active-text)"
+                    : "var(--bg-raised)",
+                  color: isActive ? "#ffffff" : "var(--text-muted)",
+                  border: `1px solid ${isActive ? "var(--sidebar-active-border)" : "var(--border)"}`,
+                }}
+              >
+                {index + 1}
+              </span>
+            ) : (
+              <span
+                className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full"
+                style={{
+                  backgroundColor: isActive
+                    ? "rgba(29,78,216,0.12)"
+                    : "var(--bg-raised)",
+                  color: isActive
+                    ? "var(--sidebar-active-text)"
+                    : "var(--text-muted)",
+                  border: `1px solid ${isActive ? "rgba(29,78,216,0.18)" : "var(--border)"}`,
+                }}
+              >
+                <ItemIcon size={12} />
+              </span>
+            )}
+            <span className={`truncate ${indexed ? "text-xs" : "text-sm"}`}>
+              {t(SIDEBAR_NAME_MAP[item.name] || item.name)}
+            </span>
+          </NavLink>
+        );
+      }
+
+      return (
+        <NavLink
+          key={item.route}
+          to={item.route}
+          onClick={closeMobile}
+          title={collapsed ? t(SIDEBAR_NAME_MAP[item.name] || item.name) : ""}
+          className={({ isActive: navActive }) =>
+            `sidebar-item ${collapsed ? "justify-center" : "gap-3"} ${
+              navActive ? "active" : ""
+            }`
+          }
+          style={({ isActive: navActive }) =>
+            navActive
+              ? {
+                  borderLeft: isRtl
+                    ? "none"
+                    : "2px solid var(--sidebar-active-border)",
+                  borderRight: isRtl
+                    ? "2px solid var(--sidebar-active-border)"
+                    : "none",
+                  paddingLeft: isRtl
+                    ? undefined
+                    : collapsed
+                      ? undefined
+                      : "calc(0.75rem - 2px)",
+                  paddingRight: isRtl
+                    ? collapsed
+                      ? undefined
+                      : "calc(0.75rem - 2px)"
+                    : undefined,
+                }
+              : undefined
+          }
+        >
+          <span className="shrink-0" style={{ opacity: 0.85 }}>
+            {ICON_MAP[item.name] || <Circle size={17} />}
+          </span>
+          {!collapsed && (
+            <span className="truncate">
+              {t(SIDEBAR_NAME_MAP[item.name] || item.name)}
+            </span>
+          )}
+        </NavLink>
+      );
+    });
 
   const handleLogout = () => {
     dispatch(api.util.resetApiState());
@@ -263,187 +584,7 @@ export default function Sidebar({ mobileOpen = false, onClose }) {
 
         {/* Nav items */}
         <nav className="flex-1 overflow-y-auto px-2 pb-3 pt-2 space-y-0.5">
-          {menu.map((item) => {
-            if (item.children) {
-              const isChildActive = item.matchPrefix
-                ? pathname.startsWith(item.matchPrefix)
-                : item.children.some((c) => pathname.startsWith(c.route));
-              const isOpen = expandedItems[item.name] ?? isChildActive;
-
-              return (
-                <div key={item.name}>
-                  {/* Parent toggle button */}
-                  <button
-                    onClick={() => {
-                      if (collapsed) {
-                        // When collapsed, navigate to first child directly
-                        navigate(item.children[0].route);
-                        closeMobile();
-                      } else {
-                        toggleExpand(item.name);
-                      }
-                    }}
-                    title={
-                      collapsed
-                        ? t(SIDEBAR_NAME_MAP[item.name] || item.name)
-                        : ""
-                    }
-                    className={`sidebar-item w-full ${collapsed ? "justify-center" : "gap-3"} ${
-                      isChildActive ? "active" : ""
-                    }`}
-                    style={
-                      isChildActive
-                        ? {
-                            backgroundColor: "var(--sidebar-active-bg)",
-                            color: "var(--sidebar-active-text)",
-                            borderLeft: isRtl
-                              ? "none"
-                              : "2px solid var(--sidebar-active-border)",
-                            borderRight: isRtl
-                              ? "2px solid var(--sidebar-active-border)"
-                              : "none",
-                            paddingLeft: isRtl
-                              ? undefined
-                              : collapsed
-                                ? undefined
-                                : "calc(0.75rem - 2px)",
-                            paddingRight: isRtl
-                              ? collapsed
-                                ? undefined
-                                : "calc(0.75rem - 2px)"
-                              : undefined,
-                          }
-                        : undefined
-                    }
-                  >
-                    <span className="shrink-0" style={{ opacity: 0.85 }}>
-                      {ICON_MAP[item.name] || <Circle size={17} />}
-                    </span>
-                    {!collapsed && (
-                      <>
-                        <span className="truncate flex-1 text-left">
-                          {t(SIDEBAR_NAME_MAP[item.name] || item.name)}
-                        </span>
-                        <ChevronDown
-                          size={14}
-                          className="shrink-0 transition-transform duration-200"
-                          style={{
-                            transform: isOpen
-                              ? "rotate(180deg)"
-                              : "rotate(0deg)",
-                          }}
-                        />
-                      </>
-                    )}
-                  </button>
-
-                  {/* Sub-items */}
-                  {!collapsed && isOpen && (
-                    <div className="mt-0.5 space-y-0.5 pl-4">
-                      {item.children.map((child, stepIdx) => {
-                        const isActive = pathname === child.route;
-                        const StepIcon = child.Icon;
-                        return (
-                          <NavLink
-                            key={child.route}
-                            to={child.route}
-                            onClick={closeMobile}
-                            className={`sidebar-item gap-2.5 ${isActive ? "active" : ""}`}
-                            style={
-                              isActive
-                                ? {
-                                    backgroundColor: "var(--sidebar-active-bg)",
-                                    color: "var(--sidebar-active-text)",
-                                    borderLeft: isRtl
-                                      ? "none"
-                                      : "2px solid var(--sidebar-active-border)",
-                                    borderRight: isRtl
-                                      ? "2px solid var(--sidebar-active-border)"
-                                      : "none",
-                                    paddingLeft: isRtl
-                                      ? undefined
-                                      : "calc(0.75rem - 2px)",
-                                    paddingRight: isRtl
-                                      ? "calc(0.75rem - 2px)"
-                                      : undefined,
-                                  }
-                                : undefined
-                            }
-                          >
-                            {/* Step number badge */}
-                            <span
-                              className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold"
-                              style={{
-                                backgroundColor: isActive
-                                  ? "var(--sidebar-active-text)"
-                                  : "var(--bg-raised)",
-                                color: isActive
-                                  ? "#ffffff"
-                                  : "var(--text-muted)",
-                                border: `1px solid ${isActive ? "var(--sidebar-active-border)" : "var(--border)"}`,
-                              }}
-                            >
-                              {stepIdx + 1}
-                            </span>
-                            <span className="truncate text-xs">
-                              {child.name}
-                            </span>
-                          </NavLink>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              );
-            }
-
-            return (
-              <NavLink
-                key={item.route}
-                to={item.route}
-                onClick={closeMobile}
-                title={
-                  collapsed ? t(SIDEBAR_NAME_MAP[item.name] || item.name) : ""
-                }
-                className={({ isActive }) =>
-                  `sidebar-item ${collapsed ? "justify-center" : "gap-3"} ${
-                    isActive ? "active" : ""
-                  }`
-                }
-                style={({ isActive }) =>
-                  isActive
-                    ? {
-                        borderLeft: isRtl
-                          ? "none"
-                          : "2px solid var(--sidebar-active-border)",
-                        borderRight: isRtl
-                          ? "2px solid var(--sidebar-active-border)"
-                          : "none",
-                        paddingLeft: isRtl
-                          ? undefined
-                          : collapsed
-                            ? undefined
-                            : "calc(0.75rem - 2px)",
-                        paddingRight: isRtl
-                          ? collapsed
-                            ? undefined
-                            : "calc(0.75rem - 2px)"
-                          : undefined,
-                      }
-                    : undefined
-                }
-              >
-                <span className="shrink-0" style={{ opacity: 0.85 }}>
-                  {ICON_MAP[item.name] || <Circle size={17} />}
-                </span>
-                {!collapsed && (
-                  <span className="truncate">
-                    {t(SIDEBAR_NAME_MAP[item.name] || item.name)}
-                  </span>
-                )}
-              </NavLink>
-            );
-          })}
+          {renderMenuItems(menu)}
         </nav>
 
         {/* Logout */}

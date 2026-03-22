@@ -7,6 +7,7 @@ const HotelSchema = new mongoose.Schema(
     description: String,
     manager: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     adminId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    selectedIcons: [{ type: mongoose.Schema.Types.ObjectId, ref: "Icon" }],
   },
   { timestamps: true },
 );

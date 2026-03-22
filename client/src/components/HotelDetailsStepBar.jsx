@@ -7,25 +7,43 @@ import {
   Images,
   Check,
 } from "lucide-react";
-
-const STEPS = [
-  { label: "Main Details", path: "/hotel/details/main", Icon: FileSearch },
-  { label: "Description", path: "/hotel/details/description", Icon: AlignLeft },
-  { label: "Icons", path: "/hotel/details/icons", Icon: Tag },
-  { label: "Policy", path: "/hotel/details/policy", Icon: ShieldCheck },
-  { label: "Photos", path: "/hotel/details/photos", Icon: Images },
-];
+import { useLanguage } from "../context/LanguageContext";
 
 export default function HotelDetailsStepBar() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
+  const { t } = useLanguage();
 
-  const currentIdx = STEPS.findIndex((s) => s.path === pathname);
+  const steps = [
+    {
+      label: t("hotelStepMain"),
+      path: "/hotel/details/main",
+      Icon: FileSearch,
+    },
+    {
+      label: t("hotelStepDescription"),
+      path: "/hotel/details/description",
+      Icon: AlignLeft,
+    },
+    { label: t("hotelStepIcons"), path: "/hotel/details/icons", Icon: Tag },
+    {
+      label: t("hotelStepPolicy"),
+      path: "/hotel/details/policy",
+      Icon: ShieldCheck,
+    },
+    {
+      label: t("hotelStepPhotos"),
+      path: "/hotel/details/photos",
+      Icon: Images,
+    },
+  ];
+
+  const currentIdx = steps.findIndex((step) => step.path === pathname);
 
   return (
-    <div className="flex justify-center mb-10 select-none overflow-x-auto py-1">
-      <div className="flex items-start">
-        {STEPS.map((step, idx) => {
+    <div className="mb-8 flex justify-center overflow-x-auto px-1 py-1 select-none lg:mb-10">
+      <div className="flex min-w-max items-start px-1 lg:px-2">
+        {steps.map((step, idx) => {
           const isDone = idx < currentIdx;
           const isCurrent = idx === currentIdx;
           const isReachable = idx <= currentIdx;
@@ -36,7 +54,7 @@ export default function HotelDetailsStepBar() {
               {/* connector line */}
               {idx > 0 && (
                 <div
-                  className="h-[2px] w-10 sm:w-14 mt-[19px]"
+                  className="mt-[22px] h-[1px] w-7 sm:w-12 lg:mt-[26px] lg:w-20"
                   style={{
                     backgroundColor:
                       idx <= currentIdx
@@ -53,7 +71,7 @@ export default function HotelDetailsStepBar() {
                   onClick={() => isReachable && navigate(step.path)}
                   disabled={!isReachable}
                   title={step.label}
-                  className="flex h-10 w-10 items-center justify-center rounded-full transition-all duration-300 outline-none"
+                  className="flex h-10 w-10 lg:h-14 lg:w-14 items-center justify-center rounded-full transition-all duration-300 outline-none"
                   style={{
                     backgroundColor:
                       isDone || isCurrent
@@ -63,19 +81,32 @@ export default function HotelDetailsStepBar() {
                     color: isDone || isCurrent ? "#fff" : "var(--text-muted)",
                     cursor: isReachable ? "pointer" : "not-allowed",
                     boxShadow: isCurrent
-                      ? "0 0 0 5px rgba(59,130,246,0.18)"
+                      ? "0 0 0 5px rgba(29,78,216,0.15)"
                       : "none",
                     transform: isCurrent ? "scale(1.12)" : "scale(1)",
                   }}
                 >
                   {isDone ? (
-                    <Check size={16} strokeWidth={3} />
+                    <Check size={16} strokeWidth={3} className="lg:hidden" />
                   ) : (
-                    <Icon size={16} strokeWidth={2} />
+                    <Icon size={16} strokeWidth={2} className="lg:hidden" />
+                  )}
+                  {isDone ? (
+                    <Check
+                      size={22}
+                      strokeWidth={3}
+                      className="hidden lg:block"
+                    />
+                  ) : (
+                    <Icon
+                      size={22}
+                      strokeWidth={2}
+                      className="hidden lg:block"
+                    />
                   )}
                 </button>
                 <span
-                  className="mt-2 text-center text-[10px] sm:text-[11px] leading-tight max-w-[62px]"
+                  className="mt-2 max-w-[58px] text-center text-[10px] leading-tight sm:max-w-[62px] sm:text-[11px] lg:max-w-[88px] lg:text-sm"
                   style={{
                     color: isCurrent
                       ? "var(--sidebar-active-text)"

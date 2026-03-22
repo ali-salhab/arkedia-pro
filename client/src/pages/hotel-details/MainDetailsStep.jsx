@@ -2,17 +2,113 @@ import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Upload, MapPin, Star, ChevronDown, Camera } from "lucide-react";
 import HotelDetailsStepBar from "../../components/HotelDetailsStepBar";
+import { useLanguage } from "../../context/LanguageContext";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 
-/* Fix Leaflet default icon paths broken by bundlers */
 import iconUrl from "leaflet/dist/images/marker-icon.png";
 import iconRetinaUrl from "leaflet/dist/images/marker-icon-2x.png";
 import shadowUrl from "leaflet/dist/images/marker-shadow.png";
+
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({ iconUrl, iconRetinaUrl, shadowUrl });
 
-/* ── Custom pin icon ──────────────────────────────────── */
+const COPY = {
+  en: {
+    uploadLogo: "Upload Logo",
+    hotelName: "Hotel Name",
+    nameEnPlaceholder: "Hotel name in English",
+    nameArPlaceholder: "Hotel name in Arabic",
+    category: "Hotel Category",
+    stars: "Hotel Stars",
+    country: "Hotel Country",
+    city: "Hotel City",
+    selectCity: "Select city",
+    location: "Location / Street",
+    locationPlaceholder: "Street / Area name",
+    postCode: "Post Code",
+    postCodePlaceholder: "e.g. 11511",
+    mapTitle: "Pin Location on Map",
+    clearPin: "Clear Pin",
+    mapHint: "Click anywhere on the map to drop a pin. Drag the pin to adjust.",
+    next: "Next -> Description",
+    errors: {
+      name: "Hotel name in English is required",
+      stars: "Please select a star rating",
+      city: "City is required",
+    },
+    categories: ["Hotel", "Resort", "Boutique", "Hostel", "Motel", "Villa"],
+    countries: {
+      Egypt: "Egypt",
+      "Saudi Arabia": "Saudi Arabia",
+      UAE: "UAE",
+      Jordan: "Jordan",
+      Morocco: "Morocco",
+      Tunisia: "Tunisia",
+    },
+  },
+  ar: {
+    uploadLogo: "رفع الشعار",
+    hotelName: "اسم الفندق",
+    nameEnPlaceholder: "اسم الفندق بالإنجليزية",
+    nameArPlaceholder: "اسم الفندق بالعربية",
+    category: "تصنيف الفندق",
+    stars: "نجوم الفندق",
+    country: "دولة الفندق",
+    city: "مدينة الفندق",
+    selectCity: "اختر المدينة",
+    location: "الموقع / الشارع",
+    locationPlaceholder: "اسم الشارع / المنطقة",
+    postCode: "الرمز البريدي",
+    postCodePlaceholder: "مثال: 11511",
+    mapTitle: "تحديد الموقع على الخريطة",
+    clearPin: "مسح النقطة",
+    mapHint:
+      "اضغط في أي مكان على الخريطة لإضافة نقطة، ويمكنك سحبها لتعديل الموقع.",
+    next: "التالي -> الوصف",
+    errors: {
+      name: "اسم الفندق باللغة الإنجليزية مطلوب",
+      stars: "يرجى اختيار عدد النجوم",
+      city: "المدينة مطلوبة",
+    },
+    categories: ["فندق", "منتجع", "بوتيك", "نزل", "موتيل", "فيلا"],
+    countries: {
+      Egypt: "مصر",
+      "Saudi Arabia": "السعودية",
+      UAE: "الإمارات",
+      Jordan: "الأردن",
+      Morocco: "المغرب",
+      Tunisia: "تونس",
+    },
+  },
+};
+
+const COUNTRY_VALUES = [
+  "Egypt",
+  "Saudi Arabia",
+  "UAE",
+  "Jordan",
+  "Morocco",
+  "Tunisia",
+];
+
+const CITIES = {
+  Egypt: [
+    "Cairo",
+    "Alexandria",
+    "Giza",
+    "Luxor",
+    "Aswan",
+    "Sharm El Sheikh",
+    "Hurghada",
+  ],
+  "Saudi Arabia": ["Riyadh", "Jeddah", "Mecca", "Medina", "Dammam"],
+  UAE: ["Dubai", "Abu Dhabi", "Sharjah", "Ajman"],
+  Jordan: ["Amman", "Aqaba", "Petra", "Irbid"],
+  Morocco: ["Casablanca", "Marrakech", "Fez", "Rabat"],
+  Tunisia: ["Tunis", "Sfax", "Sousse", "Hammamet"],
+};
+
 const makePinIcon = () =>
   L.divIcon({
     className: "",
@@ -26,13 +122,11 @@ const makePinIcon = () =>
     </svg>`,
   });
 
-/* ── Interactive Location Picker ─────────────────────── */
 function LocationPickerMap({ city, country, lat, lng, onPick }) {
   const containerRef = useRef(null);
   const mapRef = useRef(null);
   const markerRef = useRef(null);
 
-  /* Mount the map once */
   useEffect(() => {
     if (mapRef.current || !containerRef.current) return;
 
@@ -51,54 +145,61 @@ function LocationPickerMap({ city, country, lat, lng, onPick }) {
     }).addTo(map);
 
     if (lat != null && lng != null) {
-      const m = L.marker([lat, lng], {
+      const marker = L.marker([lat, lng], {
         icon: makePinIcon(),
         draggable: true,
       }).addTo(map);
-      m.on("dragend", () => {
-        const p = m.getLatLng();
-        onPick(p.lat, p.lng);
+
+      marker.on("dragend", () => {
+        const point = marker.getLatLng();
+        onPick(point.lat, point.lng);
       });
-      markerRef.current = m;
+
+      markerRef.current = marker;
     }
 
-    map.on("click", (e) => {
-      const { lat: la, lng: ln } = e.latlng;
+    map.on("click", (event) => {
+      const { lat: selectedLat, lng: selectedLng } = event.latlng;
+
       if (markerRef.current) {
-        markerRef.current.setLatLng([la, ln]);
+        markerRef.current.setLatLng([selectedLat, selectedLng]);
       } else {
-        const m = L.marker([la, ln], {
+        const marker = L.marker([selectedLat, selectedLng], {
           icon: makePinIcon(),
           draggable: true,
         }).addTo(map);
-        m.on("dragend", () => {
-          const p = m.getLatLng();
-          onPick(p.lat, p.lng);
+
+        marker.on("dragend", () => {
+          const point = marker.getLatLng();
+          onPick(point.lat, point.lng);
         });
-        markerRef.current = m;
+
+        markerRef.current = marker;
       }
-      onPick(la, ln);
+
+      onPick(selectedLat, selectedLng);
     });
 
     mapRef.current = map;
+
     return () => {
       map.remove();
       mapRef.current = null;
       markerRef.current = null;
     };
-  }, []); // mount once
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  /* Geocode city/country when no manual pin yet */
   useEffect(() => {
     if (!mapRef.current) return;
     if (lat != null) return;
-    const q = [city, country].filter(Boolean).join(", ");
-    if (!q) return;
+    const query = [city, country].filter(Boolean).join(", ");
+    if (!query) return;
+
     fetch(
-      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=1`,
+      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`,
       { headers: { "Accept-Language": "en" } },
     )
-      .then((r) => r.json())
+      .then((response) => response.json())
       .then((data) => {
         if (data[0] && mapRef.current) {
           mapRef.current.flyTo(
@@ -108,47 +209,55 @@ function LocationPickerMap({ city, country, lat, lng, onPick }) {
         }
       })
       .catch(() => {});
-  }, [city, country]);
+  }, [city, country, lat]);
 
   return <div ref={containerRef} style={{ height: "100%", width: "100%" }} />;
 }
 
-const HOTEL_CATEGORIES = [
-  "Hotel",
-  "Resort",
-  "Boutique",
-  "Hostel",
-  "Motel",
-  "Villa",
-];
-const COUNTRIES = [
-  "Egypt",
-  "Saudi Arabia",
-  "UAE",
-  "Jordan",
-  "Morocco",
-  "Tunisia",
-];
-const CITIES = {
-  Egypt: [
-    "Cairo",
-    "Alexandria",
-    "Giza",
-    "Luxor",
-    "Aswan",
-    "Sharm El Sheikh",
-    "Hurghada",
-  ],
-  "Saudi Arabia": ["Riyadh", "Jeddah", "Mecca", "Medina", "Dammam"],
-  UAE: ["Dubai", "Abu Dhabi", "Sharjah", "Ajman"],
-  Jordan: ["Amman", "Aqaba", "Petra", "Irbid"],
-  Morocco: ["Casablanca", "Marrakech", "Fez", "Rabat"],
-  Tunisia: ["Tunis", "Sfax", "Sousse", "Hammamet"],
-};
+const LangToggle = ({ lang, setLang }) => (
+  <div className="flex items-center gap-1.5">
+    <button
+      onClick={() => setLang("en")}
+      className="flex items-center gap-1 h-7 px-2 rounded-lg text-xs font-semibold transition-all"
+      style={{
+        backgroundColor:
+          lang === "en" ? "var(--sidebar-active-text)" : "var(--bg-raised)",
+        color: lang === "en" ? "#fff" : "var(--text-secondary)",
+        border: `1px solid ${lang === "en" ? "var(--sidebar-active-text)" : "var(--border)"}`,
+      }}
+    >
+      <img
+        src="https://flagcdn.com/w20/us.png"
+        alt="EN"
+        className="h-4 w-5 rounded object-cover"
+      />
+      EN
+    </button>
+    <button
+      onClick={() => setLang("ar")}
+      className="flex items-center gap-1 h-7 px-2 rounded-lg text-xs font-semibold transition-all"
+      style={{
+        backgroundColor:
+          lang === "ar" ? "var(--sidebar-active-text)" : "var(--bg-raised)",
+        color: lang === "ar" ? "#fff" : "var(--text-secondary)",
+        border: `1px solid ${lang === "ar" ? "var(--sidebar-active-text)" : "var(--border)"}`,
+      }}
+    >
+      <img
+        src="https://flagcdn.com/w20/eg.png"
+        alt="AR"
+        className="h-4 w-5 rounded object-cover"
+      />
+      AR
+    </button>
+  </div>
+);
 
 export default function HotelMainDetailsStep() {
   const navigate = useNavigate();
   const logoInputRef = useRef(null);
+  const { lang } = useLanguage();
+  const copy = COPY[lang] || COPY.en;
 
   const [form, setForm] = useState(() => {
     const saved = JSON.parse(
@@ -172,33 +281,36 @@ export default function HotelMainDetailsStep() {
   const [nameLang, setNameLang] = useState("en");
   const [errors, setErrors] = useState({});
 
-  const set = (field, value) => setForm((f) => ({ ...f, [field]: value }));
+  const set = (field, value) =>
+    setForm((prev) => ({ ...prev, [field]: value }));
+
   const clearError = (field) =>
-    setErrors((e) => {
-      const n = { ...e };
-      delete n[field];
-      return n;
+    setErrors((prev) => {
+      const next = { ...prev };
+      delete next[field];
+      return next;
     });
 
-  const handleLogoChange = (e) => {
-    const file = e.target.files?.[0];
+  const handleLogoChange = (event) => {
+    const file = event.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (ev) => set("logoDataUrl", ev.target.result);
+    reader.onload = (loadEvent) => set("logoDataUrl", loadEvent.target.result);
     reader.readAsDataURL(file);
   };
 
   const validate = () => {
-    const errs = {};
-    if (!form.nameEn.trim()) errs.nameEn = "Hotel name (English) is required";
-    if (!form.stars) errs.stars = "Please select star rating";
-    if (!form.city.trim()) errs.city = "City is required";
-    setErrors(errs);
-    return Object.keys(errs).length === 0;
+    const nextErrors = {};
+    if (!form.nameEn.trim()) nextErrors.nameEn = copy.errors.name;
+    if (!form.stars) nextErrors.stars = copy.errors.stars;
+    if (!form.city.trim()) nextErrors.city = copy.errors.city;
+    setErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
   };
 
   const handleNext = () => {
     if (!validate()) return;
+
     sessionStorage.setItem(
       "hotel_details_main",
       JSON.stringify({
@@ -215,57 +327,18 @@ export default function HotelMainDetailsStep() {
         lng: form.lng,
       }),
     );
+
     navigate("/hotel/details/description");
   };
-
-  const LangToggle = ({ lang, setLang }) => (
-    <div className="flex items-center gap-1.5">
-      <button
-        onClick={() => setLang("en")}
-        className="flex items-center gap-1 h-7 px-2 rounded-lg text-xs font-semibold transition-all"
-        style={{
-          backgroundColor:
-            lang === "en" ? "var(--sidebar-active-text)" : "var(--bg-raised)",
-          color: lang === "en" ? "#fff" : "var(--text-secondary)",
-          border: `1px solid ${lang === "en" ? "var(--sidebar-active-text)" : "var(--border)"}`,
-        }}
-      >
-        <img
-          src="https://flagcdn.com/w20/us.png"
-          alt="EN"
-          className="h-4 w-5 rounded object-cover"
-        />
-        EN
-      </button>
-      <button
-        onClick={() => setLang("ar")}
-        className="flex items-center gap-1 h-7 px-2 rounded-lg text-xs font-semibold transition-all"
-        style={{
-          backgroundColor:
-            lang === "ar" ? "var(--sidebar-active-text)" : "var(--bg-raised)",
-          color: lang === "ar" ? "#fff" : "var(--text-secondary)",
-          border: `1px solid ${lang === "ar" ? "var(--sidebar-active-text)" : "var(--border)"}`,
-        }}
-      >
-        <img
-          src="https://flagcdn.com/w20/eg.png"
-          alt="AR"
-          className="h-4 w-5 rounded object-cover"
-        />
-        AR
-      </button>
-    </div>
-  );
 
   return (
     <div className="page-shell">
       <HotelDetailsStepBar />
 
-      {/* Logo upload */}
-      <div className="flex flex-col items-center gap-2 mb-8">
+      <div className="mb-8 flex flex-col items-center gap-2">
         <button
           onClick={() => logoInputRef.current?.click()}
-          className="relative flex h-24 w-24 items-center justify-center rounded-full transition-all group overflow-hidden"
+          className="group relative flex h-24 w-24 items-center justify-center overflow-hidden rounded-full transition-all"
           style={{
             border: "2.5px dashed var(--brand)",
             backgroundColor: "var(--bg-raised)",
@@ -280,7 +353,7 @@ export default function HotelMainDetailsStep() {
                 className="h-full w-full object-cover"
               />
               <div
-                className="absolute inset-0 flex items-center justify-center rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                className="absolute inset-0 flex items-center justify-center rounded-full opacity-0 transition-opacity group-hover:opacity-100"
                 style={{ backgroundColor: "rgba(0,0,0,0.45)" }}
               >
                 <Camera size={22} className="text-white" />
@@ -290,12 +363,14 @@ export default function HotelMainDetailsStep() {
             <Upload size={26} />
           )}
         </button>
+
         <span
           className="text-sm font-medium"
           style={{ color: "var(--text-secondary)" }}
         >
-          Upload Logo
+          {copy.uploadLogo}
         </span>
+
         <input
           ref={logoInputRef}
           type="file"
@@ -305,53 +380,59 @@ export default function HotelMainDetailsStep() {
         />
       </div>
 
-      {/* 2-column grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
-        {/* Hotel Name - full width */}
+      <div className="grid grid-cols-1 gap-x-6 gap-y-5 md:grid-cols-2">
         <div className="md:col-span-2">
-          <div className="flex items-center justify-between mb-1.5">
+          <div className="mb-1.5 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <label
               className="text-sm font-semibold"
               style={{ color: "var(--sidebar-active-text)" }}
             >
-              Hotel Name
+              {copy.hotelName}
             </label>
             <LangToggle lang={nameLang} setLang={setNameLang} />
           </div>
+
           <input
             className="input"
             placeholder={
               nameLang === "en"
-                ? "Hotel name in English"
-                : "اسم الفندق بالعربية"
+                ? copy.nameEnPlaceholder
+                : copy.nameArPlaceholder
             }
             dir={nameLang === "ar" ? "rtl" : "ltr"}
             value={nameLang === "en" ? form.nameEn : form.nameAr}
-            onChange={(e) => {
-              set(nameLang === "en" ? "nameEn" : "nameAr", e.target.value);
+            onChange={(event) => {
+              set(nameLang === "en" ? "nameEn" : "nameAr", event.target.value);
               clearError("nameEn");
             }}
           />
+
           {errors.nameEn && <p className="input-error mt-1">{errors.nameEn}</p>}
         </div>
 
-        {/* Category */}
         <div>
           <label
-            className="text-sm font-semibold mb-1.5 block"
+            className="mb-1.5 block text-sm font-semibold"
             style={{ color: "var(--sidebar-active-text)" }}
           >
-            Hotel Category
+            {copy.category}
           </label>
           <div className="relative">
             <select
               className="input appearance-none pr-10"
               value={form.category}
-              onChange={(e) => set("category", e.target.value)}
+              onChange={(event) => set("category", event.target.value)}
             >
-              {HOTEL_CATEGORIES.map((c) => (
-                <option key={c} value={c}>
-                  {c}
+              {copy.categories.map((label, index) => (
+                <option
+                  key={label}
+                  value={
+                    ["Hotel", "Resort", "Boutique", "Hostel", "Motel", "Villa"][
+                      index
+                    ]
+                  }
+                >
+                  {label}
                 </option>
               ))}
             </select>
@@ -363,28 +444,27 @@ export default function HotelMainDetailsStep() {
           </div>
         </div>
 
-        {/* Stars */}
         <div>
           <label
-            className="text-sm font-semibold mb-1.5 block"
+            className="mb-1.5 block text-sm font-semibold"
             style={{ color: "var(--sidebar-active-text)" }}
           >
-            Hotel Stars
+            {copy.stars}
           </label>
-          <div className="flex items-center gap-1 h-[42px]">
-            {[1, 2, 3, 4, 5].map((n) => (
+          <div className="flex h-[42px] items-center gap-1">
+            {[1, 2, 3, 4, 5].map((value) => (
               <button
-                key={n}
+                key={value}
                 onClick={() => {
-                  set("stars", n);
+                  set("stars", value);
                   clearError("stars");
                 }}
                 className="transition-transform hover:scale-110"
               >
                 <Star
                   size={24}
-                  fill={n <= form.stars ? "#f59e0b" : "none"}
-                  stroke={n <= form.stars ? "#f59e0b" : "var(--border)"}
+                  fill={value <= form.stars ? "#f59e0b" : "none"}
+                  stroke={value <= form.stars ? "#f59e0b" : "var(--border)"}
                 />
               </button>
             ))}
@@ -401,26 +481,25 @@ export default function HotelMainDetailsStep() {
           {errors.stars && <p className="input-error mt-1">{errors.stars}</p>}
         </div>
 
-        {/* Country */}
         <div>
           <label
-            className="text-sm font-semibold mb-1.5 block"
+            className="mb-1.5 block text-sm font-semibold"
             style={{ color: "var(--sidebar-active-text)" }}
           >
-            Hotel Country
+            {copy.country}
           </label>
           <div className="relative">
             <select
               className="input appearance-none pr-10"
               value={form.country}
-              onChange={(e) => {
-                set("country", e.target.value);
+              onChange={(event) => {
+                set("country", event.target.value);
                 set("city", "");
               }}
             >
-              {COUNTRIES.map((c) => (
-                <option key={c} value={c}>
-                  {c}
+              {COUNTRY_VALUES.map((country) => (
+                <option key={country} value={country}>
+                  {copy.countries[country]}
                 </option>
               ))}
             </select>
@@ -432,27 +511,26 @@ export default function HotelMainDetailsStep() {
           </div>
         </div>
 
-        {/* City */}
         <div>
           <label
-            className="text-sm font-semibold mb-1.5 block"
+            className="mb-1.5 block text-sm font-semibold"
             style={{ color: "var(--sidebar-active-text)" }}
           >
-            Hotel City
+            {copy.city}
           </label>
           <div className="relative">
             <select
               className="input appearance-none pr-10"
               value={form.city}
-              onChange={(e) => {
-                set("city", e.target.value);
+              onChange={(event) => {
+                set("city", event.target.value);
                 clearError("city");
               }}
             >
-              <option value="">Select city</option>
-              {(CITIES[form.country] || []).map((c) => (
-                <option key={c} value={c}>
-                  {c}
+              <option value="">{copy.selectCity}</option>
+              {(CITIES[form.country] || []).map((city) => (
+                <option key={city} value={city}>
+                  {city}
                 </option>
               ))}
             </select>
@@ -465,13 +543,12 @@ export default function HotelMainDetailsStep() {
           {errors.city && <p className="input-error mt-1">{errors.city}</p>}
         </div>
 
-        {/* Location */}
         <div>
           <label
-            className="text-sm font-semibold mb-1.5 block"
+            className="mb-1.5 block text-sm font-semibold"
             style={{ color: "var(--sidebar-active-text)" }}
           >
-            Location / Street
+            {copy.location}
           </label>
           <div className="relative">
             <MapPin
@@ -481,40 +558,38 @@ export default function HotelMainDetailsStep() {
             />
             <input
               className="input pl-9"
-              placeholder="Street / Area name"
+              placeholder={copy.locationPlaceholder}
               value={form.location}
-              onChange={(e) => set("location", e.target.value)}
+              onChange={(event) => set("location", event.target.value)}
             />
           </div>
         </div>
 
-        {/* PostCode */}
         <div>
           <label
-            className="text-sm font-semibold mb-1.5 block"
+            className="mb-1.5 block text-sm font-semibold"
             style={{ color: "var(--sidebar-active-text)" }}
           >
-            Post Code
+            {copy.postCode}
           </label>
           <input
             className="input"
-            placeholder="e.g. 11511"
+            placeholder={copy.postCodePlaceholder}
             value={form.postCode}
-            onChange={(e) => set("postCode", e.target.value)}
+            onChange={(event) => set("postCode", event.target.value)}
           />
         </div>
 
-        {/* Map - full width */}
         <div className="md:col-span-2">
-          <div className="flex items-center justify-between mb-1.5">
+          <div className="mb-1.5 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <label
               className="text-sm font-semibold"
               style={{ color: "var(--sidebar-active-text)" }}
             >
-              Pin Location on Map
+              {copy.mapTitle}
             </label>
             {form.lat != null && (
-              <div className="flex items-center gap-3">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
                 <span
                   className="text-xs"
                   style={{ color: "var(--text-muted)" }}
@@ -523,21 +598,25 @@ export default function HotelMainDetailsStep() {
                 </span>
                 <button
                   type="button"
-                  onClick={() => set("lat", null) || set("lng", null)}
-                  className="text-xs px-2 py-0.5 rounded-lg"
+                  onClick={() => {
+                    set("lat", null);
+                    set("lng", null);
+                  }}
+                  className="rounded-lg px-2 py-0.5 text-xs"
                   style={{
                     color: "var(--danger)",
                     border: "1px solid var(--border)",
                     backgroundColor: "var(--bg-raised)",
                   }}
                 >
-                  Clear Pin
+                  {copy.clearPin}
                 </button>
               </div>
             )}
           </div>
+
           <div
-            className="w-full rounded-xl overflow-hidden"
+            className="w-full overflow-hidden rounded-xl"
             style={{ height: 260, border: "1px solid var(--border)" }}
           >
             <LocationPickerMap
@@ -545,26 +624,26 @@ export default function HotelMainDetailsStep() {
               country={form.country}
               lat={form.lat}
               lng={form.lng}
-              onPick={(la, ln) => {
-                set("lat", la);
-                set("lng", ln);
+              onPick={(lat, lng) => {
+                set("lat", lat);
+                set("lng", lng);
               }}
             />
           </div>
+
           <p className="mt-1.5 text-xs" style={{ color: "var(--text-muted)" }}>
-            Click anywhere on the map to drop a pin · Drag the pin to adjust
+            {copy.mapHint}
           </p>
         </div>
       </div>
 
-      {/* Next */}
       <div className="mt-8">
         <button
           onClick={handleNext}
-          className="btn btn-primary w-full py-3 text-base rounded-2xl"
+          className="btn btn-primary w-full rounded-2xl py-3 text-base"
           style={{ backgroundColor: "var(--sidebar-active-text)" }}
         >
-          Next → Description
+          {copy.next}
         </button>
       </div>
     </div>
