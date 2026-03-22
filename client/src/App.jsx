@@ -36,6 +36,17 @@ import HotelIconsStep from "./pages/hotel-details/IconsStep";
 import HotelPolicyStep from "./pages/hotel-details/PolicyStep";
 import HotelPhotosStep from "./pages/hotel-details/PhotosStep";
 import HotelDetailsView from "./pages/hotel-details/HotelDetailsView";
+import RestaurantMainDetailsStep from "./pages/restaurant-details/MainDetailsStep";
+import RestaurantDescriptionStep from "./pages/restaurant-details/DescriptionStep";
+import RestaurantPolicyStep from "./pages/restaurant-details/PolicyStep";
+import RestaurantPhotosStep from "./pages/restaurant-details/PhotosStep";
+import RestaurantDetailsView from "./pages/restaurant-details/RestaurantDetailsView";
+import ActivityMainDetailsStep from "./pages/activity-details/MainDetailsStep";
+import ActivityDescriptionStep from "./pages/activity-details/DescriptionStep";
+import ActivityIconsStep from "./pages/activity-details/IconsStep";
+import ActivityPolicyStep from "./pages/activity-details/PolicyStep";
+import ActivityPhotosStep from "./pages/activity-details/PhotosStep";
+import ActivityDetailsView from "./pages/activity-details/ActivityDetailsView";
 import HotelChannelManagerPage from "./pages/hotel-channel/ChannelManagerPage";
 import GuestGroupsPage from "./pages/hotel-channel/travky/GuestGroupsPage";
 import MealPlansPage from "./pages/hotel-channel/travky/MealPlansPage";
@@ -292,6 +303,30 @@ export default function App() {
             path="/restaurant"
             element={<DashboardRoute element={<RestaurantDashboard />} />}
           />
+          <Route
+            path="/restaurant/details"
+            element={<Navigate to="/restaurant/details/main" replace />}
+          />
+          <Route
+            path="/restaurant/details/main"
+            element={<DashboardRoute element={<RestaurantMainDetailsStep />} />}
+          />
+          <Route
+            path="/restaurant/details/description"
+            element={<DashboardRoute element={<RestaurantDescriptionStep />} />}
+          />
+          <Route
+            path="/restaurant/details/policy"
+            element={<DashboardRoute element={<RestaurantPolicyStep />} />}
+          />
+          <Route
+            path="/restaurant/details/photos"
+            element={<DashboardRoute element={<RestaurantPhotosStep />} />}
+          />
+          <Route
+            path="/restaurant/details/view"
+            element={<DashboardRoute element={<RestaurantDetailsView />} />}
+          />
         </Route>
 
         <Route
@@ -300,6 +335,34 @@ export default function App() {
           <Route
             path="/activity"
             element={<DashboardRoute element={<ActivityDashboard />} />}
+          />
+          <Route
+            path="/activity/details"
+            element={<Navigate to="/activity/details/main" replace />}
+          />
+          <Route
+            path="/activity/details/main"
+            element={<DashboardRoute element={<ActivityMainDetailsStep />} />}
+          />
+          <Route
+            path="/activity/details/description"
+            element={<DashboardRoute element={<ActivityDescriptionStep />} />}
+          />
+          <Route
+            path="/activity/details/icons"
+            element={<DashboardRoute element={<ActivityIconsStep />} />}
+          />
+          <Route
+            path="/activity/details/policy"
+            element={<DashboardRoute element={<ActivityPolicyStep />} />}
+          />
+          <Route
+            path="/activity/details/photos"
+            element={<DashboardRoute element={<ActivityPhotosStep />} />}
+          />
+          <Route
+            path="/activity/details/view"
+            element={<DashboardRoute element={<ActivityDetailsView />} />}
           />
         </Route>
 

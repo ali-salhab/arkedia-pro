@@ -114,6 +114,18 @@ const permissionMatrix = [
     actions: [{ key: "details", label: "Manage Hotel Main Details" }],
   },
   {
+    module: "restaurant",
+    label: "Restaurant Details (Wizard)",
+    icon: "🍽️",
+    actions: [{ key: "details", label: "Manage Restaurant Main Details" }],
+  },
+  {
+    module: "activity",
+    label: "Activity Details (Wizard)",
+    icon: "🎯",
+    actions: [{ key: "details", label: "Manage Activity Main Details" }],
+  },
+  {
     module: "channel_manager",
     label: "Channel Manager",
     icon: "🔗",
@@ -267,7 +279,7 @@ const roleModules = {
     "rates",
     "availability",
   ],
-  restaurant: ["users", "rooms", "bookings", "finance", "reports", "settings"],
+  restaurant: ["users", "rooms", "bookings", "finance", "reports", "settings", "restaurant"],
   restaurantuser: [
     "users",
     "rooms",
@@ -275,6 +287,7 @@ const roleModules = {
     "finance",
     "reports",
     "settings",
+    "restaurant",
   ],
   activity: [
     "users",
@@ -283,6 +296,7 @@ const roleModules = {
     "finance",
     "reports",
     "settings",
+    "activity",
   ],
   activityuser: [
     "users",
@@ -291,6 +305,7 @@ const roleModules = {
     "finance",
     "reports",
     "settings",
+    "activity",
   ],
 };
 
@@ -427,6 +442,7 @@ const rolePresets = {
     "finance:view",
     "reports:view",
     "settings:view",
+    "restaurant:details",
   ],
   // restaurant staff — only tables & reservations by default
   restaurantuser: [
@@ -448,6 +464,7 @@ const rolePresets = {
     "finance:view",
     "reports:view",
     "settings:view",
+    "activity:details",
   ],
   // activity staff — only activities & bookings by default
   activityuser: [
@@ -766,8 +783,6 @@ export default function UserFormModal({
       style={{
         width: pageMode ? "100%" : "90%",
         maxWidth: pageMode ? "none" : 900,
-        maxHeight: pageMode ? "none" : "90vh",
-        overflow: "auto",
         background: "var(--bg-surface)",
       }}
     >
@@ -1052,43 +1067,100 @@ export default function UserFormModal({
             </div>
           )}
 
-          {/* Logo URL for hotel/restaurant/activity */}
+          {/* Logo upload for hotel/restaurant/activity */}
           {showLogoUpload && (
             <div style={{ marginTop: 16 }}>
               <label style={labelStyle}>🖼️ {t("logoUpload")}</label>
-              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                {form.logo && (
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: 12,
+                  padding: 16,
+                  background: "var(--bg-raised)",
+                  borderRadius: 12,
+                  border: form.logo
+                    ? "2px solid var(--success)"
+                    : "2px dashed var(--border)",
+                }}
+              >
+                {form.logo ? (
                   <img
                     src={form.logo}
-                    alt="logo"
+                    alt="logo preview"
                     style={{
-                      width: 52,
-                      height: 52,
-                      borderRadius: "50%",
-                      objectFit: "cover",
-                      border: "2px solid var(--border)",
+                      width: 120,
+                      height: 120,
+                      borderRadius: 16,
+                      objectFit: "contain",
+                      background: "var(--bg-surface)",
+                      border: "1px solid var(--border)",
+                      padding: 4,
                     }}
                   />
+                ) : (
+                  <div
+                    style={{
+                      width: 120,
+                      height: 120,
+                      borderRadius: 16,
+                      background: "var(--bg-surface)",
+                      border: "1px solid var(--border)",
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      color: "var(--text-muted)",
+                      fontSize: 32,
+                    }}
+                  >
+                    🖼️
+                    <span
+                      style={{
+                        fontSize: 10,
+                        marginTop: 4,
+                        color: "var(--text-muted)",
+                      }}
+                    >
+                      {isRtl ? "لا توجد صورة" : "No logo"}
+                    </span>
+                  </div>
                 )}
                 <button
                   type="button"
                   onClick={() => logoInputRef.current?.click()}
                   style={{
-                    padding: "10px 18px",
-                    background: "var(--bg-raised)",
-                    border: "1px dashed var(--text-muted)",
+                    padding: "8px 20px",
+                    background: "var(--brand)",
+                    border: "none",
                     borderRadius: 8,
-                    color: "var(--text-secondary)",
+                    color: "#fff",
                     cursor: "pointer",
                     fontSize: 13,
-                    fontWeight: 500,
+                    fontWeight: 600,
                   }}
                 >
-                  📂 {t("logoUpload")}
+                  {form.logo
+                    ? isRtl
+                      ? "تغيير الشعار"
+                      : "Change Logo"
+                    : isRtl
+                      ? "رفع الشعار"
+                      : "Upload Logo"}
                 </button>
                 {form.logo && (
-                  <span style={{ color: "var(--success)", fontSize: 12 }}>
-                    {t("logoPreview")}
+                  <span
+                    style={{
+                      color: "var(--success)",
+                      fontSize: 12,
+                      fontWeight: 500,
+                    }}
+                  >
+                    ✓{" "}
+                    {isRtl
+                      ? "تم رفع الشعار بنجاح"
+                      : "Logo uploaded successfully"}
                   </span>
                 )}
               </div>
@@ -1655,11 +1727,12 @@ export default function UserFormModal({
         position: "fixed",
         inset: 0,
         background: "rgba(0,0,0,0.7)",
-        display: "grid",
-        placeItems: "center",
+        display: "flex",
+        alignItems: "flex-start",
+        justifyContent: "center",
         zIndex: 1000,
-        overflow: "auto",
-        padding: "20px 0",
+        overflowY: "auto",
+        padding: "20px",
       }}
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >

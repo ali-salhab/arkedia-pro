@@ -4,6 +4,8 @@ const permissionMatrix = [
   { module: "roles", actions: ["view", "add", "edit", "delete"] },
   { module: "hotels", actions: ["view", "add", "edit", "delete"] },
   { module: "hotel", actions: ["details"] },
+  { module: "restaurant", actions: ["details"] },
+  { module: "activity", actions: ["details"] },
   { module: "channel_manager", actions: ["view"] },
   { module: "channel_manager_travky", actions: ["view"] },
   { module: "channel_manager_external", actions: ["view"] },

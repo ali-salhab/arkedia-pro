@@ -85,13 +85,13 @@ const ROLE_MENUS = {
           route: "/hotel/details/description",
           Icon: AlignLeft,
         },
+        { name: "Hotel Icons", route: "/hotel/details/icons", Icon: Tag },
         {
           name: "Hotel Policy",
           route: "/hotel/details/policy",
           Icon: ShieldCheck,
         },
         { name: "Photos", route: "/hotel/details/photos", Icon: Images },
-        { name: "Hotel Icons", route: "/hotel/details/icons", Icon: Tag },
       ],
     },
     {
@@ -171,6 +171,17 @@ const ROLE_MENUS = {
     { name: "Finance", route: "/finance", perm: "finance:view" },
     { name: "Reports", route: "/reports", perm: "reports:view" },
     { name: "Settings", route: "/settings", perm: "settings:view" },
+    {
+      name: "Restaurant Main Details",
+      perm: "restaurant:details",
+      matchPrefix: "/restaurant/details",
+      children: [
+        { name: "Restaurant Info", route: "/restaurant/details/main", Icon: FileSearch },
+        { name: "Restaurant Description", route: "/restaurant/details/description", Icon: AlignLeft },
+        { name: "Restaurant Policy", route: "/restaurant/details/policy", Icon: ShieldCheck },
+        { name: "Restaurant Photos", route: "/restaurant/details/photos", Icon: Images },
+      ],
+    },
   ],
   activity: [
     { name: "Dashboard", route: "/activity", perm: null },
@@ -180,6 +191,18 @@ const ROLE_MENUS = {
     { name: "Finance", route: "/finance", perm: "finance:view" },
     { name: "Reports", route: "/reports", perm: "reports:view" },
     { name: "Settings", route: "/settings", perm: "settings:view" },
+    {
+      name: "Activity Main Details",
+      perm: "activity:details",
+      matchPrefix: "/activity/details",
+      children: [
+        { name: "Activity Info", route: "/activity/details/main", Icon: FileSearch },
+        { name: "Activity Description", route: "/activity/details/description", Icon: AlignLeft },
+        { name: "Activity Icons", route: "/activity/details/icons", Icon: Tag },
+        { name: "Activity Policy", route: "/activity/details/policy", Icon: ShieldCheck },
+        { name: "Activity Photos", route: "/activity/details/photos", Icon: Images },
+      ],
+    },
   ],
 };
 
@@ -193,6 +216,17 @@ const ROLE_MENU_ALIASES = {
 
 const SIDEBAR_NAME_MAP = {
   "Hotel Main Details": "hotelMainDetails",
+  "Restaurant Main Details": "restaurantMainDetails",
+  "Activity Main Details": "activityMainDetails",
+  "Restaurant Info": "restaurantStepMain",
+  "Restaurant Description": "restaurantStepDescription",
+  "Restaurant Policy": "restaurantStepPolicy",
+  "Restaurant Photos": "restaurantStepPhotos",
+  "Activity Info": "activityStepMain",
+  "Activity Description": "activityStepDescription",
+  "Activity Icons": "activityStepIcons",
+  "Activity Policy": "activityStepPolicy",
+  "Activity Photos": "activityStepPhotos",
   "Icons Library": "iconsLibrary",
   "Channel Manager": "channelManager",
   Travky: "travky",
@@ -234,6 +268,8 @@ const SIDEBAR_NAME_MAP = {
 
 const ICON_MAP = {
   "Hotel Main Details": <ClipboardList size={17} />,
+  "Restaurant Main Details": <UtensilsCrossed size={17} />,
+  "Activity Main Details": <Zap size={17} />,
   "Channel Manager": <Link2 size={17} />,
   Dashboard: <LayoutDashboard size={17} />,
   Users: <Users size={17} />,
@@ -447,7 +483,7 @@ export default function Sidebar({ mobileOpen = false, onClose }) {
               >
                 {renderMenuItems(item.children, {
                   depth: depth + 1,
-                  indexed: item.name === "Hotel Main Details",
+                  indexed: ["Hotel Main Details", "Restaurant Main Details", "Activity Main Details"].includes(item.name),
                   parentKey: key,
                 })}
               </div>
@@ -667,4 +703,3 @@ export default function Sidebar({ mobileOpen = false, onClose }) {
     </>
   );
 }
-
