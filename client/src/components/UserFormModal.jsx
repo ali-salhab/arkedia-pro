@@ -279,7 +279,15 @@ const roleModules = {
     "rates",
     "availability",
   ],
-  restaurant: ["users", "rooms", "bookings", "finance", "reports", "settings", "restaurant"],
+  restaurant: [
+    "users",
+    "rooms",
+    "bookings",
+    "finance",
+    "reports",
+    "settings",
+    "restaurant",
+  ],
   restaurantuser: [
     "users",
     "rooms",

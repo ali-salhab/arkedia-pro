@@ -176,10 +176,26 @@ const ROLE_MENUS = {
       perm: "restaurant:details",
       matchPrefix: "/restaurant/details",
       children: [
-        { name: "Restaurant Info", route: "/restaurant/details/main", Icon: FileSearch },
-        { name: "Restaurant Description", route: "/restaurant/details/description", Icon: AlignLeft },
-        { name: "Restaurant Policy", route: "/restaurant/details/policy", Icon: ShieldCheck },
-        { name: "Restaurant Photos", route: "/restaurant/details/photos", Icon: Images },
+        {
+          name: "Restaurant Info",
+          route: "/restaurant/details/main",
+          Icon: FileSearch,
+        },
+        {
+          name: "Restaurant Description",
+          route: "/restaurant/details/description",
+          Icon: AlignLeft,
+        },
+        {
+          name: "Restaurant Policy",
+          route: "/restaurant/details/policy",
+          Icon: ShieldCheck,
+        },
+        {
+          name: "Restaurant Photos",
+          route: "/restaurant/details/photos",
+          Icon: Images,
+        },
       ],
     },
   ],
@@ -196,11 +212,27 @@ const ROLE_MENUS = {
       perm: "activity:details",
       matchPrefix: "/activity/details",
       children: [
-        { name: "Activity Info", route: "/activity/details/main", Icon: FileSearch },
-        { name: "Activity Description", route: "/activity/details/description", Icon: AlignLeft },
+        {
+          name: "Activity Info",
+          route: "/activity/details/main",
+          Icon: FileSearch,
+        },
+        {
+          name: "Activity Description",
+          route: "/activity/details/description",
+          Icon: AlignLeft,
+        },
         { name: "Activity Icons", route: "/activity/details/icons", Icon: Tag },
-        { name: "Activity Policy", route: "/activity/details/policy", Icon: ShieldCheck },
-        { name: "Activity Photos", route: "/activity/details/photos", Icon: Images },
+        {
+          name: "Activity Policy",
+          route: "/activity/details/policy",
+          Icon: ShieldCheck,
+        },
+        {
+          name: "Activity Photos",
+          route: "/activity/details/photos",
+          Icon: Images,
+        },
       ],
     },
   ],
@@ -483,7 +515,11 @@ export default function Sidebar({ mobileOpen = false, onClose }) {
               >
                 {renderMenuItems(item.children, {
                   depth: depth + 1,
-                  indexed: ["Hotel Main Details", "Restaurant Main Details", "Activity Main Details"].includes(item.name),
+                  indexed: [
+                    "Hotel Main Details",
+                    "Restaurant Main Details",
+                    "Activity Main Details",
+                  ].includes(item.name),
                   parentKey: key,
                 })}
               </div>

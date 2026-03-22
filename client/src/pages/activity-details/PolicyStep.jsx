@@ -56,8 +56,11 @@ export default function ActivityPolicyStep() {
   const copy = COPY[lang] || COPY.en;
 
   const saved = (() => {
-    try { return JSON.parse(sessionStorage.getItem(STORAGE_KEY) || "null") || {}; }
-    catch { return {}; }
+    try {
+      return JSON.parse(sessionStorage.getItem(STORAGE_KEY) || "null") || {};
+    } catch {
+      return {};
+    }
   })();
 
   const [duration, setDuration] = useState(saved.duration || "");
@@ -69,7 +72,18 @@ export default function ActivityPolicyStep() {
   const [notIncluded, setNotIncluded] = useState(saved.notIncluded || "");
 
   const handleNext = () => {
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ duration, groupSize, minAge, difficulty, cancellation, included, notIncluded }));
+    sessionStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        duration,
+        groupSize,
+        minAge,
+        difficulty,
+        cancellation,
+        included,
+        notIncluded,
+      }),
+    );
     navigate("/activity/details/photos");
   };
 
@@ -80,31 +94,58 @@ export default function ActivityPolicyStep() {
     <div className="page-shell">
       <ActivityDetailsStepBar />
       <div className="space-y-5">
-        <p className="text-sm" style={{ color: "var(--text-muted)" }}>{copy.hint}</p>
+        <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+          {copy.hint}
+        </p>
 
         <div className="card grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <label className="label-text">{copy.duration}</label>
-            <input className={inputClass} value={duration} onChange={(e) => setDuration(e.target.value)} placeholder={copy.durationPlaceholder} />
+            <input
+              className={inputClass}
+              value={duration}
+              onChange={(e) => setDuration(e.target.value)}
+              placeholder={copy.durationPlaceholder}
+            />
           </div>
           <div>
             <label className="label-text">{copy.groupSize}</label>
-            <input className={inputClass} value={groupSize} onChange={(e) => setGroupSize(e.target.value)} placeholder={copy.groupSizePlaceholder} />
+            <input
+              className={inputClass}
+              value={groupSize}
+              onChange={(e) => setGroupSize(e.target.value)}
+              placeholder={copy.groupSizePlaceholder}
+            />
           </div>
           <div>
             <label className="label-text">{copy.minAge}</label>
-            <input className={inputClass} value={minAge} onChange={(e) => setMinAge(e.target.value)} placeholder={copy.minAgePlaceholder} />
+            <input
+              className={inputClass}
+              value={minAge}
+              onChange={(e) => setMinAge(e.target.value)}
+              placeholder={copy.minAgePlaceholder}
+            />
           </div>
           <div>
             <label className="label-text">{copy.difficulty}</label>
             <div className="relative">
-              <select className="input w-full text-sm appearance-none" value={difficulty} onChange={(e) => setDifficulty(e.target.value)}>
+              <select
+                className="input w-full text-sm appearance-none"
+                value={difficulty}
+                onChange={(e) => setDifficulty(e.target.value)}
+              >
                 <option value="">{copy.difficulty}</option>
                 {DIFFICULTY_EN.map((d, i) => (
-                  <option key={d} value={d}>{copy.difficultyOptions[i] || d}</option>
+                  <option key={d} value={d}>
+                    {copy.difficultyOptions[i] || d}
+                  </option>
                 ))}
               </select>
-              <ChevronDown size={15} className="pointer-events-none absolute end-3 top-1/2 -translate-y-1/2" style={{ color: "var(--text-muted)" }} />
+              <ChevronDown
+                size={15}
+                className="pointer-events-none absolute end-3 top-1/2 -translate-y-1/2"
+                style={{ color: "var(--text-muted)" }}
+              />
             </div>
           </div>
         </div>
@@ -112,21 +153,50 @@ export default function ActivityPolicyStep() {
         <div className="card grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <label className="label-text">{copy.included}</label>
-            <textarea className={textareaClass} rows={4} value={included} onChange={(e) => setIncluded(e.target.value)} placeholder={copy.includedPlaceholder} />
+            <textarea
+              className={textareaClass}
+              rows={4}
+              value={included}
+              onChange={(e) => setIncluded(e.target.value)}
+              placeholder={copy.includedPlaceholder}
+            />
           </div>
           <div>
             <label className="label-text">{copy.notIncluded}</label>
-            <textarea className={textareaClass} rows={4} value={notIncluded} onChange={(e) => setNotIncluded(e.target.value)} placeholder={copy.notIncludedPlaceholder} />
+            <textarea
+              className={textareaClass}
+              rows={4}
+              value={notIncluded}
+              onChange={(e) => setNotIncluded(e.target.value)}
+              placeholder={copy.notIncludedPlaceholder}
+            />
           </div>
           <div className="sm:col-span-2">
             <label className="label-text">{copy.cancellation}</label>
-            <textarea className={textareaClass} rows={4} value={cancellation} onChange={(e) => setCancellation(e.target.value)} placeholder={copy.cancellationPlaceholder} />
+            <textarea
+              className={textareaClass}
+              rows={4}
+              value={cancellation}
+              onChange={(e) => setCancellation(e.target.value)}
+              placeholder={copy.cancellationPlaceholder}
+            />
           </div>
         </div>
 
         <div className="flex justify-between">
-          <button onClick={() => navigate("/activity/details/icons")} className="btn btn-secondary rounded-2xl px-6 py-3 text-sm font-semibold">{copy.back}</button>
-          <button onClick={handleNext} className="btn btn-primary rounded-2xl px-8 py-3 text-sm font-semibold" style={{ backgroundColor: "var(--sidebar-active-text)" }}>{copy.next}</button>
+          <button
+            onClick={() => navigate("/activity/details/icons")}
+            className="btn btn-secondary rounded-2xl px-6 py-3 text-sm font-semibold"
+          >
+            {copy.back}
+          </button>
+          <button
+            onClick={handleNext}
+            className="btn btn-primary rounded-2xl px-8 py-3 text-sm font-semibold"
+            style={{ backgroundColor: "var(--sidebar-active-text)" }}
+          >
+            {copy.next}
+          </button>
         </div>
       </div>
     </div>
