@@ -359,7 +359,7 @@ export default function MealPlansPage() {
           style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
         >
           <div
-            className="w-full max-w-md rounded-2xl p-6 shadow-xl"
+            className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-2xl p-6 shadow-xl"
             style={{
               backgroundColor: "var(--bg-surface)",
               border: "1px solid var(--border)",
@@ -533,3 +533,4 @@ function InfoRow({ label, value }) {
     </div>
   );
 }
+

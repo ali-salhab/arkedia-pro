@@ -274,7 +274,7 @@ export default function PeriodsPage() {
           style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
         >
           <div
-            className="w-full max-w-sm rounded-2xl p-6 shadow-xl"
+            className="w-full max-w-sm max-h-[90vh] overflow-y-auto rounded-2xl p-6 shadow-xl"
             style={{
               backgroundColor: "var(--bg-surface)",
               border: "1px solid var(--border)",
@@ -423,3 +423,4 @@ export default function PeriodsPage() {
     </div>
   );
 }
+

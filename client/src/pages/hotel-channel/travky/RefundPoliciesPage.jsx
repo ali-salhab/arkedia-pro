@@ -700,3 +700,4 @@ export default function RefundPoliciesPage() {
     </div>
   );
 }
+
