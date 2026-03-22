@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import LoadingScreen from "../components/LoadingScreen";
+import DeleteConfirmModal from "../components/DeleteConfirmModal";
 import { useLanguage } from "../context/LanguageContext";
 import { useGetUsersQuery, useDeleteUserMutation } from "../store/services/api";
 import { Pencil, Trash2, Search, Download, Plus } from "lucide-react";
@@ -26,6 +27,7 @@ export default function AdminsPage() {
   const { t, lang } = useLanguage();
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   const { data: users = [], isLoading, error } = useGetUsersQuery();
   const [deleteUser] = useDeleteUserMutation();
@@ -48,8 +50,10 @@ export default function AdminsPage() {
     navigate(`/admins/${u._id}/edit`, {
       state: { user: u, fixedRole: "admin", backTo: "/admins" },
     });
-  const handleDelete = async (id) => {
-    if (window.confirm(t("confirmDeleteUser"))) await deleteUser(id);
+  const handleDelete = (id) => setDeleteTarget(id);
+  const confirmDelete = async () => {
+    if (deleteTarget) await deleteUser(deleteTarget);
+    setDeleteTarget(null);
   };
 
   if (isLoading)
@@ -79,6 +83,11 @@ export default function AdminsPage() {
 
   return (
     <div className="p-6">
+      <DeleteConfirmModal
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={confirmDelete}
+      />
       {/* Header */}
       <div className="flex items-start justify-between gap-4 mb-6">
         <div>

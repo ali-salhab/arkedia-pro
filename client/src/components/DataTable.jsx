@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useLanguage } from "../context/LanguageContext";
+import DeleteConfirmModal from "./DeleteConfirmModal";
 
 /**
  * DataTable with inline editing, add row, delete, and CSV export.
@@ -27,6 +28,7 @@ export default function DataTable({
   const [editRow, setEditRow] = useState({});
   const [addingNew, setAddingNew] = useState(false);
   const [newRow, setNewRow] = useState({});
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   const startEdit = (row) => {
     setEditingId(row[idKey]);
@@ -44,9 +46,10 @@ export default function DataTable({
     setEditRow({});
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Delete this item?")) return;
-    if (onDelete) await onDelete(id);
+  const handleDelete = (id) => setDeleteTarget(id);
+  const confirmDelete = async () => {
+    if (deleteTarget && onDelete) await onDelete(deleteTarget);
+    setDeleteTarget(null);
   };
 
   const startAdd = () => {
@@ -89,6 +92,11 @@ export default function DataTable({
 
   return (
     <div className="space-y-3">
+      <DeleteConfirmModal
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={confirmDelete}
+      />
       {(editable || exportFilename) && (
         <div className="flex flex-wrap justify-end gap-2">
           {editable && !addingNew && (

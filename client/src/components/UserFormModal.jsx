@@ -601,6 +601,15 @@ export default function UserFormModal({
     "activity",
     "activityuser",
   ].includes(selectedRole);
+
+  // When the selected role is hotel/restaurant/activity (owner account),
+  // hide the permissions tab — they always get the full preset automatically.
+  const hidePermissionsTab = [
+    "hotel",
+    "restaurant",
+    "activity",
+  ].includes(selectedRole);
+
   const selectedAdmin = adminsList.find((admin) => admin._id === form.adminId);
 
   useEffect(() => {
@@ -872,22 +881,26 @@ export default function UserFormModal({
         >
           👤 {t("basicInfoTab")}
         </button>
-        <button
-          onClick={() => setActiveTab("permissions")}
-          style={{
-            padding: "10px 20px",
-            background:
-              activeTab === "permissions" ? "var(--brand)" : "var(--bg-raised)",
-            border: "none",
-            borderRadius: 8,
-            color:
-              activeTab === "permissions" ? "#fff" : "var(--text-secondary)",
-            cursor: "pointer",
-            fontWeight: 500,
-          }}
-        >
-          🔐 {t("permissionsTab")} ({(form.permissions || []).length})
-        </button>
+        {!hidePermissionsTab && (
+          <button
+            onClick={() => setActiveTab("permissions")}
+            style={{
+              padding: "10px 20px",
+              background:
+                activeTab === "permissions"
+                  ? "var(--brand)"
+                  : "var(--bg-raised)",
+              border: "none",
+              borderRadius: 8,
+              color:
+                activeTab === "permissions" ? "#fff" : "var(--text-secondary)",
+              cursor: "pointer",
+              fontWeight: 500,
+            }}
+          >
+            🔐 {t("permissionsTab")} ({(form.permissions || []).length})
+          </button>
+        )}
       </div>
 
       {/* Basic Info Tab */}

@@ -3,6 +3,7 @@ import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import LoadingScreen from "../components/LoadingScreen";
 import Modal from "../components/Modal";
+import DeleteConfirmModal from "../components/DeleteConfirmModal";
 import { useLanguage } from "../context/LanguageContext";
 import { useGetUsersQuery, useDeleteUserMutation } from "../store/services/api";
 import { Pencil, Trash2, Search, Download, Plus } from "lucide-react";
@@ -28,6 +29,7 @@ export default function HotelsPage() {
   const [search, setSearch] = useState("");
   const [adminRequiredModalOpen, setAdminRequiredModalOpen] = useState(false);
   const [resumeHotelCreation, setResumeHotelCreation] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   const { data: users = [], isLoading, error } = useGetUsersQuery();
   const [deleteUser] = useDeleteUserMutation();
@@ -77,8 +79,10 @@ export default function HotelsPage() {
     navigate(`/hotels/${hotel._id}/edit`, {
       state: { hotel, backTo: "/hotels" },
     });
-  const handleDelete = async (id) => {
-    if (window.confirm(t("confirmDeleteHotel"))) await deleteUser(id);
+  const handleDelete = (id) => setDeleteTarget(id);
+  const confirmDelete = async () => {
+    if (deleteTarget) await deleteUser(deleteTarget);
+    setDeleteTarget(null);
   };
 
   const handleOpenAdminCreation = () => {
@@ -127,7 +131,12 @@ export default function HotelsPage() {
 
   return (
     <div className="p-6">
-      {/* Header */}
+      <DeleteConfirmModal
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={confirmDelete}
+      />
+      {/* Header */}}
       <div className="flex items-start justify-between gap-4 mb-6">
         <div>
           <nav className="flex items-center gap-1.5 text-sm text-slate-400 mb-1">
