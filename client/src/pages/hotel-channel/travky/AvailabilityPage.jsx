@@ -9,6 +9,7 @@ import {
   X,
 } from "lucide-react";
 import { useLocalStorage } from "../../../hooks/useLocalStorage";
+import DeleteConfirmModal from "../../../components/DeleteConfirmModal";
 
 const INITIAL_ROOM_TYPES = [
   { id: "dbl", code: "DBL", nameEn: "Double Room", nameAr: "غرفة مزدوجة" },
@@ -152,9 +153,13 @@ export default function AvailabilityPage() {
   }
 
   function handleDelete(id) {
-    if (window.confirm("هل تريد حذف هذا التوافر؟")) {
-      setAvailability((prev) => prev.filter((a) => a.id !== id));
-    }
+    setDeleteTarget(id);
+  }
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  function confirmDelete() {
+    if (deleteTarget)
+      setAvailability((prev) => prev.filter((a) => a.id !== deleteTarget));
+    setDeleteTarget(null);
   }
 
   const isView = modal?.mode === "view";
@@ -162,6 +167,11 @@ export default function AvailabilityPage() {
 
   return (
     <div className="page-shell">
+      <DeleteConfirmModal
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={confirmDelete}
+      />
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
@@ -515,4 +525,3 @@ export default function AvailabilityPage() {
     </div>
   );
 }
-

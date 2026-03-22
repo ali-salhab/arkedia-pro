@@ -18,6 +18,7 @@ import {
   useDeleteIconMutation,
 } from "../store/services/api";
 import { useLanguage } from "../context/LanguageContext";
+import DeleteConfirmModal from "../components/DeleteConfirmModal";
 
 const CATEGORIES = [
   { value: "hotel", key: "hotel" },
@@ -458,6 +459,7 @@ export default function SuperAdminIconsPage() {
 
   const { data: allIcons = [], isLoading } = useGetIconsQuery();
   const { data: requestedIcons = [] } = useGetIconRequestsQuery();
+  const [deleteTarget, setDeleteTarget] = useState(null);
   const [updateIcon] = useUpdateIconMutation();
   const [deleteIcon] = useDeleteIconMutation();
 
@@ -474,9 +476,10 @@ export default function SuperAdminIconsPage() {
     await updateIcon({ _id: icon._id, imageUrl, status: "designed" });
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm(copy.deleteConfirm)) return;
-    await deleteIcon(id);
+  const handleDelete = (id) => setDeleteTarget(id);
+  const confirmDelete = async () => {
+    if (deleteTarget) await deleteIcon(deleteTarget);
+    setDeleteTarget(null);
   };
 
   const handleEditSave = async (icon, changes) => {
@@ -491,6 +494,12 @@ export default function SuperAdminIconsPage() {
 
   return (
     <div className="page-shell" dir={dir}>
+      <DeleteConfirmModal
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={confirmDelete}
+        message={copy.deleteConfirm}
+      />
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>

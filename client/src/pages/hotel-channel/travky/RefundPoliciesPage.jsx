@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { RotateCcw, Plus, Search, Trash2, Pencil, Eye, X } from "lucide-react";
 import { useLocalStorage } from "../../../hooks/useLocalStorage";
+import DeleteConfirmModal from "../../../components/DeleteConfirmModal";
 
 const INITIAL_GROUPS = [
   { id: "1", name: "Egyptian Market", currency: "EGP" },
@@ -198,9 +199,13 @@ export default function RefundPoliciesPage() {
   }
 
   function handleDelete(id) {
-    if (window.confirm("هل تريد حذف سياسة الاسترداد؟")) {
-      setPolicies((prev) => prev.filter((p) => p.id !== id));
-    }
+    setDeleteTarget(id);
+  }
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  function confirmDelete() {
+    if (deleteTarget)
+      setPolicies((prev) => prev.filter((p) => p.id !== deleteTarget));
+    setDeleteTarget(null);
   }
 
   const isView = modal?.mode === "view";
@@ -210,6 +215,11 @@ export default function RefundPoliciesPage() {
 
   return (
     <div className="page-shell">
+      <DeleteConfirmModal
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={confirmDelete}
+      />
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
@@ -700,4 +710,3 @@ export default function RefundPoliciesPage() {
     </div>
   );
 }
-

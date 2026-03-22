@@ -1,4 +1,5 @@
 import { useState } from "react";
+import DeleteConfirmModal from "../../../components/DeleteConfirmModal";
 import {
   UtensilsCrossed,
   Plus,
@@ -167,9 +168,13 @@ export default function MealPlansPage() {
   }
 
   function handleDelete(id) {
-    if (window.confirm("هل تريد حذف خطة الوجبات؟")) {
-      setPlans((prev) => prev.filter((p) => p.id !== id));
-    }
+    setDeleteTarget(id);
+  }
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  function confirmDelete() {
+    if (deleteTarget)
+      setPlans((prev) => prev.filter((p) => p.id !== deleteTarget));
+    setDeleteTarget(null);
   }
 
   const isView = modal?.mode === "view";
@@ -177,6 +182,11 @@ export default function MealPlansPage() {
 
   return (
     <div className="page-shell">
+      <DeleteConfirmModal
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={confirmDelete}
+      />
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
@@ -533,4 +543,3 @@ function InfoRow({ label, value }) {
     </div>
   );
 }
-

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Users, Plus, Search, Trash2, Pencil, Eye, X } from "lucide-react";
 import { useLocalStorage } from "../../../hooks/useLocalStorage";
+import DeleteConfirmModal from "../../../components/DeleteConfirmModal";
 
 const CURRENCIES = [
   "EGP",
@@ -186,9 +187,13 @@ export default function GuestGroupsPage() {
   }
 
   function handleDelete(id) {
-    if (window.confirm("هل تريد حذف هذه المجموعة؟")) {
-      setGroups((prev) => prev.filter((g) => g.id !== id));
-    }
+    setDeleteTarget(id);
+  }
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  function confirmDelete() {
+    if (deleteTarget)
+      setGroups((prev) => prev.filter((g) => g.id !== deleteTarget));
+    setDeleteTarget(null);
   }
 
   const isView = modal?.mode === "view";
@@ -197,6 +202,11 @@ export default function GuestGroupsPage() {
 
   return (
     <div className="page-shell">
+      <DeleteConfirmModal
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={confirmDelete}
+      />
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
@@ -552,4 +562,3 @@ export default function GuestGroupsPage() {
     </div>
   );
 }
-

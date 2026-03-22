@@ -9,6 +9,7 @@ import {
   X,
 } from "lucide-react";
 import { useLocalStorage } from "../../../hooks/useLocalStorage";
+import DeleteConfirmModal from "../../../components/DeleteConfirmModal";
 
 const INITIAL_PERIODS = [
   { id: "1", name: "Low Season", from: "2024-01-01", to: "2024-03-31" },
@@ -106,9 +107,13 @@ export default function PeriodsPage() {
   }
 
   function handleDelete(id) {
-    if (window.confirm("هل تريد حذف هذه الفترة؟")) {
-      setPeriods((prev) => prev.filter((p) => p.id !== id));
-    }
+    setDeleteTarget(id);
+  }
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  function confirmDelete() {
+    if (deleteTarget)
+      setPeriods((prev) => prev.filter((p) => p.id !== deleteTarget));
+    setDeleteTarget(null);
   }
 
   const isView = modal?.mode === "view";
@@ -131,6 +136,11 @@ export default function PeriodsPage() {
 
   return (
     <div className="page-shell">
+      <DeleteConfirmModal
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={confirmDelete}
+      />
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
@@ -423,4 +433,3 @@ export default function PeriodsPage() {
     </div>
   );
 }
-

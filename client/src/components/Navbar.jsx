@@ -4,8 +4,9 @@ import { api } from "../store/services/api";
 import { logout } from "../store/slices/authSlice";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "../context/LanguageContext";
-import { Menu, Moon, Sun, Globe, LogOut, Search, Settings } from "lucide-react";
+import { Menu, Moon, Sun, Globe, Search } from "lucide-react";
 import NotificationPanel from "./NotificationPanel";
+import ProfileModal from "./ProfileModal";
 
 const ROLE_LABELS = {
   super_admin: "Super Admin",
@@ -20,14 +21,17 @@ const ROLE_LABELS = {
   activityuser: "Activity Staff",
 };
 
-export default function Navbar({ onToggleSidebar, notifications = [], onClearNotifications }) {
+export default function Navbar({
+  onToggleSidebar,
+  notifications = [],
+  onClearNotifications,
+}) {
   const user = useSelector((s) => s.auth.user);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { t, theme, toggleTheme, toggleLang } = useLanguage();
   const isDark = theme === "dark";
-  const [menuOpen, setMenuOpen] = useState(false);
-  const menuRef = useRef(null);
+  const [profileOpen, setProfileOpen] = useState(false);
 
   const initials =
     user?.name
@@ -38,19 +42,10 @@ export default function Navbar({ onToggleSidebar, notifications = [], onClearNot
       .toUpperCase() || "U";
 
   const handleLogout = () => {
-    setMenuOpen(false);
     dispatch(api.util.resetApiState());
     dispatch(logout());
     navigate("/login");
   };
-
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false);
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
 
   return (
     <header className="navbar">
@@ -73,14 +68,22 @@ export default function Navbar({ onToggleSidebar, notifications = [], onClearNot
               src="/logo.png"
               alt="logo"
               className="h-5 w-5 object-contain brightness-0 invert"
-              onError={(e) => { e.target.style.display = "none"; }}
+              onError={(e) => {
+                e.target.style.display = "none";
+              }}
             />
           </div>
           <div className="hidden leading-tight sm:block">
-            <p className="text-sm font-bold" style={{ color: "var(--text-primary)" }}>
+            <p
+              className="text-sm font-bold"
+              style={{ color: "var(--text-primary)" }}
+            >
               Travky.com
             </p>
-            <p className="text-[10px] font-medium uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>
+            <p
+              className="text-[10px] font-medium uppercase tracking-widest"
+              style={{ color: "var(--text-muted)" }}
+            >
               Dashboard
             </p>
           </div>
@@ -96,7 +99,11 @@ export default function Navbar({ onToggleSidebar, notifications = [], onClearNot
             border: "1px solid var(--border)",
           }}
         >
-          <Search size={14} className="shrink-0" style={{ color: "var(--text-muted)" }} />
+          <Search
+            size={14}
+            className="shrink-0"
+            style={{ color: "var(--text-muted)" }}
+          />
           <input
             type="text"
             placeholder={t("search") + "..."}
@@ -117,98 +124,53 @@ export default function Navbar({ onToggleSidebar, notifications = [], onClearNot
 
       {/* Right: actions + avatar */}
       <div className="flex shrink-0 items-center gap-2">
-        <button onClick={toggleTheme} className="icon-btn" title="Toggle theme" aria-label="Toggle theme">
+        <button
+          onClick={toggleTheme}
+          className="icon-btn"
+          title="Toggle theme"
+          aria-label="Toggle theme"
+        >
           {isDark ? <Sun size={16} /> : <Moon size={16} />}
         </button>
-        <button onClick={toggleLang} className="icon-btn" title="Toggle language" aria-label="Toggle language">
+        <button
+          onClick={toggleLang}
+          className="icon-btn"
+          title="Toggle language"
+          aria-label="Toggle language"
+        >
           <Globe size={16} />
         </button>
 
-        <NotificationPanel notifications={notifications} onClear={onClearNotifications} />
+        <NotificationPanel
+          notifications={notifications}
+          onClear={onClearNotifications}
+        />
 
-        {/* Avatar + dropdown */}
-        <div className="relative" ref={menuRef}>
-          <button
-            onClick={() => setMenuOpen((v) => !v)}
-            className="overflow-hidden rounded-xl transition hover:opacity-80"
-            aria-label="User menu"
-          >
-            {user?.logo ? (
-              <img src={user.logo} alt={user.name} className="h-9 w-9 rounded-xl object-cover" />
-            ) : (
-              <div
-                className="grid h-9 w-9 place-items-center rounded-xl text-xs font-bold text-white"
-                style={{ backgroundColor: "var(--brand)" }}
-              >
-                {initials}
-              </div>
-            )}
-          </button>
-
-          {menuOpen && (
+        {/* Avatar → opens ProfileModal */}
+        <ProfileModal
+          open={profileOpen}
+          onClose={() => setProfileOpen(false)}
+        />
+        <button
+          onClick={() => setProfileOpen(true)}
+          className="overflow-hidden rounded-xl transition hover:opacity-80"
+          aria-label="User profile"
+        >
+          {user?.logo ? (
+            <img
+              src={user.logo}
+              alt={user.name}
+              className="h-9 w-9 rounded-xl object-cover"
+            />
+          ) : (
             <div
-              className="absolute right-0 top-11 z-[200] w-52 overflow-hidden rounded-xl shadow-xl"
-              style={{
-                backgroundColor: "var(--bg-surface)",
-                border: "1px solid var(--border)",
-              }}
+              className="grid h-9 w-9 place-items-center rounded-xl text-xs font-bold text-white"
+              style={{ backgroundColor: "var(--brand)" }}
             >
-              {/* User info */}
-              <div
-                className="px-4 py-3"
-                style={{ borderBottom: "1px solid var(--border)" }}
-              >
-                <div className="flex items-center gap-2.5">
-                  {user?.logo ? (
-                    <img src={user.logo} alt={user.name} className="h-8 w-8 rounded-lg object-cover" />
-                  ) : (
-                    <div
-                      className="grid h-8 w-8 place-items-center rounded-lg text-xs font-bold text-white"
-                      style={{ backgroundColor: "var(--brand)" }}
-                    >
-                      {initials}
-                    </div>
-                  )}
-                  <div>
-                    <div className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
-                      {user?.name || "User"}
-                    </div>
-                    <div className="text-xs" style={{ color: "var(--text-muted)" }}>
-                      {ROLE_LABELS[user?.role] || user?.role}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Settings */}
-              <button
-                onClick={() => { setMenuOpen(false); navigate("/settings"); }}
-                className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm font-medium transition hover:opacity-90"
-                style={{
-                  color: "var(--text-secondary)",
-                  backgroundColor: "transparent",
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "var(--bg-raised)"}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
-              >
-                <Settings size={15} />
-                {t("settings")}
-              </button>
-
-              {/* Logout */}
-              <button
-                onClick={handleLogout}
-                className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm font-medium transition"
-                style={{ color: "var(--danger)", backgroundColor: "transparent" }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "var(--bg-raised)"}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
-              >
-                <LogOut size={15} />
-                {t("logout")}
-              </button>
+              {initials}
             </div>
           )}
-        </div>
+        </button>
       </div>
     </header>
   );

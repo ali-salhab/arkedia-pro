@@ -14,6 +14,7 @@ import {
   Image as ImageIcon,
 } from "lucide-react";
 import { useLocalStorage } from "../../../hooks/useLocalStorage";
+import DeleteConfirmModal from "../../../components/DeleteConfirmModal";
 
 const INITIAL_GROUPS = [
   { id: "1", name: "Egyptian Market", currency: "EGP" },
@@ -146,6 +147,7 @@ export default function RoomTypesPage() {
   const [step, setStep] = useState(1);
   const [langTab, setLangTab] = useState("en");
   const [errors, setErrors] = useState({});
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   const filtered = roomTypes.filter(
     (r) =>
@@ -283,6 +285,14 @@ export default function RoomTypesPage() {
 
   return (
     <div className="page-shell">
+      <DeleteConfirmModal
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={() => {
+          setRoomTypes((prev) => prev.filter((r) => r.id !== deleteTarget));
+          setDeleteTarget(null);
+        }}
+      />
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
@@ -468,12 +478,7 @@ export default function RoomTypesPage() {
                       <div className="flex items-center gap-1 justify-end">
                         {!room.isBase && (
                           <button
-                            onClick={() => {
-                              if (window.confirm("حذف هذا النوع من الغرف؟"))
-                                setRoomTypes((prev) =>
-                                  prev.filter((r) => r.id !== room.id),
-                                );
-                            }}
+                            onClick={() => setDeleteTarget(room.id)}
                             className="p-1.5 rounded-lg transition-colors hover:bg-red-50 dark:hover:bg-red-900/20"
                             style={{ color: "#ef4444" }}
                           >
@@ -1118,4 +1123,3 @@ export default function RoomTypesPage() {
     </div>
   );
 }
-

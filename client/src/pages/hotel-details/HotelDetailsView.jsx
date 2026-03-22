@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { useLanguage } from "../../context/LanguageContext";
 import { useGetIconsQuery } from "../../store/services/api";
+import DeleteConfirmModal from "../../components/DeleteConfirmModal";
 
 const STORAGE_KEYS = [
   "hotel_details_main",
@@ -313,8 +314,9 @@ export default function HotelDetailsView() {
   const { main, description, icons, policy, photos } = readSession();
 
   const handleEdit = () => navigate("/hotel/details/main");
-  const handleDelete = () => {
-    if (!window.confirm(copy.deleteConfirm)) return;
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const handleDelete = () => setShowDeleteModal(true);
+  const confirmDelete = () => {
     STORAGE_KEYS.forEach((key) => sessionStorage.removeItem(key));
     navigate("/hotel/details/main");
   };
@@ -381,6 +383,12 @@ export default function HotelDetailsView() {
 
   return (
     <div className="page-shell space-y-5">
+      <DeleteConfirmModal
+        open={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={confirmDelete}
+        message={copy.deleteConfirm}
+      />
       {allPhotos.length > 0 && <PhotoSlider photos={allPhotos} />}
 
       <div

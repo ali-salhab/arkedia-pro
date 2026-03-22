@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { useLanguage } from "../../context/LanguageContext";
 import { useGetIconsQuery } from "../../store/services/api";
+import DeleteConfirmModal from "../../components/DeleteConfirmModal";
 
 const STORAGE_KEYS = [
   "activity_details_main",
@@ -232,8 +233,9 @@ export default function ActivityDetailsView() {
   const { main, description, icons, policy, photos } = readSession();
 
   const handleEdit = () => navigate("/activity/details/main");
-  const handleDelete = () => {
-    if (!window.confirm(copy.deleteConfirm)) return;
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const handleDelete = () => setShowDeleteModal(true);
+  const confirmDelete = () => {
     STORAGE_KEYS.forEach((key) => sessionStorage.removeItem(key));
     navigate("/activity/details/main");
   };
@@ -292,6 +294,12 @@ export default function ActivityDetailsView() {
 
   return (
     <div className="page-shell space-y-5">
+      <DeleteConfirmModal
+        open={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={confirmDelete}
+        message={copy.deleteConfirm}
+      />
       {allPhotos.length > 0 && <PhotoSlider photos={allPhotos} />}
 
       {/* Header card */}

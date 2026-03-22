@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { BedDouble, Plus, Search, Trash2, Pencil, Eye, X } from "lucide-react";
 import { useLocalStorage } from "../../../hooks/useLocalStorage";
+import DeleteConfirmModal from "../../../components/DeleteConfirmModal";
 
 const INITIAL_GROUPS = [
   {
@@ -129,9 +130,13 @@ export default function SupplementsPage() {
   }
 
   function handleDelete(id) {
-    if (window.confirm("هل تريد حذف هذه الإضافة؟")) {
-      setSupplements((prev) => prev.filter((s) => s.id !== id));
-    }
+    setDeleteTarget(id);
+  }
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  function confirmDelete() {
+    if (deleteTarget)
+      setSupplements((prev) => prev.filter((s) => s.id !== deleteTarget));
+    setDeleteTarget(null);
   }
 
   const isView = modal?.mode === "view";
@@ -139,6 +144,11 @@ export default function SupplementsPage() {
 
   return (
     <div className="page-shell">
+      <DeleteConfirmModal
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={confirmDelete}
+      />
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
@@ -440,4 +450,3 @@ export default function SupplementsPage() {
     </div>
   );
 }
-

@@ -604,11 +604,9 @@ export default function UserFormModal({
 
   // When the selected role is hotel/restaurant/activity (owner account),
   // hide the permissions tab — they always get the full preset automatically.
-  const hidePermissionsTab = [
-    "hotel",
-    "restaurant",
-    "activity",
-  ].includes(selectedRole);
+  const hidePermissionsTab = ["hotel", "restaurant", "activity"].includes(
+    selectedRole,
+  );
 
   const selectedAdmin = adminsList.find((admin) => admin._id === form.adminId);
 
@@ -1579,7 +1577,7 @@ export default function UserFormModal({
                 margin: "6px 0 0",
                 color: "var(--text-primary)",
                 fontSize: 40,
-                lineHeight: 1.1,
+                lineHeight: 1,
                 fontWeight: 700,
               }}
             >
@@ -1591,9 +1589,7 @@ export default function UserFormModal({
                 color: "var(--text-secondary)",
                 fontSize: 14,
               }}
-            >
-              {pageSubtitle}
-            </p>
+            ></p>
           </div>
           <button className="btn btn-secondary" onClick={onClose}>
             {backLabel}
