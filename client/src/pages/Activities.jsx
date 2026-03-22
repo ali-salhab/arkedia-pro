@@ -39,9 +39,9 @@ export default function ActivitiesPage() {
   const adminsList = usersArray.filter((u) => u.role === "admin");
 
   const resolveLinkedAdmin = (a) => {
-    if (!a.adminCompany) return null;
+    if (!a.adminId) return null;
     const id =
-      typeof a.adminCompany === "object" ? a.adminCompany._id : a.adminCompany;
+      typeof a.adminId === "object" ? a.adminId._id : a.adminId;
     return adminsList.find((adm) => adm._id === id) || null;
   };
 
@@ -330,3 +330,4 @@ export default function ActivitiesPage() {
     </div>
   );
 }
+

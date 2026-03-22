@@ -322,7 +322,6 @@ const rolePresets = {
   super_admin: permissionMatrix.flatMap((m) =>
     m.actions.map((a) => `${m.module}:${a.key}`),
   ),
-  // super_admin's staff — limited read-only access by default
   superadminuser: [
     "users:view",
     "users:add",
@@ -379,7 +378,6 @@ const rolePresets = {
     "settings:view",
     "settings:edit",
   ],
-  // admin's staff — limited by default
   adminuser: [
     "hotels:view",
     "restaurants:view",
@@ -416,7 +414,6 @@ const rolePresets = {
     "availability:view",
     "hotel:details",
   ],
-  // hotel staff — only room & booking operations by default
   hoteluser: [
     "rooms:view",
     "bookings:view",
@@ -452,7 +449,6 @@ const rolePresets = {
     "settings:view",
     "restaurant:details",
   ],
-  // restaurant staff — only tables & reservations by default
   restaurantuser: [
     "rooms:view",
     "bookings:view",
@@ -474,7 +470,6 @@ const rolePresets = {
     "settings:view",
     "activity:details",
   ],
-  // activity staff — only activities & bookings by default
   activityuser: [
     "activities:view",
     "bookings:view",
@@ -483,23 +478,11 @@ const rolePresets = {
   ],
 };
 
-const inputStyle = {
-  background: "var(--bg-surface)",
-  border: "1px solid var(--border)",
-  borderRadius: 8,
-  padding: "10px 14px",
-  color: "var(--text-primary)",
-  width: "100%",
-  fontSize: 14,
-};
+const inputClassName =
+  "w-full px-4 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] text-[var(--text-primary)] text-sm outline-none transition-all placeholder:text-sm focus:ring-2 focus:ring-[var(--brand)]/20 focus:border-[var(--brand)]";
 
-const labelStyle = {
-  display: "block",
-  marginBottom: 6,
-  fontWeight: 500,
-  color: "var(--text-secondary)",
-  fontSize: 13,
-};
+const labelClassName =
+  "block mb-1.5 text-[13px] font-medium text-[var(--text-secondary)]";
 
 // Roles that must be owned by an admin (set adminId)
 const ADMIN_OWNED_ROLES = new Set([
@@ -589,9 +572,6 @@ export default function UserFormModal({
   const pageTitle = user
     ? `${isRtl ? "تعديل" : "Edit"} ${selectedRoleLabel}`
     : `${isRtl ? "إضافة" : "New"} ${selectedRoleLabel}`;
-  const pageSubtitle = isRtl
-    ? "أدخل البيانات الأساسية ثم راجع الصلاحيات قبل الحفظ."
-    : "Enter the essential details and review permissions before saving.";
   const backLabel = isRtl ? "رجوع" : "Back";
   const showLogoUpload = [
     "hotel",
@@ -637,7 +617,7 @@ export default function UserFormModal({
       });
       setUseCustomPermissions(false);
     }
-  }, [user, open]);
+  }, [user, open, fixedRole, defaultRole, isAdmin, currentUser]);
 
   if (!open && !pageMode) return null;
 
@@ -794,33 +774,14 @@ export default function UserFormModal({
 
   const innerContent = (
     <div
-      className="card"
-      style={{
-        width: pageMode ? "100%" : "90%",
-        maxWidth: pageMode ? "none" : 900,
-        background: "var(--bg-surface)",
-      }}
+      className={`card ${
+        pageMode ? "w-full shadow-none border border-[var(--border)]" : "w-[90%] max-w-[900px]"
+      } bg-[var(--bg-surface)] p-6 md:p-8 rounded-2xl`}
     >
       {/* Header */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "flex-start",
-          marginBottom: 20,
-          padding: "0 0 16px 0",
-          borderBottom: "1px solid var(--border)",
-        }}
-      >
+      <div className="flex justify-between items-start mb-8 pb-5 border-b border-[var(--border)]">
         <div>
-          <h2
-            style={{
-              margin: 0,
-              color: "var(--text-primary)",
-              fontSize: pageMode ? 28 : 22,
-              fontWeight: 700,
-            }}
-          >
+          <h2 className={`font-bold text-[var(--text-primary)] m-0 ${pageMode ? 'text-2xl md:text-3xl' : 'text-xl'}`}>
             {pageMode
               ? isRtl
                 ? "المعلومات الأساسية"
@@ -830,13 +791,7 @@ export default function UserFormModal({
                 : t("createNewUser")}
           </h2>
           {pageMode && (
-            <p
-              style={{
-                margin: "6px 0 0 0",
-                color: "var(--text-secondary)",
-                fontSize: 14,
-              }}
-            >
+            <p className="m-0 mt-2 text-[var(--text-secondary)] text-sm">
               {isRtl
                 ? "أدخل تفاصيل الحساب الأساسية ثم راجع إعدادات الصلاحيات."
                 : "Enter the account basics, then review permission settings."}
@@ -845,7 +800,7 @@ export default function UserFormModal({
         </div>
         {!pageMode && (
           <button
-            className="icon-btn"
+            className="icon-btn text-[var(--text-secondary)] hover:text-red-500 transition-colors"
             onClick={onClose}
             aria-label={t("close")}
           >
@@ -854,83 +809,52 @@ export default function UserFormModal({
         )}
       </div>
 
-      {/* Tabs */}
-      <div
-        style={{
-          display: "flex",
-          gap: 8,
-          marginBottom: 20,
-          borderBottom: "1px solid var(--border)",
-          paddingBottom: 12,
-        }}
-      >
+      {/* Segmented Tabs Control */}
+      <div className="flex gap-2 p-1.5 rounded-xl bg-[var(--bg-raised)] w-max mb-8 border border-[var(--border)]/60 shadow-sm">
         <button
           onClick={() => setActiveTab("basic")}
-          style={{
-            padding: "10px 20px",
-            background:
-              activeTab === "basic" ? "var(--brand)" : "var(--bg-raised)",
-            border: "none",
-            borderRadius: 8,
-            color: activeTab === "basic" ? "#fff" : "var(--text-secondary)",
-            cursor: "pointer",
-            fontWeight: 500,
-          }}
+          className={`px-5 py-2 rounded-lg font-medium text-[13px] transition-all ${
+            activeTab === "basic"
+              ? "bg-[var(--brand)] text-white shadow-md shadow-[var(--brand)]/20"
+              : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)]"
+          }`}
         >
           👤 {t("basicInfoTab")}
         </button>
         {!hidePermissionsTab && (
           <button
             onClick={() => setActiveTab("permissions")}
-            style={{
-              padding: "10px 20px",
-              background:
-                activeTab === "permissions"
-                  ? "var(--brand)"
-                  : "var(--bg-raised)",
-              border: "none",
-              borderRadius: 8,
-              color:
-                activeTab === "permissions" ? "#fff" : "var(--text-secondary)",
-              cursor: "pointer",
-              fontWeight: 500,
-            }}
+            className={`px-5 py-2 rounded-lg font-medium text-[13px] transition-all flex items-center gap-1.5 ${
+              activeTab === "permissions"
+                ? "bg-[var(--brand)] text-white shadow-md shadow-[var(--brand)]/20"
+                : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)]"
+            }`}
           >
-            🔐 {t("permissionsTab")} ({(form.permissions || []).length})
+            🔐 {t("permissionsTab")} 
+            <span className={`px-1.5 py-0.5 rounded-md text-[10px] bg-black/10 ${activeTab === "permissions" ? 'text-white/90' : 'text-[var(--text-muted)]'}`}>
+              {(form.permissions || []).length}
+            </span>
           </button>
         )}
       </div>
 
       {/* Basic Info Tab */}
       {activeTab === "basic" && (
-        <div
-          style={{
-            padding: 16,
-            background: "var(--bg-raised)",
-            borderRadius: 12,
-            border: "1px solid var(--border)",
-          }}
-        >
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(2, 1fr)",
-              gap: 16,
-            }}
-          >
+        <div className="p-6 bg-[var(--bg-raised)]/50 rounded-2xl border border-[var(--border)]">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label style={labelStyle}>{t("fullName")} *</label>
+              <label className={labelClassName}>{t("fullName")} *</label>
               <input
-                style={inputStyle}
+                className={inputClassName}
                 value={form.name}
                 onChange={(e) => handleChange("name", e.target.value)}
                 placeholder="John Doe"
               />
             </div>
             <div>
-              <label style={labelStyle}>{t("emailAddress")} *</label>
+              <label className={labelClassName}>{t("emailAddress")} *</label>
               <input
-                style={inputStyle}
+                className={inputClassName}
                 type="email"
                 value={form.email}
                 onChange={(e) => handleChange("email", e.target.value)}
@@ -939,20 +863,13 @@ export default function UserFormModal({
             </div>
           </div>
 
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(2, 1fr)",
-              gap: 16,
-              marginTop: 16,
-            }}
-          >
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
             <div>
-              <label style={labelStyle}>
+              <label className={labelClassName}>
                 {t("password")} {user ? t("leaveEmptyPassword") : "*"}
               </label>
               <input
-                style={inputStyle}
+                className={inputClassName}
                 type="password"
                 value={form.password}
                 onChange={(e) => handleChange("password", e.target.value)}
@@ -961,17 +878,8 @@ export default function UserFormModal({
             </div>
             {fixedRole ? (
               <div>
-                <label style={labelStyle}>{t("role")}</label>
-                <div
-                  style={{
-                    ...inputStyle,
-                    background: "var(--bg-raised)",
-                    color: "var(--text-secondary)",
-                    display: "flex",
-                    alignItems: "center",
-                    fontWeight: 600,
-                  }}
-                >
+                <label className={labelClassName}>{t("role")}</label>
+                <div className={`${inputClassName} !bg-[var(--bg-raised)] !text-[var(--text-secondary)] flex items-center font-semibold cursor-not-allowed`}>
                   {fixedRole === "super_admin" && "🔑 " + t("role_super_admin")}
                   {fixedRole === "superadminuser" && "👤 Super Admin User"}
                   {fixedRole === "admin" && "👔 " + t("role_admin")}
@@ -986,9 +894,9 @@ export default function UserFormModal({
               </div>
             ) : (
               <div>
-                <label style={labelStyle}>{t("role")} *</label>
+                <label className={labelClassName}>{t("role")} *</label>
                 <select
-                  style={inputStyle}
+                  className={inputClassName}
                   value={form.role}
                   onChange={(e) => handleChange("role", e.target.value)}
                 >
@@ -1035,31 +943,21 @@ export default function UserFormModal({
 
           {/* Admin Selector — required for platform roles when creating hotel/restaurant/activity accounts */}
           {isPlatformRole && ADMIN_OWNED_ROLES.has(selectedRole) && (
-            <div style={{ marginTop: 16 }}>
-              <label style={{ ...labelStyle, color: "var(--warning)" }}>
+            <div className="mt-6">
+              <label className={`${labelClassName} !text-[var(--warning)]`}>
                 🔗 {t("linkedAdmin")} *
               </label>
               {adminsList.length === 0 ? (
-                <div
-                  style={{
-                    ...inputStyle,
-                    background: "rgba(220, 38, 38, 0.12)",
-                    borderColor: "var(--danger)",
-                    color: "var(--danger)",
-                  }}
-                >
+                <div className="w-full px-4 py-3 rounded-xl border border-[var(--danger)] bg-red-500/10 text-[var(--danger)] text-sm font-medium">
                   ⚠️ No admins found — create an admin account first before
                   adding hotel/restaurant/activity accounts.
                 </div>
               ) : (
                 <>
                   <select
-                    style={{
-                      ...inputStyle,
-                      borderColor: form.adminId
-                        ? "var(--success)"
-                        : "var(--danger)",
-                    }}
+                    className={`${inputClassName} ${
+                      form.adminId ? "border-[var(--success)]" : "border-[var(--danger)]/70"
+                    }`}
                     value={form.adminId}
                     onChange={(e) => handleChange("adminId", e.target.value)}
                   >
@@ -1071,13 +969,7 @@ export default function UserFormModal({
                     ))}
                   </select>
                   {!form.adminId && (
-                    <p
-                      style={{
-                        color: "var(--danger)",
-                        fontSize: 12,
-                        marginTop: 4,
-                      }}
-                    >
+                    <p className="text-[var(--danger)] text-[11px] mt-1.5 font-medium ml-1">
                       ⚠️ {t("adminRequired")}
                     </p>
                   )}
@@ -1088,405 +980,226 @@ export default function UserFormModal({
 
           {/* Logo upload for hotel/restaurant/activity */}
           {showLogoUpload && (
-            <div style={{ marginTop: 16 }}>
-              <label style={labelStyle}>🖼️ {t("logoUpload")}</label>
+            <div className="mt-8">
+              <label className={labelClassName}>🖼️ {t("logoUpload")}</label>
               <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  gap: 12,
-                  padding: 16,
-                  background: "var(--bg-raised)",
-                  borderRadius: 12,
-                  border: form.logo
-                    ? "2px solid var(--success)"
-                    : "2px dashed var(--border)",
-                }}
+                className={`group relative flex flex-col items-center justify-center p-8 rounded-2xl border-2 border-dashed transition-all cursor-pointer overflow-hidden ${
+                  form.logo
+                    ? "border-[var(--success)] bg-[var(--success)]/5"
+                    : "border-[var(--border)] hover:border-[var(--brand)] hover:bg-[var(--brand)]/5"
+                }`}
+                onClick={() => logoInputRef.current?.click()}
               >
                 {form.logo ? (
-                  <img
-                    src={form.logo}
-                    alt="logo preview"
-                    style={{
-                      width: 120,
-                      height: 120,
-                      borderRadius: 16,
-                      objectFit: "contain",
-                      background: "var(--bg-surface)",
-                      border: "1px solid var(--border)",
-                      padding: 4,
-                    }}
-                  />
-                ) : (
-                  <div
-                    style={{
-                      width: 120,
-                      height: 120,
-                      borderRadius: 16,
-                      background: "var(--bg-surface)",
-                      border: "1px solid var(--border)",
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      color: "var(--text-muted)",
-                      fontSize: 32,
-                    }}
-                  >
-                    🖼️
-                    <span
-                      style={{
-                        fontSize: 10,
-                        marginTop: 4,
-                        color: "var(--text-muted)",
-                      }}
-                    >
-                      {isRtl ? "لا توجد صورة" : "No logo"}
-                    </span>
+                  <div className="flex flex-col items-center gap-4">
+                    <img
+                      src={form.logo}
+                      alt="logo preview"
+                      className="w-28 h-28 rounded-xl object-contain bg-white shadow-sm ring-1 ring-black/5 p-2 transition-transform group-hover:scale-105"
+                    />
+                    <div className="flex flex-col items-center gap-1">
+                      <span className="text-[var(--success)] text-[13px] font-medium flex items-center gap-1.5">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
+                        {isRtl ? "تم رفع الشعار بنجاح" : "Logo uploaded"}
+                      </span>
+                      <span className="text-[var(--brand)] text-[12px] opacity-0 group-hover:opacity-100 transition-opacity">
+                        {isRtl ? "انقر لتغيير الشعار" : "Click to change logo"}
+                      </span>
+                    </div>
                   </div>
-                )}
-                <button
-                  type="button"
-                  onClick={() => logoInputRef.current?.click()}
-                  style={{
-                    padding: "8px 20px",
-                    background: "var(--brand)",
-                    border: "none",
-                    borderRadius: 8,
-                    color: "#fff",
-                    cursor: "pointer",
-                    fontSize: 13,
-                    fontWeight: 600,
-                  }}
-                >
-                  {form.logo
-                    ? isRtl
-                      ? "تغيير الشعار"
-                      : "Change Logo"
-                    : isRtl
-                      ? "رفع الشعار"
-                      : "Upload Logo"}
-                </button>
-                {form.logo && (
-                  <span
-                    style={{
-                      color: "var(--success)",
-                      fontSize: 12,
-                      fontWeight: 500,
-                    }}
-                  >
-                    ✓{" "}
-                    {isRtl
-                      ? "تم رفع الشعار بنجاح"
-                      : "Logo uploaded successfully"}
-                  </span>
+                ) : (
+                  <div className="flex flex-col items-center gap-3 text-center">
+                    <div className="w-14 h-14 rounded-full bg-[var(--bg-surface)] shadow-sm border border-[var(--border)] flex items-center justify-center text-2xl group-hover:scale-110 transition-transform duration-300">
+                      📸
+                    </div>
+                    <div>
+                      <p className="text-[var(--text-primary)] font-semibold text-[14px]">
+                        {isRtl ? "انقر لرفع الشعار" : "Click to upload logo"}
+                      </p>
+                      <p className="text-[var(--text-muted)] text-[12px] mt-1">
+                        {isRtl ? "الصيغ المدعومة: JPG, PNG أو GIF" : "Supported formats: JPG, PNG, GIF"}
+                      </p>
+                    </div>
+                  </div>
                 )}
               </div>
               <input
                 ref={logoInputRef}
                 type="file"
                 accept="image/*"
-                style={{ display: "none" }}
+                className="hidden"
                 onChange={handleLogoUpload}
               />
             </div>
           )}
 
           {/* Role Description */}
-          <div
-            style={{
-              marginTop: 20,
-              padding: 16,
-              background: "var(--brand-muted)",
-              borderRadius: 8,
-              borderLeft: "4px solid var(--brand)",
-            }}
-          >
-            <h4
-              style={{
-                margin: "0 0 8px 0",
-                color: "var(--brand)",
-                fontSize: 14,
-              }}
-            >
-              {t("roleDescription")}
+          <div className="mt-8 p-5 bg-[var(--brand)]/10 rounded-xl border-l-4 border-[var(--brand)]">
+            <h4 className="m-0 mb-2 text-[var(--brand)] text-sm font-semibold flex items-center gap-2">
+              💡 {t("roleDescription")}
             </h4>
-            <p
-              style={{
-                margin: 0,
-                color: "var(--text-secondary)",
-                fontSize: 13,
-              }}
-            >
+            <p className="m-0 text-[var(--text-secondary)] text-[13.5px] leading-relaxed">
               {t("roleDesc_" + form.role)}
             </p>
           </div>
 
           {/* Custom Permissions Toggle */}
-          <div
-            style={{
-              marginTop: 20,
-              display: "flex",
-              alignItems: "center",
-              gap: 12,
-            }}
-          >
-            <input
-              type="checkbox"
-              id="customPerms"
-              checked={useCustomPermissions}
-              onChange={(e) => {
-                setUseCustomPermissions(e.target.checked);
-                if (!e.target.checked) {
-                  applyRolePreset();
-                }
-              }}
-            />
-            <label
-              htmlFor="customPerms"
-              style={{ color: "var(--text-secondary)" }}
-            >
-              {t("useCustomPerms")}
+          <div className="mt-6 flex items-center gap-3">
+            <label className="relative flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                className="peer sr-only"
+                checked={useCustomPermissions}
+                onChange={(e) => {
+                  setUseCustomPermissions(e.target.checked);
+                  if (!e.target.checked) {
+                    applyRolePreset();
+                  }
+                }}
+              />
+              <div className="w-11 h-6 bg-[var(--bg-surface)] border border-[var(--border)] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--brand)] peer-checked:border-[var(--brand)]"></div>
             </label>
+            <span className="text-[var(--text-secondary)] text-sm font-medium cursor-pointer select-none" onClick={() => setUseCustomPermissions(!useCustomPermissions)}>
+              {t("useCustomPerms")}
+            </span>
           </div>
         </div>
       )}
 
       {/* Permissions Tab */}
       {activeTab === "permissions" && (
-        <div>
+        <div className="animate-in fade-in duration-300">
           {/* Quick Actions */}
-          <div
-            style={{
-              display: "flex",
-              gap: 8,
-              marginBottom: 16,
-              flexWrap: "wrap",
-            }}
-          >
+          <div className="flex flex-wrap items-center gap-2 mb-6 bg-[var(--bg-raised)] p-3 rounded-xl border border-[var(--border)]">
             <button
               onClick={selectAllPermissions}
-              style={{
-                padding: "8px 16px",
-                background: "var(--success)",
-                border: "none",
-                borderRadius: 6,
-                color: "#fff",
-                cursor: "pointer",
-                fontSize: 13,
-              }}
+              className="px-4 py-2 bg-[var(--success)] text-white font-medium text-[12px] rounded-lg shadow-sm hover:scale-[1.02] transition-transform"
             >
               ✅ {t("selectAll")}
             </button>
             <button
               onClick={clearAllPermissions}
-              style={{
-                padding: "8px 16px",
-                background: "var(--danger)",
-                border: "none",
-                borderRadius: 6,
-                color: "#fff",
-                cursor: "pointer",
-                fontSize: 13,
-              }}
+              className="px-4 py-2 bg-[var(--danger)] text-white font-medium text-[12px] rounded-lg shadow-sm hover:scale-[1.02] transition-transform"
             >
               ❌ {t("clearAll")}
             </button>
             <button
               onClick={applyRolePreset}
-              style={{
-                padding: "8px 16px",
-                background: "var(--brand)",
-                border: "none",
-                borderRadius: 6,
-                color: "#fff",
-                cursor: "pointer",
-                fontSize: 13,
-              }}
+              className="px-4 py-2 bg-[var(--brand)] text-white font-medium text-[12px] rounded-lg shadow-sm hover:scale-[1.02] transition-transform"
             >
               🔄 {t("applyRolePreset")}
             </button>
-            <span
-              style={{
-                color: "var(--text-secondary)",
-                fontSize: 13,
-                alignSelf: "center",
-                marginLeft: "auto",
-              }}
-            >
+            <span className="ms-auto mr-2 rtl:mr-0 rtl:ml-2 text-[var(--text-secondary)] text-[13px] font-semibold bg-[var(--bg-surface)] px-3 py-1.5 rounded-md border border-[var(--border)]">
               {(form.permissions || []).length} {t("permissionsSelected")}
             </span>
           </div>
 
           {/* Permission Modules */}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(2, 1fr)",
-              gap: 16,
-            }}
-          >
-            {visibleMatrix.map((module) => (
-              <div
-                key={module.module}
-                style={{
-                  background: "var(--bg-raised)",
-                  borderRadius: 12,
-                  padding: 16,
-                  border: isModuleFullySelected(module.module)
-                    ? "2px solid var(--success)"
-                    : isModulePartiallySelected(module.module)
-                      ? "2px solid var(--warning)"
-                      : "2px solid var(--border)",
-                }}
-              >
-                {/* Module Header */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {visibleMatrix.map((module) => {
+              const fullySelected = isModuleFullySelected(module.module);
+              const partiallySelected = isModulePartiallySelected(module.module);
+              return (
                 <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 10,
-                    marginBottom: 12,
-                    paddingBottom: 10,
-                    borderBottom: "1px solid var(--border)",
-                  }}
+                  key={module.module}
+                  className={`bg-[var(--bg-raised)] rounded-2xl p-5 border-2 transition-all duration-200 ${
+                    fullySelected
+                      ? "border-[var(--success)] shadow-[0_0_15px_rgba(34,197,94,0.1)]"
+                      : partiallySelected
+                      ? "border-[var(--warning)]"
+                      : "border-[var(--border)] hover:border-[var(--text-muted)]"
+                  }`}
                 >
-                  <span style={{ fontSize: 24 }}>{module.icon}</span>
-                  <div style={{ flex: 1 }}>
-                    <h4
-                      style={{
-                        margin: 0,
-                        color: "var(--text-primary)",
-                        fontSize: 15,
-                      }}
-                    >
-                      {t(`module_${module.module}`)}
-                    </h4>
+                  {/* Module Header */}
+                  <div className="flex items-center gap-3 mb-4 pb-3 border-b border-[var(--border)]/70">
+                    <div className="w-10 h-10 rounded-xl bg-[var(--bg-surface)] shadow-sm border border-[var(--border)] flex items-center justify-center text-xl">
+                      {module.icon}
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="m-0 text-[var(--text-primary)] text-[15px] font-bold">
+                        {t(`module_${module.module}`)}
+                      </h4>
+                    </div>
+                    <label className="flex items-center gap-2 cursor-pointer bg-[var(--bg-surface)] px-2 py-1 rounded-md border border-[var(--border)] hover:bg-[var(--border)] transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={fullySelected}
+                        onChange={(e) =>
+                          toggleModuleAll(module.module, e.target.checked)
+                        }
+                        className="w-4 h-4 rounded text-[var(--brand)] focus:ring-[var(--brand)]"
+                      />
+                      <span className="text-[var(--text-secondary)] text-[11px] font-semibold uppercase tracking-wider">
+                        {t("allLabel")}
+                      </span>
+                    </label>
                   </div>
-                  <label
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 6,
-                      cursor: "pointer",
-                    }}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={isModuleFullySelected(module.module)}
-                      onChange={(e) =>
-                        toggleModuleAll(module.module, e.target.checked)
-                      }
-                      style={{ width: 18, height: 18 }}
-                    />
-                    <span
-                      style={{ color: "var(--text-secondary)", fontSize: 12 }}
-                    >
-                      {t("allLabel")}
-                    </span>
-                  </label>
-                </div>
 
-                {/* Module Actions */}
-                <div
-                  style={{ display: "flex", flexDirection: "column", gap: 8 }}
-                >
-                  {module.actions.map((action) => {
-                    const perm = `${module.module}:${action.key}`;
-                    const isSelected = (form.permissions || []).includes(perm);
-                    return (
-                      <label
-                        key={perm}
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 10,
-                          padding: "8px 12px",
-                          background: isSelected
-                            ? "rgba(34, 197, 94, 0.14)"
-                            : "var(--bg-surface)",
-                          borderRadius: 6,
-                          cursor: "pointer",
-                          border: isSelected
-                            ? "1px solid rgba(34, 197, 94, 0.45)"
-                            : "1px solid var(--border)",
-                          transition: "all 0.15s",
-                        }}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={() => togglePermission(perm)}
-                          style={{ width: 16, height: 16 }}
-                        />
-                        <span
-                          style={{
-                            color: isSelected
-                              ? "var(--success)"
-                              : "var(--text-secondary)",
-                            fontSize: 13,
-                          }}
+                  {/* Module Actions */}
+                  <div className="flex flex-col gap-2.5">
+                    {module.actions.map((action) => {
+                      const perm = `${module.module}:${action.key}`;
+                      const isSelected = (form.permissions || []).includes(perm);
+                      return (
+                        <label
+                          key={perm}
+                          className={`group flex items-center gap-3 p-3 rounded-xl cursor-pointer border transition-all duration-200 ${
+                            isSelected
+                              ? "bg-[var(--success)]/10 border-[var(--success)]/30"
+                              : "bg-[var(--bg-surface)] border-transparent hover:border-[var(--border)] hover:bg-[var(--bg-surface)]/80"
+                          }`}
                         >
-                          {t(`action_${action.key}_${module.module}`)}
-                        </span>
-                        {action.key === "delete" && (
+                          <div className={`w-5 h-5 rounded border ${isSelected ? 'bg-[var(--success)] border-[var(--success)] text-white' : 'border-[var(--border)] bg-transparent'} flex items-center justify-center transition-colors`}>
+                            {isSelected && <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path></svg>}
+                          </div>
+                          
+                          {/* Hide the actual checkbox input but keep logic */}
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => togglePermission(perm)}
+                            className="hidden"
+                          />
+
                           <span
-                            style={{
-                              marginLeft: "auto",
-                              fontSize: 10,
-                              background: "rgba(220, 38, 38, 0.12)",
-                              color: "var(--danger)",
-                              padding: "2px 6px",
-                              borderRadius: 4,
-                            }}
+                            className={`font-medium text-[13px] ${
+                              isSelected
+                                ? "text-[var(--success)]"
+                                : "text-[var(--text-secondary)] group-hover:text-[var(--text-primary)]"
+                            }`}
                           >
-                            {t("dangerLabel")}
+                            {t(`action_${action.key}_${module.module}`)}
                           </span>
-                        )}
-                      </label>
-                    );
-                  })}
+
+                          {action.key === "delete" && (
+                            <span className="ms-auto rtl:ms-0 rtl:me-auto text-[10px] font-bold bg-red-500/10 text-red-500 px-2 py-0.5 rounded-md border border-red-500/20">
+                              {t("dangerLabel")}
+                            </span>
+                          )}
+                        </label>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
-          {/* Permission Summary */}
-          <div
-            style={{
-              marginTop: 20,
-              padding: 16,
-              background: "var(--bg-raised)",
-              borderRadius: 12,
-              border: "1px solid var(--border)",
-            }}
-          >
-            <h4
-              style={{
-                margin: "0 0 12px 0",
-                color: "var(--text-primary)",
-                fontSize: 14,
-              }}
-            >
+          {/* Permission Summary box below */}
+          <div className="mt-8 p-5 bg-[var(--bg-raised)] rounded-2xl border border-[var(--border)]">
+            <h4 className="m-0 mb-4 text-[var(--text-primary)] text-sm font-bold flex items-center gap-2">
               📋 {t("permSummary")}
             </h4>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+            <div className="flex flex-wrap gap-2">
               {(form.permissions || []).length === 0 ? (
-                <span style={{ color: "var(--text-muted)", fontSize: 13 }}>
+                <span className="text-[var(--text-muted)] text-[13px] italic bg-[var(--bg-surface)] px-3 py-1 rounded-md border border-[var(--border)]">
                   {t("noPermsSelected")}
                 </span>
               ) : (
                 (form.permissions || []).map((p) => (
                   <span
                     key={p}
-                    style={{
-                      padding: "4px 10px",
-                      background: "#1e3a8a",
-                      borderRadius: 20,
-                      fontSize: 11,
-                      color: "#93c5fd",
-                    }}
+                    className="px-3 py-1.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-full text-[11px] font-medium tracking-wide shadow-sm"
                   >
                     {p}
                   </span>
@@ -1499,50 +1212,37 @@ export default function UserFormModal({
 
       {/* Error Banner */}
       {saveError && (
-        <div
-          style={{
-            marginTop: 16,
-            padding: "12px 16px",
-            background: "rgba(220, 38, 38, 0.12)",
-            border: "1px solid rgba(220, 38, 38, 0.35)",
-            borderRadius: 8,
-            color: "var(--danger)",
-            fontSize: 13,
-            fontWeight: 500,
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-          }}
-        >
-          ⚠️ {saveError}
+        <div className="animate-in fade-in slide-in-from-bottom-2 mt-6 p-4 bg-red-500/10 border border-red-500/30 rounded-xl text-red-500 text-sm font-semibold flex items-center gap-3 shadow-sm">
+          <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+          {saveError}
         </div>
       )}
 
       {!pageMode && (
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "flex-end",
-            gap: 12,
-            marginTop: 20,
-            paddingTop: 16,
-            borderTop: "1px solid var(--border)",
-          }}
-        >
-          <button className="btn btn-secondary" onClick={onClose}>
+        <div className="flex justify-end gap-3 mt-8 pt-5 border-t border-[var(--border)]">
+          <button className="btn btn-secondary !px-6 !py-2.5 !rounded-xl !font-semibold transition-all hover:bg-[var(--bg-surface)]" onClick={onClose}>
             {t("cancel")}
           </button>
           <button
-            className="btn btn-primary"
+            className="btn btn-primary !px-8 !py-2.5 !rounded-xl !font-semibold transition-all shadow-md shadow-[var(--brand)]/20 hover:shadow-lg hover:shadow-[var(--brand)]/30 hover:-translate-y-0.5 disabled:shadow-none disabled:hover:translate-y-0"
             onClick={handleSubmit}
             disabled={loading || !form.name || !form.email}
             style={{
               background: loading ? "var(--bg-raised)" : "var(--brand)",
               color: loading ? "var(--text-secondary)" : "#ffffff",
-              opacity: !form.name || !form.email ? 0.5 : 1,
+              opacity: !form.name || !form.email ? 0.6 : 1,
             }}
           >
-            {loading ? t("saving") : user ? t("updateUser") : t("createUser")}
+            {loading ? (
+              <span className="flex items-center gap-2">
+                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                {t("saving")}
+              </span>
+            ) : user ? (
+              t("updateUser")
+            ) : (
+              t("createUser")
+            )}
           </button>
         </div>
       )}
@@ -1560,175 +1260,118 @@ export default function UserFormModal({
 
   if (pageMode) {
     return (
-      <div className="space-y-6" style={{ direction: isRtl ? "rtl" : "ltr" }}>
+      <div className="space-y-6 animate-in fade-in duration-300" style={{ direction: isRtl ? "rtl" : "ltr" }}>
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <p
-              style={{
-                margin: 0,
-                color: "var(--text-muted)",
-                fontSize: 13,
-              }}
-            >
-              {t("dashboard")} / {selectedRoleLabel}
-            </p>
-            <h1
-              style={{
-                margin: "6px 0 0",
-                color: "var(--text-primary)",
-                fontSize: 40,
-                lineHeight: 1,
-                fontWeight: 700,
-              }}
-            >
+            <div className="flex items-center gap-2 text-[var(--text-muted)] text-[13px] font-medium mb-1.5">
+              <span>{t("dashboard")}</span>
+              <span className="opacity-50">/</span>
+              <span className="text-[var(--text-secondary)]">{selectedRoleLabel}</span>
+            </div>
+            <h1 className="m-0 text-[var(--text-primary)] text-4xl font-extrabold tracking-tight">
               {pageTitle}
             </h1>
-            <p
-              style={{
-                margin: "8px 0 0",
-                color: "var(--text-secondary)",
-                fontSize: 14,
-              }}
-            ></p>
           </div>
-          <button className="btn btn-secondary" onClick={onClose}>
-            {backLabel}
+          <button className="btn btn-secondary !px-5 !py-2 !rounded-xl font-semibold shadow-sm hover:bg-[var(--bg-raised)] transition-all" onClick={onClose}>
+            <span className="flex items-center gap-2">
+              <svg className={`w-4 h-4 ${isRtl ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+              {backLabel}
+            </span>
           </button>
         </div>
 
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px] items-start pb-10">
           {innerContent}
 
-          <div className="space-y-4">
-            <div className="card">
-              <h3
-                style={{
-                  margin: 0,
-                  color: "var(--text-primary)",
-                  fontSize: 24,
-                  fontWeight: 700,
-                }}
-              >
-                {isRtl ? "معلومات الحساب" : "Organization"}
+          <div className="sticky top-6 flex flex-col gap-5">
+            <div className="card p-6 bg-[var(--bg-surface)] rounded-2xl border border-[var(--border)] shadow-sm">
+              <h3 className="m-0 text-[var(--text-primary)] text-[20px] font-bold">
+                {isRtl ? "معلومات الحساب" : "Summary"}
               </h3>
-              <p
-                style={{
-                  margin: "6px 0 16px",
-                  color: "var(--text-secondary)",
-                  fontSize: 13,
-                }}
-              >
+              <p className="mt-1.5 mb-6 text-[var(--text-secondary)] text-[13px]">
                 {isRtl ? "ملخص سريع قبل الحفظ" : "Quick summary before saving."}
               </p>
 
-              <div style={{ display: "grid", gap: 10 }}>
+              <div className="flex flex-col gap-4">
                 <div>
-                  <p
-                    style={{
-                      margin: "0 0 6px",
-                      color: "var(--text-muted)",
-                      fontSize: 12,
-                      textTransform: "uppercase",
-                      letterSpacing: "0.06em",
-                    }}
-                  >
+                  <p className="m-0 mb-1.5 text-[var(--text-muted)] text-[11px] uppercase tracking-widest font-bold">
                     {t("role")}
                   </p>
-                  <div
-                    style={{
-                      background: "var(--bg-raised)",
-                      border: "1px solid var(--border)",
-                      borderRadius: 10,
-                      padding: "10px 12px",
-                      color: "var(--text-primary)",
-                      fontWeight: 600,
-                    }}
-                  >
+                  <div className="bg-[var(--bg-raised)] border border-[var(--border)] rounded-xl px-4 py-3 text-[var(--text-primary)] text-[14px] font-semibold flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-[var(--brand)]"></div>
                     {selectedRoleLabel}
                   </div>
                 </div>
 
                 <div>
-                  <p
-                    style={{
-                      margin: "0 0 6px",
-                      color: "var(--text-muted)",
-                      fontSize: 12,
-                      textTransform: "uppercase",
-                      letterSpacing: "0.06em",
-                    }}
-                  >
+                  <p className="m-0 mb-1.5 text-[var(--text-muted)] text-[11px] uppercase tracking-widest font-bold">
                     {t("permissions")}
                   </p>
-                  <div
-                    style={{
-                      background: "var(--bg-raised)",
-                      border: "1px solid var(--border)",
-                      borderRadius: 10,
-                      padding: "10px 12px",
-                      color: "var(--text-primary)",
-                      fontWeight: 600,
-                    }}
-                  >
-                    {(form.permissions || []).length} {t("permissionsSelected")}
+                  <div className="bg-[var(--bg-raised)] border border-[var(--border)] rounded-xl px-4 py-3 text-[var(--text-primary)] text-[14px] font-semibold flex items-center justify-between">
+                    <span>{t("permissionsSelected")}</span>
+                    <span className="bg-[var(--brand)]/10 text-[var(--brand)] px-2 py-0.5 rounded-md text-[12px] border border-[var(--brand)]/20">
+                      {(form.permissions || []).length}
+                    </span>
                   </div>
                 </div>
 
                 {needsLinkedAdmin && (
                   <div>
-                    <p
-                      style={{
-                        margin: "0 0 6px",
-                        color: "var(--text-muted)",
-                        fontSize: 12,
-                        textTransform: "uppercase",
-                        letterSpacing: "0.06em",
-                      }}
-                    >
+                    <p className="m-0 mb-1.5 text-[var(--text-muted)] text-[11px] uppercase tracking-widest font-bold">
                       {t("linkedAdmin")}
                     </p>
                     <div
-                      style={{
-                        background: "var(--bg-raised)",
-                        border: `1px solid ${
-                          form.adminId ? "var(--border)" : "var(--danger)"
-                        }`,
-                        borderRadius: 10,
-                        padding: "10px 12px",
-                        color: form.adminId
-                          ? "var(--text-primary)"
-                          : "var(--danger)",
-                        fontWeight: 600,
-                      }}
+                      className={`bg-[var(--bg-raised)] border rounded-xl px-4 py-3 text-[14px] font-semibold flex flex-col gap-1 ${
+                        form.adminId ? "border-[var(--border)] text-[var(--text-primary)]" : "border-[var(--danger)] text-[var(--danger)]"
+                      }`}
                     >
-                      {selectedAdmin
-                        ? `${selectedAdmin.name} (${selectedAdmin.email})`
-                        : t("adminRequired")}
+                      {selectedAdmin ? (
+                        <>
+                          <span className="flex items-center gap-2">
+                            <span className="text-[16px]">🧑‍💼</span>
+                            {selectedAdmin.name}
+                          </span>
+                          <span className="text-[var(--text-muted)] text-[11px] font-normal ms-6 rtl:ms-0 rtl:me-6">
+                            {selectedAdmin.email}
+                          </span>
+                        </>
+                      ) : (
+                        <span className="flex items-center gap-2">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                          {t("adminRequired")}
+                        </span>
+                      )}
                     </div>
                   </div>
                 )}
               </div>
             </div>
 
-            <div className="card" style={{ display: "grid", gap: 10 }}>
+            <div className="card p-5 bg-[var(--bg-surface)] rounded-2xl border border-[var(--border)] shadow-sm flex flex-col gap-3">
               <button
                 onClick={handleSubmit}
                 disabled={pagePrimaryDisabled}
-                className="btn"
+                className="btn w-full !py-3 !rounded-xl !text-[15px] !font-bold transition-all flex justify-center items-center gap-2 group disabled:shadow-none"
                 style={{
-                  width: "100%",
-                  background: pagePrimaryDisabled ? "#444" : "#111111",
-                  color: "#ffffff",
-                  opacity: pagePrimaryDisabled ? 0.65 : 1,
+                  background: pagePrimaryDisabled ? "var(--bg-raised)" : "var(--brand)",
+                  color: pagePrimaryDisabled ? "var(--text-muted)" : "#ffffff",
+                  opacity: pagePrimaryDisabled ? 0.7 : 1,
+                  boxShadow: pagePrimaryDisabled ? 'none' : '0 4px 14px -2px var(--brand)',
                 }}
               >
-                {loading
-                  ? t("saving")
-                  : user
-                    ? t("updateUser")
-                    : t("createUser")}
+                {loading ? (
+                  <>
+                    <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                    {t("saving")}
+                  </>
+                ) : (
+                  <>
+                    {user ? t("updateUser") : t("createUser")}
+                    <svg className={`w-4 h-4 transition-transform ${isRtl ? 'rotate-180 group-hover:-translate-x-1' : 'group-hover:translate-x-1'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                  </>
+                )}
               </button>
-              <button className="btn btn-secondary" onClick={onClose}>
+              <button className="btn btn-secondary w-full !py-3 !rounded-xl !text-[14px] !font-semibold hover:bg-[var(--bg-raised)] transition-colors" onClick={onClose}>
                 {t("cancel")}
               </button>
             </div>
@@ -1740,20 +1383,14 @@ export default function UserFormModal({
 
   return (
     <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        background: "rgba(0,0,0,0.7)",
-        display: "flex",
-        alignItems: "flex-start",
-        justifyContent: "center",
-        zIndex: 1000,
-        overflowY: "auto",
-        padding: "20px",
-      }}
+      className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-start justify-center z-[1000] overflow-y-auto p-4 md:p-8 animate-in fade-in duration-200"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      {innerContent}
+      <div className="my-auto w-full flex justify-center">
+        {innerContent}
+      </div>
     </div>
   );
 }
+
+

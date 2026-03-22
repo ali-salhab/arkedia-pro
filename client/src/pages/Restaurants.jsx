@@ -39,9 +39,9 @@ export default function RestaurantsPage() {
   const adminsList = usersArray.filter((u) => u.role === "admin");
 
   const resolveLinkedAdmin = (r) => {
-    if (!r.adminCompany) return null;
+    if (!r.adminId) return null;
     const id =
-      typeof r.adminCompany === "object" ? r.adminCompany._id : r.adminCompany;
+      typeof r.adminId === "object" ? r.adminId._id : r.adminId;
     return adminsList.find((a) => a._id === id) || null;
   };
 
@@ -136,7 +136,7 @@ export default function RestaurantsPage() {
         onClose={() => setDeleteTarget(null)}
         onConfirm={confirmDelete}
       />
-      {/* Header */}}
+      {/* Header */}
       <div className="flex items-start justify-between gap-4 mb-6">
         <div>
           <nav className="flex items-center gap-1.5 text-sm text-slate-400 mb-1">
@@ -329,3 +329,4 @@ export default function RestaurantsPage() {
     </div>
   );
 }
+

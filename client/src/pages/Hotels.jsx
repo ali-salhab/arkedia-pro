@@ -39,11 +39,11 @@ export default function HotelsPage() {
   const adminsList = usersArray.filter((u) => u.role === "admin");
 
   const resolveLinkedAdmin = (hotel) => {
-    if (!hotel.adminCompany) return null;
+    if (!hotel.adminId) return null;
     const id =
-      typeof hotel.adminCompany === "object"
-        ? hotel.adminCompany._id
-        : hotel.adminCompany;
+      typeof hotel.adminId === "object"
+        ? hotel.adminId._id
+        : hotel.adminId;
     return adminsList.find((a) => a._id === id) || null;
   };
 
@@ -136,7 +136,7 @@ export default function HotelsPage() {
         onClose={() => setDeleteTarget(null)}
         onConfirm={confirmDelete}
       />
-      {/* Header */}}
+      {/* Header */}
       <div className="flex items-start justify-between gap-4 mb-6">
         <div>
           <nav className="flex items-center gap-1.5 text-sm text-slate-400 mb-1">
@@ -330,3 +330,4 @@ export default function HotelsPage() {
     </div>
   );
 }
+
