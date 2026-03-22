@@ -14,7 +14,7 @@ export default function Modal({ open, onClose, title, children }) {
         backdropFilter: "blur(4px)",
       }}
     >
-      <div className="card" style={{ minWidth: 360, maxWidth: 520 }}>
+      <div className="card w-full max-w-lg mx-4">
         <div
           style={{
             display: "flex",

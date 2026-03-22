@@ -37,6 +37,14 @@ import HotelPolicyStep from "./pages/hotel-details/PolicyStep";
 import HotelPhotosStep from "./pages/hotel-details/PhotosStep";
 import HotelDetailsView from "./pages/hotel-details/HotelDetailsView";
 import HotelChannelManagerPage from "./pages/hotel-channel/ChannelManagerPage";
+import GuestGroupsPage from "./pages/hotel-channel/travky/GuestGroupsPage";
+import MealPlansPage from "./pages/hotel-channel/travky/MealPlansPage";
+import PeriodsPage from "./pages/hotel-channel/travky/PeriodsPage";
+import SupplementsPage from "./pages/hotel-channel/travky/SupplementsPage";
+import RefundPoliciesPage from "./pages/hotel-channel/travky/RefundPoliciesPage";
+import RoomTypesPage from "./pages/hotel-channel/travky/RoomTypesPage";
+import RatesPage from "./pages/hotel-channel/travky/RatesPage";
+import AvailabilityPage from "./pages/hotel-channel/travky/AvailabilityPage";
 
 const ALL_ROLES = [
   "super_admin",
@@ -163,9 +171,7 @@ export default function App() {
                 element={
                   <PermissionRoute
                     permission="guest_groups:view"
-                    element={
-                      <HotelChannelManagerPage sectionKey="guest_groups" />
-                    }
+                    element={<GuestGroupsPage />}
                   />
                 }
               />
@@ -178,9 +184,7 @@ export default function App() {
                 element={
                   <PermissionRoute
                     permission="meal_plans:view"
-                    element={
-                      <HotelChannelManagerPage sectionKey="meal_plans" />
-                    }
+                    element={<MealPlansPage />}
                   />
                 }
               />
@@ -193,7 +197,7 @@ export default function App() {
                 element={
                   <PermissionRoute
                     permission="periods:view"
-                    element={<HotelChannelManagerPage sectionKey="periods" />}
+                    element={<PeriodsPage />}
                   />
                 }
               />
@@ -206,9 +210,7 @@ export default function App() {
                 element={
                   <PermissionRoute
                     permission="supplements:view"
-                    element={
-                      <HotelChannelManagerPage sectionKey="supplements" />
-                    }
+                    element={<SupplementsPage />}
                   />
                 }
               />
@@ -221,9 +223,7 @@ export default function App() {
                 element={
                   <PermissionRoute
                     permission="refund_policies:view"
-                    element={
-                      <HotelChannelManagerPage sectionKey="refund_policies" />
-                    }
+                    element={<RefundPoliciesPage />}
                   />
                 }
               />
@@ -236,9 +236,7 @@ export default function App() {
                 element={
                   <PermissionRoute
                     permission="channel_manager_rooms:view"
-                    element={
-                      <HotelChannelManagerPage sectionKey="channel_manager_rooms" />
-                    }
+                    element={<RoomTypesPage />}
                   />
                 }
               />
@@ -251,7 +249,7 @@ export default function App() {
                 element={
                   <PermissionRoute
                     permission="rates:view"
-                    element={<HotelChannelManagerPage sectionKey="rates" />}
+                    element={<RatesPage />}
                   />
                 }
               />
@@ -264,9 +262,7 @@ export default function App() {
                 element={
                   <PermissionRoute
                     permission="availability:view"
-                    element={
-                      <HotelChannelManagerPage sectionKey="availability" />
-                    }
+                    element={<AvailabilityPage />}
                   />
                 }
               />

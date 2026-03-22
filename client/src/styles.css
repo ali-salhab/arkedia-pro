@@ -31,13 +31,10 @@
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: none;
   }
 }
 
-/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-   DESIGN TOKENS
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 @layer base {
   :root {
     /* Brand */
@@ -72,6 +69,8 @@
     --sidebar-active-border: #3b82f6;
     --sidebar-hover-bg: #f3f4f6;
     --sidebar-header-bg: #111827;
+    --sidebar-item-active-bg: #0f172a;
+    --sidebar-item-active-color: #ffffff;
   }
 
   html.dark {
@@ -104,6 +103,8 @@
     --sidebar-active-border: #3b82f6;
     --sidebar-hover-bg: #1f2937;
     --sidebar-header-bg: #0b0f14;
+    --sidebar-item-active-bg: rgba(59, 130, 246, 0.18);
+    --sidebar-item-active-color: #93c5fd;
   }
 
   html,
@@ -293,10 +294,8 @@
     color: var(--text-primary);
   }
   .sidebar-item.active {
-    background-color: var(--sidebar-active-bg);
-    color: var(--sidebar-active-text);
-    border-left: 2px solid var(--sidebar-active-border);
-    padding-left: calc(0.75rem - 2px);
+    background-color: var(--sidebar-item-active-bg);
+    color: var(--sidebar-item-active-color);
     font-weight: 600;
   }
 

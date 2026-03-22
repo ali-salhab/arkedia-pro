@@ -21,6 +21,7 @@ import {
   ChevronRight,
   ChevronDown,
   Circle,
+  X,
   ClipboardList,
   FileSearch,
   AlignLeft,
@@ -84,13 +85,13 @@ const ROLE_MENUS = {
           route: "/hotel/details/description",
           Icon: AlignLeft,
         },
-        { name: "Hotel Icons", route: "/hotel/details/icons", Icon: Tag },
         {
           name: "Hotel Policy",
           route: "/hotel/details/policy",
           Icon: ShieldCheck,
         },
         { name: "Photos", route: "/hotel/details/photos", Icon: Images },
+        { name: "Hotel Icons", route: "/hotel/details/icons", Icon: Tag },
       ],
     },
     {
@@ -256,6 +257,54 @@ const ICON_MAP = {
   Settings: <Settings size={17} />,
 };
 
+const ROLE_HEADER_CONFIG = {
+  hotel: { label: "Hotel", Icon: Building2, bg: "#dcfce7", color: "#16a34a" },
+  hoteluser: {
+    label: "Hotel",
+    Icon: Building2,
+    bg: "#dcfce7",
+    color: "#16a34a",
+  },
+  restaurant: {
+    label: "Restaurant",
+    Icon: UtensilsCrossed,
+    bg: "#fff7ed",
+    color: "#ea580c",
+  },
+  restaurantuser: {
+    label: "Restaurant",
+    Icon: UtensilsCrossed,
+    bg: "#fff7ed",
+    color: "#ea580c",
+  },
+  activity: { label: "Activity", Icon: Zap, bg: "#fef9c3", color: "#ca8a04" },
+  activityuser: {
+    label: "Activity",
+    Icon: Zap,
+    bg: "#fef9c3",
+    color: "#ca8a04",
+  },
+  admin: { label: "Admin", Icon: UserCheck, bg: "#eff6ff", color: "#2563eb" },
+  adminuser: {
+    label: "Admin",
+    Icon: UserCheck,
+    bg: "#eff6ff",
+    color: "#2563eb",
+  },
+  super_admin: {
+    label: "Super Admin",
+    Icon: LayoutDashboard,
+    bg: "#f3e8ff",
+    color: "#9333ea",
+  },
+  superadminuser: {
+    label: "Super Admin",
+    Icon: LayoutDashboard,
+    bg: "#f3e8ff",
+    color: "#9333ea",
+  },
+};
+
 function filterMenuItems(items, permissions) {
   return items.reduce((acc, item) => {
     if (item.perm && !permissions.includes(item.perm)) return acc;
@@ -304,6 +353,13 @@ export default function Sidebar({ mobileOpen = false, onClose }) {
   const [expandedItems, setExpandedItems] = useState({});
 
   const isRtl = dir === "rtl";
+  const roleConf = ROLE_HEADER_CONFIG[currentUser?.role] || {
+    label: "Menu",
+    Icon: LayoutDashboard,
+    bg: "#eff6ff",
+    color: "#2563eb",
+  };
+  const RoleIcon = roleConf.Icon;
   const menu = useMemo(
     () => buildMenu(currentUser?.role, userPerms),
     [currentUser?.role, userPerms],
@@ -344,38 +400,33 @@ export default function Sidebar({ mobileOpen = false, onClose }) {
               style={
                 isActive
                   ? {
-                      backgroundColor: "var(--sidebar-active-bg)",
-                      color: "var(--sidebar-active-text)",
-                      borderLeft: isRtl
-                        ? "none"
-                        : "2px solid var(--sidebar-active-border)",
-                      borderRight: isRtl
-                        ? "2px solid var(--sidebar-active-border)"
-                        : "none",
-                      paddingLeft: isRtl
-                        ? undefined
-                        : collapsed
-                          ? undefined
-                          : "calc(0.75rem - 2px)",
-                      paddingRight: isRtl
-                        ? collapsed
-                          ? undefined
-                          : "calc(0.75rem - 2px)"
-                        : undefined,
+                      backgroundColor: "var(--sidebar-item-active-bg)",
+                      color: "var(--sidebar-item-active-color)",
                     }
                   : undefined
               }
             >
-              <span className="shrink-0" style={{ opacity: 0.85 }}>
-                {item.Icon ? (
-                  <item.Icon size={17} />
+              <span className="shrink-0 flex items-center justify-center">
+                {depth > 0 ? (
+                  <span
+                    className="block w-1.5 h-1.5 rounded-full"
+                    style={{
+                      backgroundColor: isActive
+                        ? "var(--sidebar-item-active-color)"
+                        : "var(--text-muted)",
+                    }}
+                  />
+                ) : item.Icon ? (
+                  <item.Icon size={17} style={{ opacity: 0.85 }} />
                 ) : (
-                  ICON_MAP[item.name] || <Circle size={17} />
+                  (ICON_MAP[item.name] ?? (
+                    <Circle size={17} style={{ opacity: 0.85 }} />
+                  ))
                 )}
               </span>
               {!collapsed && (
                 <>
-                  <span className="truncate flex-1 text-left">
+                  <span className="truncate flex-1 text-start">
                     {t(SIDEBAR_NAME_MAP[item.name] || item.name)}
                   </span>
                   <ChevronDown
@@ -417,16 +468,8 @@ export default function Sidebar({ mobileOpen = false, onClose }) {
             style={
               isActive
                 ? {
-                    backgroundColor: "var(--sidebar-active-bg)",
-                    color: "var(--sidebar-active-text)",
-                    borderLeft: isRtl
-                      ? "none"
-                      : "2px solid var(--sidebar-active-border)",
-                    borderRight: isRtl
-                      ? "2px solid var(--sidebar-active-border)"
-                      : "none",
-                    paddingLeft: isRtl ? undefined : "calc(0.75rem - 2px)",
-                    paddingRight: isRtl ? "calc(0.75rem - 2px)" : undefined,
+                    backgroundColor: "var(--sidebar-item-active-bg)",
+                    color: "var(--sidebar-item-active-color)",
                   }
                 : undefined
             }
@@ -436,29 +479,25 @@ export default function Sidebar({ mobileOpen = false, onClose }) {
                 className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold"
                 style={{
                   backgroundColor: isActive
-                    ? "var(--sidebar-active-text)"
+                    ? "var(--sidebar-item-active-color)"
                     : "var(--bg-raised)",
-                  color: isActive ? "#ffffff" : "var(--text-muted)",
-                  border: `1px solid ${isActive ? "var(--sidebar-active-border)" : "var(--border)"}`,
+                  color: isActive
+                    ? "var(--sidebar-item-active-bg)"
+                    : "var(--text-muted)",
+                  border: `1px solid ${isActive ? "var(--sidebar-item-active-color)" : "var(--border)"}`,
                 }}
               >
                 {index + 1}
               </span>
             ) : (
               <span
-                className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full"
+                className="block w-1.5 h-1.5 rounded-full shrink-0 mt-1"
                 style={{
                   backgroundColor: isActive
-                    ? "rgba(29,78,216,0.12)"
-                    : "var(--bg-raised)",
-                  color: isActive
-                    ? "var(--sidebar-active-text)"
+                    ? "var(--sidebar-item-active-color)"
                     : "var(--text-muted)",
-                  border: `1px solid ${isActive ? "rgba(29,78,216,0.18)" : "var(--border)"}`,
                 }}
-              >
-                <ItemIcon size={12} />
-              </span>
+              />
             )}
             <span className={`truncate ${indexed ? "text-xs" : "text-sm"}`}>
               {t(SIDEBAR_NAME_MAP[item.name] || item.name)}
@@ -477,28 +516,6 @@ export default function Sidebar({ mobileOpen = false, onClose }) {
             `sidebar-item ${collapsed ? "justify-center" : "gap-3"} ${
               navActive ? "active" : ""
             }`
-          }
-          style={({ isActive: navActive }) =>
-            navActive
-              ? {
-                  borderLeft: isRtl
-                    ? "none"
-                    : "2px solid var(--sidebar-active-border)",
-                  borderRight: isRtl
-                    ? "2px solid var(--sidebar-active-border)"
-                    : "none",
-                  paddingLeft: isRtl
-                    ? undefined
-                    : collapsed
-                      ? undefined
-                      : "calc(0.75rem - 2px)",
-                  paddingRight: isRtl
-                    ? collapsed
-                      ? undefined
-                      : "calc(0.75rem - 2px)"
-                    : undefined,
-                }
-              : undefined
           }
         >
           <span className="shrink-0" style={{ opacity: 0.85 }}>
@@ -550,6 +567,42 @@ export default function Sidebar({ mobileOpen = false, onClose }) {
           borderLeft: isRtl ? "1px solid var(--sidebar-border)" : "none",
         }}
       >
+        {/* Role header */}
+        <div
+          className={`flex items-center gap-3 px-4 py-3 ${collapsed ? "justify-center" : "justify-between"}`}
+          style={{ borderBottom: "1px solid var(--sidebar-border)" }}
+        >
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div
+              className="w-8 h-8 rounded-lg grid place-items-center shrink-0"
+              style={{ backgroundColor: roleConf.bg }}
+            >
+              <RoleIcon size={16} style={{ color: roleConf.color }} />
+            </div>
+            {!collapsed && (
+              <span
+                className="font-semibold text-sm truncate"
+                style={{ color: "var(--text-primary)" }}
+              >
+                {roleConf.label}
+              </span>
+            )}
+          </div>
+          {!collapsed && (
+            <button
+              onClick={closeMobile}
+              className="lg:hidden h-7 w-7 grid place-items-center rounded-lg shrink-0 transition"
+              style={{
+                color: "var(--text-secondary)",
+                backgroundColor: "var(--bg-raised)",
+                border: "1px solid var(--border)",
+              }}
+            >
+              <X size={14} />
+            </button>
+          )}
+        </div>
+
         <div className="hidden justify-end px-2 pt-2 lg:flex">
           <button
             onClick={() => setCollapsed((v) => !v)}
@@ -614,3 +667,4 @@ export default function Sidebar({ mobileOpen = false, onClose }) {
     </>
   );
 }
+

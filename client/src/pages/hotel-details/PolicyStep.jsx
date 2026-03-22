@@ -1,123 +1,47 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ShieldCheck } from "lucide-react";
+import { ShieldCheck, Info } from "lucide-react";
 import HotelDetailsStepBar from "../../components/HotelDetailsStepBar";
 import { useLanguage } from "../../context/LanguageContext";
 
-const MAX_LENGTH = 500;
+const STORAGE_KEY = "hotel_details_policy";
 
-const COPY = {
-  en: {
-    title: "Hotel Policy",
-    error:
-      "Please enter your hotel policy with at least 10 English characters.",
-    placeholder:
-      "Describe cancellation terms, check-in/check-out rules, house rules, and any important guest information.",
-    checklistTitle: "Policy Checklist",
-    checklist: [
-      "Cancellation and refund terms",
-      "Check-in / Check-out hours",
-      "Accepted payment methods",
-      "Pet and smoking policy",
-      "Child / extra bed policy",
-      "Dress code if applicable",
-    ],
-    next: "Next -> Photos",
-  },
-  ar: {
-    title: "سياسة الفندق",
-    error: "يرجى إدخال سياسة الفندق بما لا يقل عن 10 أحرف باللغة الإنجليزية.",
-    placeholder:
-      "اكتب سياسة الإلغاء وقواعد تسجيل الوصول والمغادرة والقواعد الداخلية وأي معلومات مهمة للضيف.",
-    checklistTitle: "قائمة السياسة",
-    checklist: [
-      "شروط الإلغاء والاسترداد",
-      "مواعيد تسجيل الوصول والمغادرة",
-      "وسائل الدفع المقبولة",
-      "سياسة الحيوانات الأليفة والتدخين",
-      "سياسة الأطفال أو السرير الإضافي",
-      "قواعد اللباس إن وجدت",
-    ],
-    next: "التالي -> الصور",
-  },
-};
-
-const LangToggle = ({ lang, setLang }) => (
-  <div className="flex items-center gap-1.5">
-    <button
-      onClick={() => setLang("en")}
-      className="flex items-center gap-1 h-7 px-2 rounded-lg text-xs font-semibold transition-all"
-      style={{
-        backgroundColor:
-          lang === "en" ? "var(--sidebar-active-text)" : "var(--bg-raised)",
-        color: lang === "en" ? "#fff" : "var(--text-secondary)",
-        border: `1px solid ${lang === "en" ? "var(--sidebar-active-text)" : "var(--border)"}`,
-      }}
-    >
-      <img
-        src="https://flagcdn.com/w20/us.png"
-        alt="EN"
-        className="h-4 w-5 rounded object-cover"
-      />
-      EN
-    </button>
-    <button
-      onClick={() => setLang("ar")}
-      className="flex items-center gap-1 h-7 px-2 rounded-lg text-xs font-semibold transition-all"
-      style={{
-        backgroundColor:
-          lang === "ar" ? "var(--sidebar-active-text)" : "var(--bg-raised)",
-        color: lang === "ar" ? "#fff" : "var(--text-secondary)",
-        border: `1px solid ${lang === "ar" ? "var(--sidebar-active-text)" : "var(--border)"}`,
-      }}
-    >
-      <img
-        src="https://flagcdn.com/w20/eg.png"
-        alt="AR"
-        className="h-4 w-5 rounded object-cover"
-      />
-      AR
-    </button>
-  </div>
-);
+function loadPolicy() {
+  try {
+    return JSON.parse(sessionStorage.getItem(STORAGE_KEY) || "null") || {};
+  } catch {
+    return {};
+  }
+}
 
 export default function HotelPolicyStep() {
   const navigate = useNavigate();
   const { lang: uiLang, dir } = useLanguage();
-  const copy = COPY[uiLang] || COPY.en;
-  const [lang, setLang] = useState("en");
-  const [policyEn, setPolicyEn] = useState(
-    () =>
-      JSON.parse(sessionStorage.getItem("hotel_details_policy") || "null")
-        ?.policyEn || "",
-  );
-  const [policyAr, setPolicyAr] = useState(
-    () =>
-      JSON.parse(sessionStorage.getItem("hotel_details_policy") || "null")
-        ?.policyAr || "",
-  );
-  const [error, setError] = useState("");
+  const isAr = uiLang === "ar";
 
-  const current = lang === "en" ? policyEn : policyAr;
+  const saved = loadPolicy();
+  const [checkIn, setCheckIn] = useState(saved.checkIn || "14:00");
+  const [checkOut, setCheckOut] = useState(saved.checkOut || "12:00");
+  const [petPolicy, setPetPolicy] = useState(saved.petPolicy || "no");
+  const [smokingPolicy, setSmokingPolicy] = useState(
+    saved.smokingPolicy || "no",
+  );
+  const [additionalDetails, setAdditionalDetails] = useState(
+    saved.additionalDetails || "",
+  );
 
-  const setCurrent = (value) => {
-    if (lang === "en") {
-      setPolicyEn(value);
-    } else {
-      setPolicyAr(value);
-    }
-    setError("");
-  };
+  const label = (en, ar) => (isAr ? ar : en);
 
   const handleNext = () => {
-    if (!policyEn.trim() || policyEn.trim().length < 10) {
-      setError(copy.error);
-      return;
-    }
-
     sessionStorage.setItem(
-      "hotel_details_policy",
-      JSON.stringify({ policyEn, policyAr }),
+      STORAGE_KEY,
+      JSON.stringify({
+        checkIn,
+        checkOut,
+        petPolicy,
+        smokingPolicy,
+        additionalDetails,
+      }),
     );
     navigate("/hotel/details/photos");
   };
@@ -126,87 +50,166 @@ export default function HotelPolicyStep() {
     <div className="page-shell">
       <HotelDetailsStepBar />
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-          <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <h2
-              className="text-lg font-bold"
-              style={{ color: "var(--sidebar-active-text)" }}
-            >
-              {copy.title}
-            </h2>
-            <LangToggle lang={lang} setLang={setLang} />
-          </div>
-
-          <div className="relative">
-            <textarea
-              className="input w-full resize-none pb-8"
-              style={{ minHeight: 260 }}
-              placeholder={copy.placeholder}
-              dir={lang === "ar" ? "rtl" : "ltr"}
-              maxLength={MAX_LENGTH}
-              value={current}
-              onChange={(event) => setCurrent(event.target.value)}
-            />
-
-            <span
-              className="pointer-events-none absolute bottom-3 text-xs"
-              style={{
-                [dir === "rtl" ? "left" : "right"]: "0.75rem",
-                color:
-                  current.length >= MAX_LENGTH * 0.9
-                    ? "var(--danger)"
-                    : "var(--text-muted)",
-              }}
-            >
-              {current.length} / {MAX_LENGTH}
-            </span>
-          </div>
-
-          {error && <p className="input-error mt-1">{error}</p>}
+      {/* Page Header */}
+      <div className="flex items-center gap-3 mb-2">
+        <div
+          className="w-11 h-11 rounded-xl grid place-items-center"
+          style={{ backgroundColor: "#eff6ff" }}
+        >
+          <ShieldCheck
+            size={22}
+            style={{ color: "var(--sidebar-active-text)" }}
+          />
         </div>
-
-        <div className="flex flex-col gap-4">
-          <div
-            className="rounded-2xl p-5"
-            style={{
-              backgroundColor: "var(--bg-surface)",
-              border: "1px solid var(--border)",
-            }}
+        <div>
+          <h1
+            className="text-xl font-bold"
+            style={{ color: "var(--text-primary)" }}
           >
-            <div className="mb-3 flex items-center gap-2">
-              <ShieldCheck size={16} style={{ color: "var(--brand)" }} />
-              <span
-                className="text-sm font-semibold"
-                style={{ color: "var(--text-primary)" }}
-              >
-                {copy.checklistTitle}
-              </span>
-            </div>
-
-            <ul className="space-y-2">
-              {copy.checklist.map((tip) => (
-                <li
-                  key={tip}
-                  className="flex items-start gap-2 text-xs"
-                  style={{ color: "var(--text-secondary)" }}
-                >
-                  <span style={{ color: "var(--brand)" }}>·</span>
-                  {tip}
-                </li>
-              ))}
-            </ul>
-          </div>
+            {label("Hotel Policy", "سياسات الفندق")}
+          </h1>
+          <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
+            {label(
+              "Define check-in/check-out times and guest policies",
+              "حدد مواعيد تسجيل الدخول والخروج وسياسات الضيوف",
+            )}
+          </p>
         </div>
       </div>
 
-      <div className="mt-8">
+      <div className="card space-y-6">
+        {/* Row 1: Check-in / Check-out */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label
+              className="block text-sm font-semibold mb-1.5"
+              style={{ color: "var(--text-primary)" }}
+            >
+              {label("⏰ Check-in Time", "⏰ وقت تسجيل الدخول")}
+            </label>
+            <input
+              type="time"
+              value={checkIn}
+              onChange={(e) => setCheckIn(e.target.value)}
+              className="input"
+            />
+          </div>
+          <div>
+            <label
+              className="block text-sm font-semibold mb-1.5"
+              style={{ color: "var(--text-primary)" }}
+            >
+              {label("⏰ Check-out Time", "⏰ وقت تسجيل الخروج")}
+            </label>
+            <input
+              type="time"
+              value={checkOut}
+              onChange={(e) => setCheckOut(e.target.value)}
+              className="input"
+            />
+          </div>
+        </div>
+
+        {/* Row 2: Pet & Smoking policy */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label
+              className="block text-sm font-semibold mb-1.5"
+              style={{ color: "var(--text-primary)" }}
+            >
+              {label("🐾 Pet Policy", "🐾 سياسة الحيوانات الأليفة")}
+            </label>
+            <select
+              value={petPolicy}
+              onChange={(e) => setPetPolicy(e.target.value)}
+              className="input"
+            >
+              <option value="no">{label("Not Allowed", "غير مسموح")}</option>
+              <option value="yes">{label("Allowed", "مسموح")}</option>
+              <option value="request">
+                {label("Upon Request", "بناءً على طلب")}
+              </option>
+            </select>
+          </div>
+          <div>
+            <label
+              className="block text-sm font-semibold mb-1.5"
+              style={{ color: "var(--text-primary)" }}
+            >
+              {label("🚬 Smoking Policy", "🚬 سياسة التدخين")}
+            </label>
+            <select
+              value={smokingPolicy}
+              onChange={(e) => setSmokingPolicy(e.target.value)}
+              className="input"
+            >
+              <option value="no">
+                {label("Non-Smoking", "غير مسموح بالتدخين")}
+              </option>
+              <option value="yes">
+                {label("Smoking Allowed", "مسموح بالتدخين")}
+              </option>
+              <option value="designated">
+                {label("Designated Areas Only", "مناطق مخصصة فقط")}
+              </option>
+            </select>
+          </div>
+        </div>
+
+        {/* Row 3: Children Policy (read-only info) */}
+        <div>
+          <label
+            className="block text-sm font-semibold mb-2"
+            style={{ color: "var(--text-primary)" }}
+          >
+            {label("👶 Children Policy", "👶 سياسة الأطفال")}
+          </label>
+          <div
+            className="flex items-start gap-2.5 rounded-xl p-4"
+            style={{ backgroundColor: "#eff6ff", border: "1px solid #bfdbfe" }}
+          >
+            <Info
+              size={16}
+              className="shrink-0 mt-0.5"
+              style={{ color: "var(--sidebar-active-text)" }}
+            />
+            <p className="text-sm leading-relaxed" style={{ color: "#1e40af" }}>
+              {label(
+                "Children policy is automatically derived from the Double Room (DBL) settings and cannot be edited here.",
+                "يتم إنشاء سياسة الأطفال تلقائيًا من إعدادات الغرفة المزدوجة (DBL) ولا يمكن تعديلها هنا.",
+              )}
+            </p>
+          </div>
+        </div>
+
+        {/* Row 4: Additional Details */}
+        <div>
+          <label
+            className="block text-sm font-semibold mb-1.5"
+            style={{ color: "var(--text-primary)" }}
+          >
+            {label("Additional Details (optional)", "تفاصيل إضافية (اختياري)")}
+          </label>
+          <textarea
+            className="input w-full resize-none"
+            style={{ minHeight: 100 }}
+            placeholder={label(
+              "Any additional rules or information for guests...",
+              "أي قواعد أو معلومات إضافية للضيوف...",
+            )}
+            value={additionalDetails}
+            onChange={(e) => setAdditionalDetails(e.target.value)}
+          />
+        </div>
+      </div>
+
+      <div className="mt-6">
         <button
           onClick={handleNext}
           className="btn btn-primary w-full rounded-2xl py-3 text-base"
           style={{ backgroundColor: "var(--sidebar-active-text)" }}
         >
-          {copy.next}
+          {label("Next -> Photos", "التالي -> الصور")}
         </button>
       </div>
     </div>
