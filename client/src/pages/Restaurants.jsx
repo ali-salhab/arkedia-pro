@@ -4,19 +4,20 @@ import { useNavigate } from "react-router-dom";
 import LoadingScreen from "../components/LoadingScreen";
 import Modal from "../components/Modal";
 import DeleteConfirmModal from "../components/DeleteConfirmModal";
+import DataModal from "../components/DataModal";
 import { useLanguage } from "../context/LanguageContext";
 import { useGetUsersQuery, useDeleteUserMutation } from "../store/services/api";
-import { Pencil, Trash2, Search, Download, Plus } from "lucide-react";
+import { Pencil, Trash2, Search, Plus, UtensilsCrossed, ShieldCheck, CalendarDays, UserCheck } from "lucide-react";
 
 const AVATAR_COLORS = [
-  "#6366f1",
-  "#3b82f6",
-  "#0ea5e9",
-  "#10b981",
-  "#f59e0b",
-  "#ef4444",
-  "#8b5cf6",
-  "#ec4899",
+  "from-indigo-500 to-blue-500",
+  "from-blue-500 to-sky-500",
+  "from-sky-500 to-cyan-500",
+  "from-emerald-500 to-teal-500",
+  "from-amber-500 to-orange-500",
+  "from-rose-500 to-red-500",
+  "from-violet-500 to-purple-500",
+  "from-pink-500 to-rose-500",
 ];
 function avatarColor(name) {
   return AVATAR_COLORS[(name?.charCodeAt(0) || 0) % AVATAR_COLORS.length];
@@ -24,7 +25,8 @@ function avatarColor(name) {
 
 export default function RestaurantsPage() {
   const currentUser = useSelector((s) => s.auth.user);
-  const { t, lang } = useLanguage();
+  const { t, lang, dir } = useLanguage();
+  const isRtl = dir === "rtl";
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [adminRequiredModalOpen, setAdminRequiredModalOpen] = useState(false);
@@ -40,21 +42,14 @@ export default function RestaurantsPage() {
 
   const resolveLinkedAdmin = (r) => {
     if (!r.adminId) return null;
-    const id =
-      typeof r.adminId === "object" ? r.adminId._id : r.adminId;
+    const id = typeof r.adminId === "object" ? r.adminId._id : r.adminId;
     return adminsList.find((a) => a._id === id) || null;
   };
 
   useEffect(() => {
     if (resumeCreation && adminsList.length > 0) {
       setResumeCreation(false);
-      navigate("/restaurants/new", {
-        state: {
-          fixedRole: "restaurant",
-          adminsList,
-          backTo: "/restaurants",
-        },
-      });
+      navigate("/restaurants/new", { state: { fixedRole: "restaurant", adminsList, backTo: "/restaurants" } });
     }
   }, [adminsList.length, resumeCreation, navigate]);
 
@@ -63,18 +58,9 @@ export default function RestaurantsPage() {
       setAdminRequiredModalOpen(true);
       return;
     }
-    navigate("/restaurants/new", {
-      state: {
-        fixedRole: "restaurant",
-        adminsList,
-        backTo: "/restaurants",
-      },
-    });
+    navigate("/restaurants/new", { state: { fixedRole: "restaurant", adminsList, backTo: "/restaurants" } });
   };
-  const handleEdit = (r) =>
-    navigate(`/restaurants/${r._id}/edit`, {
-      state: { restaurant: r, backTo: "/restaurants" },
-    });
+  const handleEdit = (r) => navigate(`/restaurants/${r._id}/edit`, { state: { restaurant: r, backTo: "/restaurants" } });
   const handleDelete = (id) => setDeleteTarget(id);
   const confirmDelete = async () => {
     if (deleteTarget) await deleteUser(deleteTarget);
@@ -84,244 +70,176 @@ export default function RestaurantsPage() {
   const handleOpenAdminCreation = () => {
     setAdminRequiredModalOpen(false);
     setResumeCreation(true);
-    navigate("/admins/new", {
-      state: {
-        fixedRole: "admin",
-        backTo: "/restaurants",
-        resumeCreation: true,
-      },
-    });
+    navigate("/admins/new", { state: { fixedRole: "admin", backTo: "/restaurants", resumeCreation: true } });
   };
 
-  if (isLoading)
-    return (
-      <LoadingScreen
-        label={t("loadingRestaurants")}
-        tableRows={6}
-        tableCols={4}
-      />
-    );
-  if (error)
-    return (
-      <div className="card p-6 text-center text-rose-500">
-        {t("errorLoadingRestaurants")}
-      </div>
-    );
+  if (isLoading) return <LoadingScreen label={t("loadingRestaurants")} tableRows={6} tableCols={4} />;
+  if (error) return <div className="p-6 text-center text-rose-500 font-bold">{t("errorLoadingRestaurants")}</div>;
 
-  const rows = restaurants.filter(
-    (r) =>
-      !search ||
-      r.name?.toLowerCase().includes(search.toLowerCase()) ||
-      r.email?.toLowerCase().includes(search.toLowerCase()),
-  );
+  const rows = restaurants.filter((r) => !search || r.name?.toLowerCase().includes(search.toLowerCase()) || r.email?.toLowerCase().includes(search.toLowerCase()));
 
-  const exportCsv = () => {
-    const csv = [
-      "Name,Email,Linked Admin,Created",
-      ...rows.map((r) => {
-        const admin = resolveLinkedAdmin(r);
-        return `"${r.name}","${r.email}","${admin ? admin.name : ""}","${r.createdAt ? new Date(r.createdAt).toLocaleDateString() : ""}"`;
-      }),
-    ].join("\n");
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
-    a.download = "restaurants.csv";
-    a.click();
-  };
+const restaurantToDelete = rows.find(r => r._id === deleteTarget);
 
   return (
-    <div className="p-6">
-      <DeleteConfirmModal
-        open={!!deleteTarget}
-        onClose={() => setDeleteTarget(null)}
-        onConfirm={confirmDelete}
-      />
-      {/* Header */}
-      <div className="flex items-start justify-between gap-4 mb-6">
-        <div>
-          <nav className="flex items-center gap-1.5 text-sm text-slate-400 mb-1">
-            <span>{t("dashboard")}</span>
-            <span>/</span>
-            <span className="text-slate-600 dark:text-slate-300">
-              {t("allRestaurants")}
-            </span>
-          </nav>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
-            {t("allRestaurants")}
-          </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-            {t("restaurantsSubtitle") || "Manage restaurant accounts"}
-          </p>
-        </div>
-        <button
-          onClick={handleAddNew}
-          className="flex items-center gap-2 bg-slate-900 dark:bg-slate-700 text-white dark:text-slate-100 px-4 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition shrink-0"
-        >
-          <Plus size={16} /> {t("addRestaurant")}
-        </button>
+    <div className="space-y-6 pb-10 animate-in fade-in duration-300" style={{ direction: isRtl ? "rtl" : "ltr" }}>
+      {/* Page Title */}
+      <div>
+        <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">{t("allRestaurants")}</h1>
+        <p className="text-slate-500 dark:text-slate-400 text-sm font-medium mt-1">{t("restaurantsSubtitle") || "Manage restaurant accounts"}</p>
       </div>
 
-      {/* Search + Export */}
-      <div className="flex items-center gap-3 mb-4">
-        <div className="relative flex-1 max-w-sm">
-          <Search
-            size={15}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-          />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder={t("search") + "..."}
-            className="input pl-9 py-2 text-sm w-full"
-          />
+      {/* Toolbar */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Search */}
+          <div className="relative">
+            <Search size={15} className={`absolute top-1/2 -translate-y-1/2 text-slate-400 ${isRtl ? 'right-3.5' : 'left-3.5'}`} />
+            <input
+              className={`h-10 ${isRtl ? 'pr-9 pl-4' : 'pl-9 pr-4'} rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-[13px] font-medium text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all w-56 lg:w-72`}
+              placeholder={t("search") + "..."}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
         </div>
-        <button
-          onClick={exportCsv}
-          className="flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
-        >
-          <Download size={15} /> {t("exportCsv")}
-        </button>
+
+        <div className="flex items-center gap-2">
+          <DataModal resourcePath="restaurants" resourceLabel={t("allRestaurants")} />
+          <button
+            onClick={handleAddNew}
+            className="h-10 px-5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-bold text-[13px] flex items-center gap-2 shadow-lg shadow-orange-500/25 hover:-translate-y-0.5 transition-all"
+          >
+            {t("addRestaurant")}
+          </button>
+        </div>
       </div>
 
-      {/* Table */}
-      <div className="bg-white dark:bg-slate-800/70 rounded-2xl border border-slate-200 dark:border-slate-700/60 overflow-hidden">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-slate-100 dark:border-slate-700">
-              <th className="text-left px-5 py-3.5 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-                {t("name")}
-              </th>
-              <th className="text-left px-5 py-3.5 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-                {t("linkedAdmin")}
-              </th>
-              <th className="text-left px-5 py-3.5 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-                {t("permissions")}
-              </th>
-              <th className="text-left px-5 py-3.5 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-                {t("createdAt")}
-              </th>
-              <th className="px-5 py-3.5" />
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-50 dark:divide-slate-700/60">
-            {rows.length === 0 ? (
-              <tr>
-                <td
-                  colSpan={5}
-                  className="px-5 py-12 text-center text-slate-400 dark:text-slate-500"
-                >
-                  {t("noData")}
-                </td>
-              </tr>
-            ) : (
-              rows.map((r) => {
-                const admin = resolveLinkedAdmin(r);
-                const bg = avatarColor(r.name);
-                return (
-                  <tr
-                    key={r._id}
-                    className="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition"
-                  >
-                    <td className="px-5 py-3.5">
-                      <div className="flex items-center gap-3">
-                        {r.logo ? (
-                          <img
-                            src={r.logo}
-                            className="h-9 w-9 rounded-full object-cover shrink-0"
-                            alt=""
-                          />
+      {/* Table / Empty */}
+      {rows.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-20 gap-4 bg-white/60 dark:bg-slate-900/40 rounded-3xl border border-slate-200/50 dark:border-slate-800/50 backdrop-blur-xl">
+          <div className="w-16 h-16 rounded-3xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+            <UtensilsCrossed size={28} className="text-slate-400" strokeWidth={1.5} />
+          </div>
+          <p className="text-slate-500 dark:text-slate-400 font-semibold text-[15px]">{t("noData")}</p>
+          <button onClick={handleAddNew} className="h-10 px-5 rounded-xl bg-orange-600 text-white font-bold text-[13px] flex items-center gap-2 shadow-md">
+            {t("addRestaurant")}
+          </button>
+        </div>
+      ) : (
+        <div className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl rounded-3xl border border-slate-200/60 dark:border-slate-800/50 shadow-sm overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-[13.5px]">
+              <thead>
+                <tr className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-800/30">
+                  {[
+                    { label: t("name"), Icon: UtensilsCrossed },
+                    { label: t("linkedAdmin"), Icon: UserCheck },
+                    { label: t("permissions"), Icon: ShieldCheck },
+                    { label: t("createdAt"), Icon: CalendarDays },
+                    { label: "" },
+                  ].map((h, i) => (
+                    <th key={i} className="px-4 py-3.5 text-center text-[11px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 whitespace-nowrap">
+                      <span className="flex items-center justify-center gap-1.5">
+                        {h.Icon && <h.Icon size={12} />}
+                        {h.label}
+                      </span>
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                {rows.map((r) => {
+                  const admin = resolveLinkedAdmin(r);
+                  const bgGrad = avatarColor(r.name);
+                  return (
+                    <tr key={r._id} className="group hover:bg-orange-50/30 dark:hover:bg-orange-900/10 transition-colors">
+                      <td className="px-4 py-4">
+                        <div className="flex items-center justify-center gap-3 text-center">
+                          {r.logo ? (
+                            <img src={r.logo} className="h-10 w-10 rounded-xl object-cover shrink-0 shadow-sm border border-slate-200 dark:border-slate-700" alt="" />
+                          ) : (
+                            <div className={`h-10 w-10 rounded-xl shrink-0 flex items-center justify-center text-white text-[13px] font-black bg-gradient-to-br ${bgGrad} shadow-sm border border-slate-200/50 dark:border-slate-700/50`}>
+                              {(r.name || "?")[0].toUpperCase()}
+                            </div>
+                          )}
+                          <div className="text-start">
+                            <p className="font-bold text-slate-900 dark:text-white leading-snug">{r.name}</p>
+                            <p className="text-[12px] font-medium text-slate-400 dark:text-slate-500">{r.email}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-4 text-center">
+                        {admin ? (
+                          <div className="flex items-center justify-center gap-2">
+                            <div className={`h-6 w-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold bg-gradient-to-br ${avatarColor(admin.name)} shadow-sm`}>
+                              {(admin.name || "?")[0].toUpperCase()}
+                            </div>
+                            <span className="text-slate-700 dark:text-slate-300 font-semibold text-[13px]">
+                              {admin.name}
+                            </span>
+                          </div>
                         ) : (
-                          <div
-                            className="h-9 w-9 rounded-full shrink-0 grid place-items-center text-white text-xs font-bold"
-                            style={{ background: bg }}
-                          >
-                            {(r.name || "?")[0].toUpperCase()}
-                          </div>
+                          <span className="text-slate-400 dark:text-slate-500 text-[13px] font-medium">—</span>
                         )}
-                        <div>
-                          <div className="font-medium text-slate-800 dark:text-slate-100">
-                            {r.name}
-                          </div>
-                          <div className="text-xs text-slate-400 dark:text-slate-500">
-                            {r.email}
-                          </div>
+                      </td>
+                      <td className="px-4 py-4 text-center text-slate-600 dark:text-slate-400 font-semibold">
+                        <span className="bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded text-[12px]">{(r.permissions || []).length}</span> {t("permissionsSelected")}
+                      </td>
+                      <td className="px-4 py-4 text-center text-slate-600 dark:text-slate-400 font-medium whitespace-nowrap">
+                         {r.createdAt ? new Date(r.createdAt).toLocaleDateString(lang === "ar" ? "ar-EG" : "en-US") : "—"}
+                      </td>
+                      <td className="px-4 py-4 text-center">
+                        <div className="flex items-center justify-center gap-2">
+                          <button onClick={() => handleEdit(r)} className="h-8 w-8 flex items-center justify-center rounded-xl bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 hover:bg-orange-100 transition-colors" title={t("edit")}>
+                            <Pencil size={14} strokeWidth={2.5} />
+                          </button>
+                          <button onClick={() => handleDelete(r._id)} className="h-8 w-8 flex items-center justify-center rounded-xl bg-red-50 dark:bg-red-900/20 text-red-500 hover:bg-red-100 transition-colors" title={t("delete")}>
+                            <Trash2 size={14} strokeWidth={2.5} />
+                          </button>
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-5 py-3.5">
-                      {admin ? (
-                        <div className="flex items-center gap-2">
-                          <div
-                            className="h-6 w-6 rounded-full grid place-items-center text-white text-[10px] font-bold"
-                            style={{ background: avatarColor(admin.name) }}
-                          >
-                            {(admin.name || "?")[0].toUpperCase()}
-                          </div>
-                          <span className="text-slate-700 dark:text-slate-300 text-xs">
-                            {admin.name}
-                          </span>
-                        </div>
-                      ) : (
-                        <span className="text-slate-400 dark:text-slate-500 text-xs">
-                          —
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-5 py-3.5 text-slate-500 dark:text-slate-400">
-                      {(r.permissions || []).length} {t("permissionsSelected")}
-                    </td>
-                    <td className="px-5 py-3.5 text-slate-500 dark:text-slate-400">
-                      {r.createdAt
-                        ? new Date(r.createdAt).toLocaleDateString(
-                            lang === "ar" ? "ar-EG" : "en-US",
-                          )
-                        : "—"}
-                    </td>
-                    <td className="px-5 py-3.5">
-                      <div className="flex items-center justify-end gap-1">
-                        <button
-                          onClick={() => handleEdit(r)}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition"
-                        >
-                          <Pencil size={15} />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(r._id)}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition"
-                        >
-                          <Trash2 size={15} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
-      </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          <div className="px-5 py-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+            <p className="text-[12px] text-slate-400 font-semibold">{rows.length} {rows.length === 1 ? "restaurant" : "restaurants"}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Delete confirmation modal */}
+      {deleteTarget && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-[1100] p-4 animate-in fade-in duration-200">
+          <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-3xl rounded-3xl border border-slate-200/60 dark:border-slate-800/50 shadow-2xl p-8 w-full max-w-sm">
+            <div className="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-2xl flex items-center justify-center mb-5">
+              <Trash2 size={22} className="text-red-600 dark:text-red-400" />
+            </div>
+            <h3 className="text-[18px] font-black text-slate-900 dark:text-white mb-2">{t("deleteConfirmTitle") || "Delete Restaurant"}</h3>
+            <p className="text-slate-600 dark:text-slate-300 font-semibold mb-1">{restaurantToDelete?.name}</p>
+            <p className="text-[13px] text-slate-500 dark:text-slate-400 mb-6">{t("deleteCannotUndo") || "This action cannot be undone."}</p>
+            <div className="flex gap-3">
+              <button onClick={() => setDeleteTarget(null)} className="flex-1 h-11 rounded-2xl border border-slate-200 dark:border-slate-700 font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-[14px]">
+                {t("cancel")}
+              </button>
+              <button onClick={confirmDelete} className="flex-1 h-11 rounded-2xl bg-red-600 hover:bg-red-700 text-white font-bold text-[14px] shadow-lg shadow-red-500/25 transition-colors">
+                {t("delete")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Admin Required Modal */}
-      <Modal
-        open={adminRequiredModalOpen}
-        onClose={() => setAdminRequiredModalOpen(false)}
-        title={t("adminRequired")}
-      >
-        <p className="text-sm text-slate-600 dark:text-slate-300 mb-5">
-          {t("adminRequiredForRestaurantMessage") ||
-            t("adminRequiredForHotelMessage")}
-        </p>
+      <Modal open={adminRequiredModalOpen} onClose={() => setAdminRequiredModalOpen(false)} title={t("adminRequired")}>
+        <p className="text-sm text-slate-600 dark:text-slate-300 mb-5">{t("adminRequiredForRestaurantMessage") || t("adminRequiredForHotelMessage")}</p>
         <div className="flex justify-end gap-3">
-          <button
-            onClick={() => setAdminRequiredModalOpen(false)}
-            className="px-4 py-2 rounded-xl text-sm border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition"
-          >
+          <button onClick={() => setAdminRequiredModalOpen(false)} className="px-4 py-2 rounded-xl text-sm border border-slate-200 dark:border-slate-600 font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition">
             {t("cancel")}
           </button>
-          <button
-            onClick={handleOpenAdminCreation}
-            className="px-4 py-2 rounded-xl text-sm bg-indigo-600 text-white hover:bg-indigo-700 transition"
-          >
+          <button onClick={handleOpenAdminCreation} className="px-4 py-2 rounded-xl text-sm font-bold bg-blue-600 text-white hover:bg-blue-700 shadow-lg transition">
             {t("createAdminNow")}
           </button>
         </div>
@@ -329,4 +247,3 @@ export default function RestaurantsPage() {
     </div>
   );
 }
-

@@ -30,6 +30,7 @@ import {
   Images,
   Link2,
   Globe,
+  MoreVertical,
 } from "lucide-react";
 
 const ROLE_MENUS = {
@@ -152,6 +153,119 @@ const ROLE_MENUS = {
               perm: "availability:view",
               Icon: BarChart2,
             },
+            {
+              name: "API Settings",
+              route: "/hotel/channel-manager/travky/api-settings",
+              perm: null,
+              Icon: Settings,
+            },
+          ],
+        },
+        {
+          name: "External",
+          route: "/hotel/channel-manager/external",
+          perm: "channel_manager_external:view",
+          Icon: Globe,
+        },
+      ],
+    },
+  ],
+  hoteluser: [
+    { name: "Dashboard", route: "/hotel", perm: null },
+    { name: "Users", route: "/users", perm: "users:view" },
+    { name: "Rooms", route: "/rooms", perm: "rooms:view" },
+    { name: "Bookings", route: "/bookings", perm: "bookings:view" },
+    { name: "Finance", route: "/finance", perm: "finance:view" },
+    { name: "Reports", route: "/reports", perm: "reports:view" },
+    { name: "Settings", route: "/settings", perm: "settings:view" },
+    {
+      name: "Hotel Main Details",
+      perm: "hotel_details:view",
+      matchPrefix: "/hotel/details",
+      children: [
+        {
+          name: "Main Details",
+          route: "/hotel/details/main",
+          Icon: FileSearch,
+        },
+        {
+          name: "Hotel Description",
+          route: "/hotel/details/description",
+          Icon: AlignLeft,
+        },
+        { name: "Hotel Icons", route: "/hotel/details/icons", Icon: Tag },
+        {
+          name: "Hotel Policy",
+          route: "/hotel/details/policy",
+          Icon: ShieldCheck,
+        },
+        { name: "Photos", route: "/hotel/details/photos", Icon: Images },
+      ],
+    },
+    {
+      name: "Channel Manager",
+      perm: "channel_manager:view",
+      matchPrefix: "/hotel/channel-manager",
+      children: [
+        {
+          name: "Travky",
+          perm: "channel_manager_travky:view",
+          matchPrefix: "/hotel/channel-manager/travky",
+          children: [
+            {
+              name: "Guest Groups",
+              route: "/hotel/channel-manager/travky/guest-groups",
+              perm: "guest_groups:view",
+              Icon: Users,
+            },
+            {
+              name: "Meal Plans",
+              route: "/hotel/channel-manager/travky/meal-plans",
+              perm: "meal_plans:view",
+              Icon: UtensilsCrossed,
+            },
+            {
+              name: "Periods",
+              route: "/hotel/channel-manager/travky/periods",
+              perm: "periods:view",
+              Icon: CalendarDays,
+            },
+            {
+              name: "Supplement",
+              route: "/hotel/channel-manager/travky/supplements",
+              perm: "supplements:view",
+              Icon: ClipboardList,
+            },
+            {
+              name: "Refund Policy",
+              route: "/hotel/channel-manager/travky/refund-policies",
+              perm: "refund_policies:view",
+              Icon: ShieldCheck,
+            },
+            {
+              name: "Channel Rooms",
+              route: "/hotel/channel-manager/travky/rooms",
+              perm: "channel_manager_rooms:view",
+              Icon: BedDouble,
+            },
+            {
+              name: "Rates",
+              route: "/hotel/channel-manager/travky/rates",
+              perm: "rates:view",
+              Icon: DollarSign,
+            },
+            {
+              name: "Availability",
+              route: "/hotel/channel-manager/travky/availability",
+              perm: "availability:view",
+              Icon: BarChart2,
+            },
+            {
+              name: "API Settings",
+              route: "/hotel/channel-manager/travky/api-settings",
+              perm: null,
+              Icon: Settings,
+            },
           ],
         },
         {
@@ -241,7 +355,6 @@ const ROLE_MENUS = {
 const ROLE_MENU_ALIASES = {
   superadminuser: "super_admin",
   adminuser: "admin",
-  hoteluser: "hotel",
   restaurantuser: "restaurant",
   activityuser: "activity",
 };
@@ -276,6 +389,7 @@ const SIDEBAR_NAME_MAP = {
   "Hotel Icons": "hotelStepIcons",
   "Hotel Policy": "hotelStepPolicy",
   Photos: "hotelStepPhotos",
+  "API Settings": "apiSettings",
   Dashboard: "dashboard",
   Users: "users",
   Admins: "admins",
@@ -299,91 +413,105 @@ const SIDEBAR_NAME_MAP = {
 };
 
 const ICON_MAP = {
-  "Hotel Main Details": <ClipboardList size={17} />,
-  "Restaurant Main Details": <UtensilsCrossed size={17} />,
-  "Activity Main Details": <Zap size={17} />,
-  "Channel Manager": <Link2 size={17} />,
-  Dashboard: <LayoutDashboard size={17} />,
-  Users: <Users size={17} />,
-  Admins: <UserCheck size={17} />,
-  "My Team": <Users size={17} />,
-  "All Hotels": <Building2 size={17} />,
-  "My Hotels": <Building2 size={17} />,
-  "All Restaurants": <UtensilsCrossed size={17} />,
-  "My Restaurants": <UtensilsCrossed size={17} />,
-  "All Activities": <Zap size={17} />,
-  "My Activities": <Zap size={17} />,
-  "All Bookings": <CalendarDays size={17} />,
-  "Rooms/Tables": <BedDouble size={17} />,
-  Rooms: <BedDouble size={17} />,
-  Tables: <BedDouble size={17} />,
-  Reservations: <CalendarDays size={17} />,
-  Activities: <Zap size={17} />,
-  Bookings: <CalendarDays size={17} />,
-  Finance: <DollarSign size={17} />,
-  Reports: <BarChart2 size={17} />,
-  Settings: <Settings size={17} />,
+  "Hotel Main Details": <ClipboardList size={18} strokeWidth={2} />,
+  "Restaurant Main Details": <UtensilsCrossed size={18} strokeWidth={2} />,
+  "Activity Main Details": <Zap size={18} strokeWidth={2} />,
+  "Channel Manager": <Link2 size={18} strokeWidth={2} />,
+  Dashboard: <LayoutDashboard size={18} strokeWidth={2} />,
+  Users: <Users size={18} strokeWidth={2} />,
+  Admins: <UserCheck size={18} strokeWidth={2} />,
+  "My Team": <Users size={18} strokeWidth={2} />,
+  "All Hotels": <Building2 size={18} strokeWidth={2} />,
+  "My Hotels": <Building2 size={18} strokeWidth={2} />,
+  "All Restaurants": <UtensilsCrossed size={18} strokeWidth={2} />,
+  "My Restaurants": <UtensilsCrossed size={18} strokeWidth={2} />,
+  "All Activities": <Zap size={18} strokeWidth={2} />,
+  "My Activities": <Zap size={18} strokeWidth={2} />,
+  "All Bookings": <CalendarDays size={18} strokeWidth={2} />,
+  "Rooms/Tables": <BedDouble size={18} strokeWidth={2} />,
+  Rooms: <BedDouble size={18} strokeWidth={2} />,
+  Tables: <BedDouble size={18} strokeWidth={2} />,
+  Reservations: <CalendarDays size={18} strokeWidth={2} />,
+  Activities: <Zap size={18} strokeWidth={2} />,
+  Bookings: <CalendarDays size={18} strokeWidth={2} />,
+  Finance: <DollarSign size={18} strokeWidth={2} />,
+  Reports: <BarChart2 size={18} strokeWidth={2} />,
+  Settings: <Settings size={18} strokeWidth={2} />,
+  "API Settings": <Settings size={18} strokeWidth={2} />,
 };
 
 const ROLE_HEADER_CONFIG = {
-  hotel: { label: "Hotel", Icon: Building2, bg: "#dcfce7", color: "#16a34a" },
+  hotel: {
+    label: "Hotel",
+    Icon: Building2,
+    bg: "linear-gradient(135deg, #10b981, #059669)",
+    color: "#ffffff",
+  },
   hoteluser: {
     label: "Hotel",
     Icon: Building2,
-    bg: "#dcfce7",
-    color: "#16a34a",
+    bg: "linear-gradient(135deg, #10b981, #059669)",
+    color: "#ffffff",
   },
   restaurant: {
     label: "Restaurant",
     Icon: UtensilsCrossed,
-    bg: "#fff7ed",
-    color: "#ea580c",
+    bg: "linear-gradient(135deg, #f97316, #ea580c)",
+    color: "#ffffff",
   },
   restaurantuser: {
     label: "Restaurant",
     Icon: UtensilsCrossed,
-    bg: "#fff7ed",
-    color: "#ea580c",
+    bg: "linear-gradient(135deg, #f97316, #ea580c)",
+    color: "#ffffff",
   },
-  activity: { label: "Activity", Icon: Zap, bg: "#fef9c3", color: "#ca8a04" },
+  activity: {
+    label: "Activity",
+    Icon: Zap,
+    bg: "linear-gradient(135deg, #eab308, #ca8a04)",
+    color: "#ffffff",
+  },
   activityuser: {
     label: "Activity",
     Icon: Zap,
-    bg: "#fef9c3",
-    color: "#ca8a04",
+    bg: "linear-gradient(135deg, #eab308, #ca8a04)",
+    color: "#ffffff",
   },
-  admin: { label: "Admin", Icon: UserCheck, bg: "#eff6ff", color: "#2563eb" },
+  admin: {
+    label: "Admin",
+    Icon: UserCheck,
+    bg: "linear-gradient(135deg, #3b82f6, #2563eb)",
+    color: "#ffffff",
+  },
   adminuser: {
     label: "Admin",
     Icon: UserCheck,
-    bg: "#eff6ff",
-    color: "#2563eb",
+    bg: "linear-gradient(135deg, #3b82f6, #2563eb)",
+    color: "#ffffff",
   },
   super_admin: {
     label: "Super Admin",
     Icon: LayoutDashboard,
-    bg: "#f3e8ff",
-    color: "#9333ea",
+    bg: "linear-gradient(135deg, #8b5cf6, #7c3aed)",
+    color: "#ffffff",
   },
   superadminuser: {
     label: "Super Admin",
     Icon: LayoutDashboard,
-    bg: "#f3e8ff",
-    color: "#9333ea",
+    bg: "linear-gradient(135deg, #8b5cf6, #7c3aed)",
+    color: "#ffffff",
   },
 };
 
 function filterMenuItems(items, permissions) {
   return items.reduce((acc, item) => {
     if (item.perm && !permissions.includes(item.perm)) return acc;
-
     if (item.children) {
       const children = filterMenuItems(item.children, permissions);
       if (children.length === 0 && !item.route) return acc;
       acc.push({ ...item, children });
       return acc;
     }
-
     acc.push(item);
     return acc;
   }, []);
@@ -421,12 +549,8 @@ export default function Sidebar({ mobileOpen = false, onClose }) {
   const [expandedItems, setExpandedItems] = useState({});
 
   const isRtl = dir === "rtl";
-  const roleConf = ROLE_HEADER_CONFIG[currentUser?.role] || {
-    label: "Menu",
-    Icon: LayoutDashboard,
-    bg: "#eff6ff",
-    color: "#2563eb",
-  };
+  const roleConf =
+    ROLE_HEADER_CONFIG[currentUser?.role] || ROLE_HEADER_CONFIG.admin;
   const RoleIcon = roleConf.Icon;
   const menu = useMemo(
     () => buildMenu(currentUser?.role, userPerms),
@@ -449,7 +573,7 @@ export default function Sidebar({ mobileOpen = false, onClose }) {
         const firstRoute = getFirstNavigableRoute(item);
 
         return (
-          <div key={key}>
+          <div key={key} className="mb-1">
             <button
               onClick={() => {
                 if (collapsed) {
@@ -462,34 +586,23 @@ export default function Sidebar({ mobileOpen = false, onClose }) {
               title={
                 collapsed ? t(SIDEBAR_NAME_MAP[item.name] || item.name) : ""
               }
-              className={`sidebar-item w-full ${collapsed ? "justify-center" : "gap-3"} ${
-                isActive ? "active" : ""
-              }`}
-              style={
+              className={`flex items-center w-full px-3 py-2.5 rounded-xl text-sm font-medium transition-all group ${
                 isActive
-                  ? {
-                      backgroundColor: "var(--sidebar-item-active-bg)",
-                      color: "var(--sidebar-item-active-color)",
-                    }
-                  : undefined
-              }
+                  ? "bg-blue-50/80 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400"
+                  : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200"
+              }`}
             >
-              <span className="shrink-0 flex items-center justify-center">
+              <span
+                className={`shrink-0 flex items-center justify-center ${collapsed ? "mx-auto" : "mr-3 rtl:mr-0 rtl:ml-3"}`}
+              >
                 {depth > 0 ? (
                   <span
-                    className="block w-1.5 h-1.5 rounded-full"
-                    style={{
-                      backgroundColor: isActive
-                        ? "var(--sidebar-item-active-color)"
-                        : "var(--text-muted)",
-                    }}
+                    className={`block w-2 h-2 rounded-full ${isActive ? "bg-blue-500" : "bg-slate-300 dark:bg-slate-600"}`}
                   />
                 ) : item.Icon ? (
-                  <item.Icon size={17} style={{ opacity: 0.85 }} />
+                  <item.Icon size={18} strokeWidth={2} />
                 ) : (
-                  (ICON_MAP[item.name] ?? (
-                    <Circle size={17} style={{ opacity: 0.85 }} />
-                  ))
+                  (ICON_MAP[item.name] ?? <Circle size={18} strokeWidth={2} />)
                 )}
               </span>
               {!collapsed && (
@@ -498,30 +611,31 @@ export default function Sidebar({ mobileOpen = false, onClose }) {
                     {t(SIDEBAR_NAME_MAP[item.name] || item.name)}
                   </span>
                   <ChevronDown
-                    size={14}
-                    className="shrink-0 transition-transform duration-200"
-                    style={{
-                      transform: isOpen ? "rotate(180deg)" : "rotate(0deg)",
-                    }}
+                    size={16}
+                    className={`shrink-0 transition-transform duration-300 ${isOpen ? "rotate-180 text-blue-600 dark:text-blue-400" : "text-slate-400 group-hover:text-slate-600"}`}
                   />
                 </>
               )}
             </button>
-
             {!collapsed && isOpen && (
               <div
-                className="mt-0.5 space-y-0.5"
-                style={{ marginInlineStart: depth === 0 ? 16 : 12 }}
+                className="mt-1 space-y-1 relative"
+                style={{ marginInlineStart: depth === 0 ? "1.5rem" : "1rem" }}
               >
-                {renderMenuItems(item.children, {
-                  depth: depth + 1,
-                  indexed: [
-                    "Hotel Main Details",
-                    "Restaurant Main Details",
-                    "Activity Main Details",
-                  ].includes(item.name),
-                  parentKey: key,
-                })}
+                <div
+                  className={`absolute top-0 bottom-0 ${isRtl ? "right-0" : "left-0"} w-px bg-slate-200 dark:bg-slate-700`}
+                />
+                <div className={isRtl ? "pr-3" : "pl-3"}>
+                  {renderMenuItems(item.children, {
+                    depth: depth + 1,
+                    indexed: [
+                      "Hotel Main Details",
+                      "Restaurant Main Details",
+                      "Activity Main Details",
+                    ].includes(item.name),
+                    parentKey: key,
+                  })}
+                </div>
               </div>
             )}
           </div>
@@ -529,51 +643,41 @@ export default function Sidebar({ mobileOpen = false, onClose }) {
       }
 
       if (depth > 0) {
-        const ItemIcon = item.Icon || Circle;
-
         return (
           <NavLink
             key={key}
             to={item.route}
             onClick={closeMobile}
-            className={`sidebar-item gap-2.5 ${isActive ? "active" : ""}`}
-            style={
-              isActive
-                ? {
-                    backgroundColor: "var(--sidebar-item-active-bg)",
-                    color: "var(--sidebar-item-active-color)",
-                  }
-                : undefined
+            className={({ isActive: navActive }) =>
+              `flex items-center px-3 py-2 rounded-lg text-sm transition-all group mb-0.5 ${
+                navActive
+                  ? "bg-blue-50/80 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 font-semibold"
+                  : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200"
+              }`
             }
           >
-            {indexed ? (
-              <span
-                className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold"
-                style={{
-                  backgroundColor: isActive
-                    ? "var(--sidebar-item-active-color)"
-                    : "var(--bg-raised)",
-                  color: isActive
-                    ? "var(--sidebar-item-active-bg)"
-                    : "var(--text-muted)",
-                  border: `1px solid ${isActive ? "var(--sidebar-item-active-color)" : "var(--border)"}`,
-                }}
-              >
-                {index + 1}
-              </span>
-            ) : (
-              <span
-                className="block w-1.5 h-1.5 rounded-full shrink-0 mt-1"
-                style={{
-                  backgroundColor: isActive
-                    ? "var(--sidebar-item-active-color)"
-                    : "var(--text-muted)",
-                }}
-              />
+            {({ isActive: navActive }) => (
+              <>
+                {indexed ? (
+                  <span
+                    className={`shrink-0 ${isRtl ? "ml-2.5" : "mr-2.5"} flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold ${navActive ? "bg-blue-600 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700"}`}
+                  >
+                    {index + 1}
+                  </span>
+                ) : (
+                  <span
+                    className={`shrink-0 ${isRtl ? "ml-2.5" : "mr-2.5"} flex items-center justify-center w-4 h-4`}
+                  >
+                    <span
+                      className={`block w-1.5 h-1.5 rounded-full ${navActive ? "bg-blue-500" : "bg-slate-400 dark:bg-slate-500"}`}
+                    />
+                  </span>
+                )}
+                <span className="truncate">
+                  {t(SIDEBAR_NAME_MAP[item.name] || item.name)}
+                </span>
+              </>
             )}
-            <span className={`truncate ${indexed ? "text-xs" : "text-sm"}`}>
-              {t(SIDEBAR_NAME_MAP[item.name] || item.name)}
-            </span>
           </NavLink>
         );
       }
@@ -585,18 +689,26 @@ export default function Sidebar({ mobileOpen = false, onClose }) {
           onClick={closeMobile}
           title={collapsed ? t(SIDEBAR_NAME_MAP[item.name] || item.name) : ""}
           className={({ isActive: navActive }) =>
-            `sidebar-item ${collapsed ? "justify-center" : "gap-3"} ${
-              navActive ? "active" : ""
+            `flex items-center w-full px-3 py-2.5 rounded-xl text-sm font-medium transition-all mb-1 ${
+              navActive
+                ? "bg-blue-50/80 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400"
+                : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200"
             }`
           }
         >
-          <span className="shrink-0" style={{ opacity: 0.85 }}>
-            {ICON_MAP[item.name] || <Circle size={17} />}
-          </span>
-          {!collapsed && (
-            <span className="truncate">
-              {t(SIDEBAR_NAME_MAP[item.name] || item.name)}
-            </span>
+          {({ isActive: navActive }) => (
+            <>
+              <span
+                className={`shrink-0 flex items-center justify-center ${collapsed ? "mx-auto" : "mr-3 rtl:mr-0 rtl:ml-3"}`}
+              >
+                {ICON_MAP[item.name] || <Circle size={18} />}
+              </span>
+              {!collapsed && (
+                <span className="truncate">
+                  {t(SIDEBAR_NAME_MAP[item.name] || item.name)}
+                </span>
+              )}
+            </>
           )}
         </NavLink>
       );
@@ -614,125 +726,74 @@ export default function Sidebar({ mobileOpen = false, onClose }) {
 
   return (
     <>
-      {/* Mobile overlay */}
       <div
-        className={`fixed inset-0 z-30 backdrop-blur-sm transition-opacity lg:hidden ${
+        className={`fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-sm transition-opacity lg:hidden ${
           mobileOpen ? "opacity-100" : "pointer-events-none opacity-0"
         }`}
-        style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
         onClick={closeMobile}
       />
 
       <aside
-        className={`fixed ${isRtl ? "right-0" : "left-0"} top-[56px] z-40 flex h-[calc(100vh-56px)] flex-col transition-all duration-300 lg:static lg:top-0 lg:z-10 lg:h-full ${
-          collapsed ? "lg:w-[68px]" : "lg:w-64"
+        className={`fixed ${isRtl ? "right-0" : "left-0"} top-0 h-screen z-50 flex flex-col transition-all duration-300 lg:relative lg:top-0 lg:z-10 lg:h-full bg-white dark:bg-[#0b0f14] border-x border-slate-200 dark:border-slate-800 shadow-xl lg:shadow-none ${
+          collapsed ? "lg:w-[76px]" : "lg:w-[280px]"
         } ${
           mobileOpen
-            ? "translate-x-0"
+            ? "translate-x-0 w-[280px]"
             : isRtl
               ? "translate-x-full lg:translate-x-0"
               : "-translate-x-full lg:translate-x-0"
         }`}
-        style={{
-          backgroundColor: "var(--sidebar-bg)",
-          borderRight: isRtl ? "none" : "1px solid var(--sidebar-border)",
-          borderLeft: isRtl ? "1px solid var(--sidebar-border)" : "none",
-        }}
       >
-        {/* Role header */}
-        <div
-          className={`flex items-center gap-3 px-4 py-3 ${collapsed ? "justify-center" : "justify-between"}`}
-          style={{ borderBottom: "1px solid var(--sidebar-border)" }}
-        >
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div
-              className="w-8 h-8 rounded-lg grid place-items-center shrink-0"
-              style={{ backgroundColor: roleConf.bg }}
-            >
-              <RoleIcon size={16} style={{ color: roleConf.color }} />
-            </div>
-            {!collapsed && (
-              <span
-                className="font-semibold text-sm truncate"
-                style={{ color: "var(--text-primary)" }}
-              >
-                {roleConf.label}
-              </span>
-            )}
-          </div>
-          {!collapsed && (
-            <button
-              onClick={closeMobile}
-              className="lg:hidden h-7 w-7 grid place-items-center rounded-lg shrink-0 transition"
-              style={{
-                color: "var(--text-secondary)",
-                backgroundColor: "var(--bg-raised)",
-                border: "1px solid var(--border)",
-              }}
-            >
-              <X size={14} />
-            </button>
-          )}
-        </div>
-
-        <div className="hidden justify-end px-2 pt-2 lg:flex">
+        {/* Mobile close button */}
+        <div className="flex lg:hidden justify-end px-3 pt-3">
           <button
-            onClick={() => setCollapsed((v) => !v)}
-            title={collapsed ? "Expand" : "Collapse"}
-            className="h-7 w-7 items-center justify-center rounded-lg transition"
-            style={{
-              backgroundColor: "var(--bg-raised)",
-              color: "var(--text-secondary)",
-              border: "1px solid var(--border)",
-            }}
-            onMouseEnter={(e) =>
-              (e.currentTarget.style.backgroundColor =
-                "var(--sidebar-hover-bg)")
-            }
-            onMouseLeave={(e) =>
-              (e.currentTarget.style.backgroundColor = "var(--bg-raised)")
-            }
+            onClick={closeMobile}
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           >
-            {collapsed ? (
-              isRtl ? (
-                <ChevronLeft size={15} />
-              ) : (
-                <ChevronRight size={15} />
-              )
-            ) : isRtl ? (
-              <ChevronRight size={15} />
-            ) : (
-              <ChevronLeft size={15} />
-            )}
+            <X size={20} />
           </button>
         </div>
 
-        {/* Nav items */}
-        <nav className="flex-1 overflow-y-auto px-2 pb-3 pt-2 space-y-0.5">
-          {renderMenuItems(menu)}
-        </nav>
-
-        {/* Logout */}
-        <div
-          className="p-2"
-          style={{ borderTop: "1px solid var(--sidebar-border)" }}
+        {/* Absolute Toggle Button */}
+        <button
+          onClick={() => setCollapsed(!collapsed)}
+          className={`hidden lg:flex absolute top-6 h-6 w-6 rounded-full bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 items-center justify-center text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:border-blue-500 transition-all z-50 shadow-sm ${
+            isRtl ? "left-0 -translate-x-1/2" : "right-0 translate-x-1/2"
+          }`}
         >
+          {collapsed ? (
+            isRtl ? (
+              <ChevronLeft size={14} strokeWidth={3} />
+            ) : (
+              <ChevronRight size={14} strokeWidth={3} />
+            )
+          ) : isRtl ? (
+            <ChevronRight size={14} strokeWidth={3} />
+          ) : (
+            <ChevronLeft size={14} strokeWidth={3} />
+          )}
+        </button>
+
+        <div className="flex-1 overflow-y-auto px-3 pb-4 no-scrollbar">
+          <nav className="space-y-0.5">{renderMenuItems(menu)}</nav>
+        </div>
+
+        <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30">
           <button
             onClick={handleLogout}
             title={collapsed ? t("logout") : ""}
-            className={`flex w-full items-center rounded-xl px-3 py-2 text-sm font-medium transition ${
-              collapsed ? "justify-center" : "gap-3"
+            className={`flex items-center w-full px-3 py-2.5 rounded-xl text-sm font-semibold transition-all group text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 ${
+              collapsed ? "justify-center" : ""
             }`}
-            style={{ color: "var(--danger)" }}
-            onMouseEnter={(e) =>
-              (e.currentTarget.style.backgroundColor = "var(--bg-raised)")
-            }
-            onMouseLeave={(e) =>
-              (e.currentTarget.style.backgroundColor = "transparent")
-            }
           >
-            <LogOut size={17} />
-            {!collapsed && <span>{t("logout")}</span>}
+            <LogOut
+              size={18}
+              strokeWidth={2.5}
+              className="group-hover:-translate-x-1 rtl:group-hover:translate-x-1 transition-transform"
+            />
+            {!collapsed && (
+              <span className={isRtl ? "mr-3" : "ml-3"}>{t("logout")}</span>
+            )}
           </button>
         </div>
       </aside>

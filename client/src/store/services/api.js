@@ -101,6 +101,7 @@ export const api = createApi({
     "Report",
     "Sidebar",
     "Icon",
+    "HotelApiConfig",
   ],
   endpoints: (builder) => ({
     login: builder.mutation({
@@ -290,6 +291,37 @@ export const api = createApi({
       }),
       invalidatesTags: ["Hotel"],
     }),
+    // Hotel Developer API config
+    getApiConfig: builder.query({
+      query: () => "/hotel-api/config",
+      providesTags: ["HotelApiConfig"],
+    }),
+    createDevToken: builder.mutation({
+      query: (body) => ({ url: "/hotel-api/tokens", method: "POST", body }),
+      invalidatesTags: ["HotelApiConfig"],
+    }),
+    revokeDevToken: builder.mutation({
+      query: (tokenId) => ({
+        url: `/hotel-api/tokens/${tokenId}/revoke`,
+        method: "PATCH",
+      }),
+      invalidatesTags: ["HotelApiConfig"],
+    }),
+    deleteDevToken: builder.mutation({
+      query: (tokenId) => ({
+        url: `/hotel-api/tokens/${tokenId}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["HotelApiConfig"],
+    }),
+    toggleApiEndpoint: builder.mutation({
+      query: (body) => ({
+        url: "/hotel-api/endpoints",
+        method: "PATCH",
+        body,
+      }),
+      invalidatesTags: ["HotelApiConfig"],
+    }),
   }),
 });
 
@@ -338,4 +370,10 @@ export const {
   useDeleteIconMutation,
   useRequestIconMutation,
   useUpdateHotelIconsMutation,
+  // Hotel Developer API
+  useGetApiConfigQuery,
+  useCreateDevTokenMutation,
+  useRevokeDevTokenMutation,
+  useDeleteDevTokenMutation,
+  useToggleApiEndpointMutation,
 } = api;

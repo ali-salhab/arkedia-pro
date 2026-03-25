@@ -9,6 +9,9 @@ import {
   ChevronLeft,
   ChevronRight,
   Image as ImageIcon,
+  FileText,
+  Tag,
+  ShieldCheck,
 } from "lucide-react";
 import { useLanguage } from "../../context/LanguageContext";
 import { useGetIconsQuery } from "../../store/services/api";
@@ -152,7 +155,7 @@ function PhotoSlider({ photos }) {
   );
 }
 
-function SectionCard({ title, icon, children, className = "" }) {
+function SectionCard({ title, Icon, children, className = "" }) {
   return (
     <div
       className={`rounded-2xl p-5 ${className}`}
@@ -162,7 +165,12 @@ function SectionCard({ title, icon, children, className = "" }) {
       }}
     >
       <div className="mb-4 flex items-center gap-2">
-        <span className="text-base leading-none">{icon}</span>
+        {Icon && (
+          <Icon
+            size={14}
+            style={{ color: "var(--text-muted)", flexShrink: 0 }}
+          />
+        )}
         <h3
           className="text-[11px] font-bold uppercase tracking-widest"
           style={{ color: "var(--text-muted)" }}
@@ -420,7 +428,7 @@ export default function ActivityDetailsView() {
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
         <SectionCard
           title={copy.sectionDescription}
-          icon="📝"
+          Icon={FileText}
           className="lg:col-span-2"
         >
           {primaryDesc ? (
@@ -453,7 +461,7 @@ export default function ActivityDetailsView() {
           )}
         </SectionCard>
 
-        <SectionCard title={copy.sectionFeatures} icon="🏷️">
+        <SectionCard title={copy.sectionFeatures} Icon={Tag}>
           {selectedIconObjs.length > 0 ? (
             <div className="flex flex-wrap gap-2">
               {selectedIconObjs.map((icon) => (
@@ -507,7 +515,7 @@ export default function ActivityDetailsView() {
         </SectionCard>
       </div>
 
-      <SectionCard title={copy.sectionPolicy} icon="🛡️">
+      <SectionCard title={copy.sectionPolicy} Icon={ShieldCheck}>
         {policy ? (
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             <PolicyRow label={copy.duration} value={policy.duration} />

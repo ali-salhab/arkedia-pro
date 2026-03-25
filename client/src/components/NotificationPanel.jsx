@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Bell } from "lucide-react";
+import { Bell, ShieldCheck } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "../context/LanguageContext";
 
@@ -202,7 +202,9 @@ export default function NotificationPanel({ notifications = [], onClear }) {
                 fontSize: 13,
               }}
             >
-              <div style={{ fontSize: 32, marginBottom: 8 }}>🔔</div>
+              <div style={{ fontSize: 32, marginBottom: 8 }}>
+                <Bell size={32} style={{ margin: "0 auto", opacity: 0.4 }} />
+              </div>
               {t("noNotifications")}
             </div>
           ) : (
@@ -243,7 +245,11 @@ export default function NotificationPanel({ notifications = [], onClear }) {
                         flexShrink: 0,
                       }}
                     >
-                      {n.type === "permissions" ? "🔐" : "🔔"}
+                      {n.type === "permissions" ? (
+                        <ShieldCheck size={18} />
+                      ) : (
+                        <Bell size={18} />
+                      )}
                     </div>
                     <div style={{ flex: 1 }}>
                       <div

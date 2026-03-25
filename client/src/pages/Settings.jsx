@@ -1,5 +1,34 @@
 import { useSelector } from "react-redux";
 import { useLanguage } from "../context/LanguageContext";
+import {
+  Key,
+  Briefcase,
+  Hotel,
+  Utensils,
+  Zap,
+  ShieldCheck,
+  Puzzle,
+  Bell,
+  UtensilsCrossed,
+  Compass,
+  Users,
+  Link2,
+  Globe,
+  UserCheck,
+  CalendarDays,
+  Plus,
+  RotateCcw,
+  BedDouble,
+  DollarSign,
+  Package,
+  BarChart3,
+  Settings2,
+  Wrench,
+  Lock,
+  DoorOpen,
+  Wallet,
+  Building2,
+} from "lucide-react";
 
 const ROLE_BADGE = {
   super_admin: {
@@ -171,7 +200,11 @@ export default function SettingsPage() {
           <span
             className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold ${roleBadge.border} bg-gradient-to-r ${roleBadge.tone} ${roleBadge.text}`}
           >
-            <span>{roleBadge.icon}</span>
+            <span>
+              {roleBadge.icon && (
+                <roleBadge.icon size={13} className="inline -mt-0.5" />
+              )}
+            </span>
             {t(roleBadge.labelKey)}
           </span>
           <span className="inline-flex items-center rounded-full border border-slate-200 bg-white/70 px-3 py-1 text-xs font-semibold text-slate-600 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-300">
@@ -275,7 +308,9 @@ export default function SettingsPage() {
 
         {(user?.permissions || []).length === 0 ? (
           <div className="rounded-2xl border border-slate-200 bg-slate-50 p-6 text-center text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-300">
-            <div className="text-2xl">🔒</div>
+            <div className="flex justify-center mb-2">
+              <Lock size={24} className="text-slate-400" />
+            </div>
             <div className="mt-2 font-semibold">{t("noPermissions")}</div>
             <div className="mt-1 text-xs">{t("settingsNoPermissionsHint")}</div>
           </div>
@@ -284,7 +319,7 @@ export default function SettingsPage() {
             {Object.entries(groupedPermissions).map(([module, actions]) => {
               const moduleConfig = MODULE_LABELS[module] || {
                 key: module,
-                icon: "🔧",
+                icon: Wrench,
               };
 
               return (
@@ -293,7 +328,12 @@ export default function SettingsPage() {
                   className="rounded-2xl border border-slate-200 bg-slate-50/90 p-4 dark:border-slate-700 dark:bg-slate-900/60"
                 >
                   <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-800 dark:text-slate-100">
-                    <span>{moduleConfig.icon}</span>
+                    {moduleConfig.icon && (
+                      <moduleConfig.icon
+                        size={14}
+                        className="shrink-0 opacity-70"
+                      />
+                    )}
                     <span>{t(moduleConfig.key) || titleCase(module)}</span>
                   </div>
 

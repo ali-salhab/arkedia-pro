@@ -95,6 +95,12 @@ export default function HotelIconsStep() {
   const { data: icons = [], isLoading } = useGetIconsQuery();
   const [requestIcon, { isLoading: requesting }] = useRequestIconMutation();
 
+  useEffect(() => {
+    if (!sessionStorage.getItem("hotel_details_description")) {
+      navigate("/hotel/details/description", { replace: true });
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   const [activeCategory, setActiveCategory] = useState("hotel");
   const [selected, setSelected] = useState(new Set());
   const [showRequestForm, setShowRequestForm] = useState(false);

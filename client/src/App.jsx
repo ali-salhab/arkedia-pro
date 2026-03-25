@@ -56,6 +56,7 @@ import RefundPoliciesPage from "./pages/hotel-channel/travky/RefundPoliciesPage"
 import RoomTypesPage from "./pages/hotel-channel/travky/RoomTypesPage";
 import RatesPage from "./pages/hotel-channel/travky/RatesPage";
 import AvailabilityPage from "./pages/hotel-channel/travky/AvailabilityPage";
+import ApiSettingsPage from "./pages/hotel-channel/travky/ApiSettingsPage";
 
 const ALL_ROLES = [
   "super_admin",
@@ -278,6 +279,10 @@ export default function App() {
                 }
               />
             }
+          />
+          <Route
+            path="/hotel/channel-manager/travky/api-settings"
+            element={<DashboardRoute element={<ApiSettingsPage />} />}
           />
           <Route
             path="/hotel/channel-manager/external"

@@ -34,13 +34,43 @@
     transform: none;
   }
 }
+@keyframes blob {
+  0% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  33% {
+    transform: translate(30px, -50px) scale(1.1);
+  }
+  66% {
+    transform: translate(-20px, 20px) scale(0.9);
+  }
+  100% {
+    transform: translate(0px, 0px) scale(1);
+  }
+}
+
+@layer utilities {
+  .animate-blob {
+    animation: blob 7s infinite;
+  }
+  .animation-delay-2000 {
+    animation-delay: 2s;
+  }
+  .animation-delay-4000 {
+    animation-delay: 4s;
+  }
+}
 
 @layer base {
+  body {
+    font-family: "Outfit", sans-serif;
+  }
+
   :root {
     /* Brand */
-    --brand: #3b82f6;
-    --brand-hover: #2563eb;
-    --brand-muted: rgba(59, 130, 246, 0.12);
+    --brand: #2563eb;
+    --brand-hover: #1d4ed8;
+    --brand-muted: rgba(37, 99, 235, 0.12);
 
     /* Light surfaces */
     --bg-base: #f9fafb;
@@ -110,14 +140,14 @@
   html,
   body,
   #root {
-    min-height: 100%;
+    height: 100vh;
+    overflow: hidden;
   }
 
   body {
     background-color: var(--bg-base);
     color: var(--text-primary);
     @apply antialiased;
-    overflow-x: hidden;
     transition:
       background-color 0.25s,
       color 0.25s;
@@ -134,18 +164,19 @@
 @layer components {
   /* Layout shell */
   .layout {
-    @apply relative flex min-h-screen min-w-0 overflow-hidden;
+    @apply relative flex w-full overflow-hidden;
+    height: calc(100vh - 60px);
     background-color: var(--bg-base);
   }
 
   .content {
-    @apply relative min-w-0 flex-1 overflow-x-hidden overflow-y-auto;
-    height: calc(100vh - 56px);
+    @apply relative min-w-0 flex-1 overflow-x-hidden overflow-y-auto flex flex-col;
+    height: 100%;
     background-color: var(--bg-base);
   }
 
   .page-shell {
-    @apply relative mx-auto w-full max-w-7xl min-w-0 space-y-6 px-4 py-5 sm:px-6 sm:py-7 lg:px-8;
+    @apply relative mx-auto w-full max-w-7xl min-w-0 flex-1 space-y-6 px-4 py-5 sm:px-6 sm:py-7 lg:px-8;
     animation: fade-up 0.3s ease-out;
   }
 
@@ -536,5 +567,3 @@ html.dark [style*="background-color: #ffffff"],
 html.dark [style*="background-color: rgb(255, 255, 255)"] {
   background-color: var(--bg-surface) !important;
 }
-
-

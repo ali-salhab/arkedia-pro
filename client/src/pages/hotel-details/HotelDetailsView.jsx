@@ -9,6 +9,9 @@ import {
   ChevronLeft,
   ChevronRight,
   Image as ImageIcon,
+  FileText,
+  Tag,
+  ShieldCheck,
 } from "lucide-react";
 import { useLanguage } from "../../context/LanguageContext";
 import { useGetIconsQuery } from "../../store/services/api";
@@ -259,7 +262,7 @@ function OsmMap({ city, country, lat: savedLat, lng: savedLng, copy }) {
   );
 }
 
-function SectionCard({ title, icon, children, className = "" }) {
+function SectionCard({ title, Icon, children, className = "" }) {
   return (
     <div
       className={`rounded-2xl p-5 ${className}`}
@@ -269,7 +272,12 @@ function SectionCard({ title, icon, children, className = "" }) {
       }}
     >
       <div className="mb-4 flex items-center gap-2">
-        <span className="text-base leading-none">{icon}</span>
+        {Icon && (
+          <Icon
+            size={14}
+            style={{ color: "var(--text-muted)", flexShrink: 0 }}
+          />
+        )}
         <h3
           className="text-[11px] font-bold uppercase tracking-widest"
           style={{ color: "var(--text-muted)" }}
@@ -517,7 +525,7 @@ export default function HotelDetailsView() {
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
         <SectionCard
           title={copy.sectionDescription}
-          icon="📝"
+          Icon={FileText}
           className="lg:col-span-2"
         >
           {primaryDescription ? (
@@ -551,7 +559,7 @@ export default function HotelDetailsView() {
           )}
         </SectionCard>
 
-        <SectionCard title={copy.sectionAmenities} icon="🏷️">
+        <SectionCard title={copy.sectionAmenities} Icon={Tag}>
           {selectedIconObjs.length > 0 ? (
             <div className="flex flex-wrap gap-2">
               {selectedIconObjs.map((icon) => (
@@ -607,7 +615,7 @@ export default function HotelDetailsView() {
       </div>
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-        <SectionCard title={copy.sectionLocation} icon="📍">
+        <SectionCard title={copy.sectionLocation} Icon={MapPin}>
           {(main.city || main.country) && (
             <p
               className="mb-3 text-xs font-medium"
@@ -641,7 +649,7 @@ export default function HotelDetailsView() {
           </a>
         </SectionCard>
 
-        <SectionCard title={copy.sectionPolicy} icon="🛡️">
+        <SectionCard title={copy.sectionPolicy} Icon={ShieldCheck}>
           {primaryPolicy ? (
             <p
               className="text-sm leading-relaxed"

@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ImageIcon, Plus, X, Camera } from "lucide-react";
 import HotelDetailsStepBar from "../../components/HotelDetailsStepBar";
@@ -47,6 +47,12 @@ export default function HotelPhotosStep() {
   const copy = COPY[lang] || COPY.en;
   const mainInputRef = useRef(null);
   const galleryInputRef = useRef(null);
+
+  useEffect(() => {
+    if (!sessionStorage.getItem("hotel_details_policy")) {
+      navigate("/hotel/details/policy", { replace: true });
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const [mainPhoto, setMainPhoto] = useState(() => {
     const saved = JSON.parse(

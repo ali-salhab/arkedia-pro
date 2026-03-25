@@ -2,19 +2,22 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "../context/LanguageContext";
 import LoadingScreen from "../components/LoadingScreen";
+import DeleteConfirmModal from "../components/DeleteConfirmModal";
+import PermissionWrapper from "../components/PermissionWrapper";
+import DataModal from "../components/DataModal";
+import { Pencil, Trash2, Search, Plus, BedDouble, Tag, DollarSign, Activity } from "lucide-react";
 import {
   useGetRoomsQuery,
   useCreateRoomMutation,
   useUpdateRoomMutation,
   useDeleteRoomMutation,
 } from "../store/services/api";
-import PermissionWrapper from "../components/PermissionWrapper";
 
-const STATUS_STYLE = {
-  available: { background: "rgba(22,163,74,0.15)", color: "#16a34a" },
-  occupied: { background: "rgba(220,38,38,0.15)", color: "#ef4444" },
-  maintenance: { background: "rgba(161,98,7,0.15)", color: "#d97706" },
-  reserved: { background: "rgba(29,78,216,0.15)", color: "#3b82f6" },
+const STATUS_BADGE = {
+  available: { cls: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" },
+  occupied: { cls: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" },
+  maintenance: { cls: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" },
+  reserved: { cls: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" },
 };
 
 const TYPE_ICON = {
@@ -27,18 +30,18 @@ const TYPE_ICON = {
 };
 
 export default function RoomsPage() {
-  const { t } = useLanguage();
+  const { t, dir } = useLanguage();
+  const isRtl = dir === "rtl";
   const navigate = useNavigate();
-  const { data: rooms = [], isLoading } = useGetRoomsQuery();
+  
+  const { data: rooms = [], isLoading, error } = useGetRoomsQuery();
   const [createRoom] = useCreateRoomMutation();
   const [updateRoom] = useUpdateRoomMutation();
   const [deleteRoom] = useDeleteRoomMutation();
 
-  const [modalOpen, setModalOpen] = useState(false);
-  const [editRoom, setEditRoom] = useState(null);
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
-  const [confirmDelete, setConfirmDelete] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   const filtered = rooms.filter((r) => {
     const q = search.toLowerCase();
@@ -51,447 +54,183 @@ export default function RoomsPage() {
     return matchSearch && matchStatus;
   });
 
-  const handleSave = async (data) => {
-    if (data._id) {
-      await updateRoom({ id: data._id, ...data }).unwrap();
-    } else {
-      await createRoom(data).unwrap();
-    }
-  };
-
   const handleDeleteConfirm = async () => {
-    if (!confirmDelete) return;
-    await deleteRoom(confirmDelete._id).unwrap();
-    setConfirmDelete(null);
+    if (!deleteTarget) return;
+    await deleteRoom(deleteTarget).unwrap();
+    setDeleteTarget(null);
   };
 
-  const openAdd = () => {
-    navigate("/rooms/new", { state: { backTo: "/rooms" } });
-  };
-  const openEdit = (r) => {
-    navigate(`/rooms/${r._id}/edit`, { state: { room: r, backTo: "/rooms" } });
-  };
+  const openAdd = () => navigate("/rooms/new", { state: { backTo: "/rooms" } });
+  const openEdit = (r) => navigate(`/rooms/${r._id}/edit`, { state: { room: r, backTo: "/rooms" } });
 
-  const stats = {
-    total: rooms.length,
-    available: rooms.filter((r) => r.status === "available").length,
-    occupied: rooms.filter((r) => r.status === "occupied").length,
-    maintenance: rooms.filter((r) => r.status === "maintenance").length,
-  };
+  if (isLoading) return <LoadingScreen label={t("loadingRooms")} tableRows={6} tableCols={5} />;
+  if (error) return <div className="p-6 text-center text-rose-500 font-bold">{t("errorLoadingRooms") || "Error loading rooms"}</div>;
 
-  if (isLoading)
-    return (
-      <LoadingScreen
-        label={t("loadingRooms")}
-        statCount={4}
-        tableRows={4}
-        tableCols={4}
-      />
-    );
+  const roomToDelete = filtered.find(r => r._id === deleteTarget);
 
   return (
-    <div style={{ padding: 24, maxWidth: 1200, margin: "0 auto" }}>
-      {/* Stats row */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(4, 1fr)",
-          gap: 14,
-          marginBottom: 24,
-        }}
-      >
-        {[
-          {
-            label: t("roomsPage_totalRooms"),
-            value: stats.total,
-            color: "#3b82f6",
-          },
-          {
-            label: t("roomsPage_available"),
-            value: stats.available,
-            color: "#16a34a",
-          },
-          {
-            label: t("roomsPage_occupied"),
-            value: stats.occupied,
-            color: "#dc2626",
-          },
-          {
-            label: t("roomsPage_maintenance"),
-            value: stats.maintenance,
-            color: "#a16207",
-          },
-        ].map((s) => (
-          <div
-            key={s.label}
-            style={{
-              background: "var(--bg-surface)",
-              borderRadius: 12,
-              padding: "16px 20px",
-              border: "1px solid var(--border)",
-              borderLeft: `4px solid ${s.color}`,
-            }}
-          >
-            <div style={{ fontSize: 28, fontWeight: 800, color: s.color }}>
-              {s.value}
-            </div>
-            <div
-              style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 2 }}
-            >
-              {s.label}
-            </div>
-          </div>
-        ))}
+    <div className="space-y-6 pb-10 animate-in fade-in duration-300" style={{ direction: isRtl ? "rtl" : "ltr" }}>
+      {/* Page Title */}
+      <div>
+        <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">{t("roomsTables") || "Rooms / Tables"}</h1>
+        <p className="text-slate-500 dark:text-slate-400 text-sm font-medium mt-1">{t("roomsSubtitle") || "Manage units and availability"}</p>
       </div>
 
       {/* Toolbar */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 20,
-          flexWrap: "wrap",
-          gap: 10,
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            gap: 10,
-            flexWrap: "wrap",
-            alignItems: "center",
-          }}
-        >
-          <input
-            style={{
-              padding: "9px 14px",
-              borderRadius: 8,
-              border: "1px solid var(--border)",
-              fontSize: 14,
-              minWidth: 220,
-              outline: "none",
-              background: "var(--bg-surface)",
-              color: "var(--text-primary)",
-            }}
-            placeholder={t("roomsPage_searchPlaceholder")}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Search */}
+          <div className="relative">
+            <Search size={15} className={`absolute top-1/2 -translate-y-1/2 text-slate-400 ${isRtl ? 'right-3.5' : 'left-3.5'}`} />
+            <input
+              className={`h-10 ${isRtl ? 'pr-9 pl-4' : 'pl-9 pr-4'} rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-[13px] font-medium text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all w-56`}
+              placeholder={t("roomsPage_searchPlaceholder")}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          {/* Filter Status */}
           <select
-            style={{
-              padding: "9px 14px",
-              borderRadius: 8,
-              border: "1px solid var(--border)",
-              fontSize: 14,
-              outline: "none",
-              background: "var(--bg-surface)",
-              color: "var(--text-primary)",
-            }}
+            className="h-10 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-[13px] font-medium text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all cursor-pointer"
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
           >
             <option value="all">{t("roomsPage_allStatuses")}</option>
-            <option value="available">✅ {t("rm_statusAvailable")}</option>
-            <option value="occupied">🔴 {t("rm_statusOccupied")}</option>
-            <option value="maintenance">🛠️ {t("rm_statusMaintenance")}</option>
-            <option value="reserved">🔵 {t("rm_statusReserved")}</option>
+            <option value="available">{t("rm_statusAvailable")}</option>
+            <option value="occupied">{t("rm_statusOccupied")}</option>
+            <option value="maintenance">{t("rm_statusMaintenance")}</option>
+            <option value="reserved">{t("rm_statusReserved")}</option>
           </select>
         </div>
-        <PermissionWrapper permission="rooms:add">
-          <button
-            onClick={openAdd}
-            style={{
-              padding: "10px 22px",
-              borderRadius: 10,
-              border: "none",
-              background: "linear-gradient(135deg, #1d4ed8, #7c3aed)",
-              color: "#fff",
-              fontWeight: 700,
-              fontSize: 14,
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-            }}
-          >
-            {t("roomsPage_addRoom")}
-          </button>
-        </PermissionWrapper>
+
+        <div className="flex items-center gap-2">
+          <DataModal resourcePath="rooms" resourceLabel={t("roomsTables") || "Rooms / Tables"} />
+          <PermissionWrapper permission="rooms:add">
+            <button
+              onClick={openAdd}
+              className="h-10 px-5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-[13px] flex items-center gap-2 shadow-lg shadow-blue-500/25 hover:-translate-y-0.5 transition-all"
+            >
+              {t("roomsPage_addRoom")}
+            </button>
+          </PermissionWrapper>
+        </div>
       </div>
 
-      {/* Cards grid */}
+      {/* Table / Empty */}
       {filtered.length === 0 ? (
-        <div
-          style={{
-            textAlign: "center",
-            padding: 60,
-            color: "var(--text-muted)",
-          }}
-        >
-          <div style={{ fontSize: 48 }}>🏨</div>
-          <div style={{ marginTop: 12, fontSize: 16 }}>
-            {t("roomsPage_noRooms")}
+        <div className="flex flex-col items-center justify-center py-20 gap-4 bg-white/60 dark:bg-slate-900/40 rounded-3xl border border-slate-200/50 dark:border-slate-800/50 backdrop-blur-xl">
+          <div className="w-16 h-16 rounded-3xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+            <BedDouble size={28} className="text-slate-400" strokeWidth={1.5} />
           </div>
+          <p className="text-slate-500 dark:text-slate-400 font-semibold text-[15px]">{t("roomsPage_noRooms")}</p>
+          <PermissionWrapper permission="rooms:add">
+            <button onClick={openAdd} className="h-10 px-5 rounded-xl bg-blue-600 text-white font-bold text-[13px] flex items-center gap-2 shadow-md">
+              {t("roomsPage_addRoom")}
+            </button>
+          </PermissionWrapper>
         </div>
       ) : (
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
-            gap: 16,
-          }}
-        >
-          {filtered.map((r) => (
-            <div
-              key={r._id}
-              style={{
-                background: "var(--bg-surface)",
-                borderRadius: 14,
-                border: "1px solid var(--border)",
-                overflow: "hidden",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
-                transition: "box-shadow 0.2s",
-              }}
-            >
-              {/* Card image */}
-              {r.thumbnail || (r.images && r.images[0]) ? (
-                <img
-                  src={r.thumbnail || r.images[0]}
-                  alt={`Room ${r.number}`}
-                  style={{ width: "100%", height: 160, objectFit: "cover" }}
-                />
-              ) : (
-                <div
-                  style={{
-                    width: "100%",
-                    height: 160,
-                    background: "linear-gradient(135deg, #1e3a8a, #5b21b6)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: 40,
-                  }}
-                >
-                  {TYPE_ICON[r.type] || "🛏️"}
-                </div>
-              )}
-              <div style={{ padding: 16 }}>
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "flex-start",
-                    marginBottom: 10,
-                  }}
-                >
-                  <div>
-                    <div
-                      style={{
-                        fontWeight: 700,
-                        fontSize: 17,
-                        color: "#1e293b",
-                      }}
-                    >
-                      Room #{r.number}
-                      {r.name ? ` — ${r.name}` : ""}
-                    </div>
-                    <div
-                      style={{
-                        fontSize: 13,
-                        color: "var(--text-muted)",
-                        marginTop: 2,
-                      }}
-                    >
-                      {r.category || r.type}{" "}
-                      {r.floor ? `· Floor ${r.floor}` : ""}
-                    </div>
-                  </div>
-                  <span
-                    style={{
-                      ...(STATUS_STYLE[r.status] || STATUS_STYLE.available),
-                      padding: "3px 10px",
-                      borderRadius: 20,
-                      fontSize: 11,
-                      fontWeight: 700,
-                    }}
-                  >
-                    {(r.status || "available").charAt(0).toUpperCase() +
-                      (r.status || "available").slice(1)}
-                  </span>
-                </div>
-                <div
-                  style={{
-                    display: "flex",
-                    gap: 14,
-                    fontSize: 13,
-                    color: "var(--text-secondary)",
-                    marginBottom: 12,
-                  }}
-                >
-                  {r.capacity && (
-                    <span>
-                      👥 {r.capacity} {t("roomsPage_guests")}
-                    </span>
-                  )}
-                  {r.sizeM2 && <span>📐 {r.sizeM2} m²</span>}
-                </div>
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                  }}
-                >
-                  <div
-                    style={{
-                      fontSize: 18,
-                      fontWeight: 700,
-                      color: "var(--brand)",
-                    }}
-                  >
-                    {r.currency || "USD"} {r.pricePerNight || 0}
-                    <span
-                      style={{
-                        fontSize: 12,
-                        color: "var(--text-muted)",
-                        fontWeight: 400,
-                      }}
-                    >
-                      /{t("bk_night")}
-                    </span>
-                    {r.discount > 0 && (
-                      <span
-                        style={{
-                          marginLeft: 6,
-                          fontSize: 11,
-                          background: "rgba(161,98,7,0.15)",
-                          color: "#d97706",
-                          borderRadius: 10,
-                          padding: "2px 7px",
-                        }}
-                      >
-                        -{r.discount}%
+        <div className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl rounded-3xl border border-slate-200/60 dark:border-slate-800/50 shadow-sm overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-[13.5px]">
+              <thead>
+                <tr className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-800/30">
+                  {[
+                    { label: t("room") || "Room", Icon: BedDouble },
+                    { label: t("details") || "Details", Icon: Tag },
+                    { label: t("price") || "Rate", Icon: DollarSign },
+                    { label: t("status") || "Status", Icon: Activity },
+                    { label: "" },
+                  ].map((h, i) => (
+                    <th key={i} className="px-4 py-3.5 text-center text-[11px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 whitespace-nowrap">
+                      <span className="flex items-center justify-center gap-1.5">
+                        {h.Icon && <h.Icon size={12} />}
+                        {h.label}
                       </span>
-                    )}
-                  </div>
-                  <div style={{ display: "flex", gap: 6 }}>
-                    <PermissionWrapper permission="rooms:edit">
-                      <button
-                        onClick={() => openEdit(r)}
-                        style={{
-                          padding: "5px 12px",
-                          borderRadius: 7,
-                          border: "1px solid var(--border)",
-                          background: "var(--bg-raised)",
-                          cursor: "pointer",
-                          fontSize: 13,
-                          color: "var(--brand)",
-                          fontWeight: 600,
-                        }}
-                      >
-                        {t("edit")}
-                      </button>
-                    </PermissionWrapper>
-                    <PermissionWrapper permission="rooms:delete">
-                      <button
-                        onClick={() => setConfirmDelete(r)}
-                        style={{
-                          padding: "5px 12px",
-                          borderRadius: 7,
-                          border: "none",
-                          background: "rgba(220,38,38,0.12)",
-                          cursor: "pointer",
-                          fontSize: 13,
-                          color: "var(--danger)",
-                          fontWeight: 600,
-                        }}
-                      >
-                        {t("delete")}
-                      </button>
-                    </PermissionWrapper>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                {filtered.map((r) => {
+                  const badge = STATUS_BADGE[r.status] || { cls: "bg-slate-100 text-slate-600" };
+                  const imgUrl = r.thumbnail || (r.images && r.images[0]);
+                  return (
+                    <tr key={r._id} className="group hover:bg-blue-50/30 dark:hover:bg-blue-900/10 transition-colors">
+                      <td className="px-4 py-4">
+                        <div className="flex items-center justify-center gap-3 text-center">
+                          {imgUrl ? (
+                            <img src={imgUrl} className="h-12 w-16 rounded-xl object-cover shrink-0 shadow-sm border border-slate-200 dark:border-slate-700" alt="" />
+                          ) : (
+                            <div className="h-12 w-16 rounded-xl shrink-0 flex items-center justify-center bg-gradient-to-br from-indigo-500 to-blue-600 shadow-sm border border-slate-200 dark:border-slate-700 text-xl">
+                              {TYPE_ICON[r.type] || "🛏️"}
+                            </div>
+                          )}
+                          <div className="text-start">
+                            <p className="font-bold text-slate-900 dark:text-white leading-snug">
+                              Room #{r.number} {r.name ? ` — ${r.name}` : ""}
+                            </p>
+                            <p className="text-[12px] font-medium text-slate-400 dark:text-slate-500">
+                              {r.category || r.type} {r.floor ? `· Floor ${r.floor}` : ""}
+                            </p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-4 text-center text-slate-600 dark:text-slate-400 font-medium">
+                        <div className="flex justify-center gap-3">
+                          {r.capacity && <span>👥 {r.capacity}</span>}
+                          {r.sizeM2 && <span>📐 {r.sizeM2}m²</span>}
+                        </div>
+                      </td>
+                      <td className="px-4 py-4 text-center">
+                        <div className="font-bold justify-center flex items-center text-slate-900 dark:text-white">
+                          {r.currency || "USD"} {r.pricePerNight || 0}
+                          <span className="text-[11px] text-slate-400 font-semibold ml-1">/ {t("bk_night")}</span>
+                        </div>
+                        {r.discount > 0 && (
+                          <div className="text-[10px] text-center font-black uppercase text-amber-600 dark:text-amber-500 mt-0.5 tracking-wider">
+                            {r.discount}% off
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-4 py-4 text-center">
+                        <span className={`inline-flex items-center justify-center px-2.5 py-1 rounded-full text-[11px] font-black uppercase tracking-wider ${badge.cls}`}>
+                          {t(`rm_status${(r.status || "available").charAt(0).toUpperCase() + (r.status || "available").slice(1)}`) || r.status}
+                        </span>
+                      </td>
+                      <td className="px-4 py-4 text-center">
+                        <div className="flex items-center justify-center gap-2">
+                          <PermissionWrapper permission="rooms:edit">
+                            <button onClick={() => openEdit(r)} className="h-8 w-8 flex items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100 transition-colors" title={t("edit")}>
+                              <Pencil size={14} strokeWidth={2.5} />
+                            </button>
+                          </PermissionWrapper>
+                          <PermissionWrapper permission="rooms:delete">
+                            <button onClick={() => setDeleteTarget(r._id)} className="h-8 w-8 flex items-center justify-center rounded-xl bg-red-50 dark:bg-red-900/20 text-red-500 hover:bg-red-100 transition-colors" title={t("delete")}>
+                              <Trash2 size={14} strokeWidth={2.5} />
+                            </button>
+                          </PermissionWrapper>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          <div className="px-5 py-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+            <p className="text-[12px] text-slate-400 font-semibold">{filtered.length} {filtered.length === 1 ? "room" : "rooms"}</p>
+          </div>
         </div>
       )}
 
-      {/* Delete confirmation */}
-      {confirmDelete && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(15,23,42,0.5)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 1100,
-          }}
-        >
-          <div
-            style={{
-              background: "var(--bg-surface)",
-              borderRadius: 14,
-              padding: 28,
-              maxWidth: 380,
-              width: "90%",
-            }}
-          >
-            <div
-              style={{
-                fontSize: 18,
-                fontWeight: 700,
-                marginBottom: 10,
-                color: "var(--text-primary)",
-              }}
-            >
-              {t("roomsPage_deleteRoomTitle")} #{confirmDelete.number}?
-            </div>
-            <div
-              style={{
-                fontSize: 14,
-                color: "var(--text-muted)",
-                marginBottom: 20,
-              }}
-            >
-              {t("roomsPage_deleteCannotUndo")}
-            </div>
-            <div
-              style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}
-            >
-              <button
-                onClick={() => setConfirmDelete(null)}
-                style={{
-                  padding: "9px 18px",
-                  borderRadius: 8,
-                  border: "1px solid var(--border)",
-                  background: "var(--bg-surface)",
-                  color: "var(--text-secondary)",
-                  cursor: "pointer",
-                }}
-              >
-                {t("cancel")}
-              </button>
-              <button
-                onClick={handleDeleteConfirm}
-                style={{
-                  padding: "9px 18px",
-                  borderRadius: 8,
-                  border: "none",
-                  background: "#dc2626",
-                  color: "#fff",
-                  fontWeight: 700,
-                  cursor: "pointer",
-                }}
-              >
-                {t("delete")}
-              </button>
-            </div>
-          </div>
-        </div>
+      {/* Delete confirmation modal */}
+      {deleteTarget && (
+        <DeleteConfirmModal
+          open={!!deleteTarget}
+          onClose={() => setDeleteTarget(null)}
+          onConfirm={handleDeleteConfirm}
+        />
       )}
     </div>
   );

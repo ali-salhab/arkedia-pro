@@ -1,4 +1,14 @@
 import { useState, useEffect } from "react";
+import {
+  ClipboardList,
+  MapPin,
+  Users,
+  Clock,
+  Utensils,
+  Sparkles,
+  Leaf,
+  CalendarDays,
+} from "lucide-react";
 
 const initialFormState = {
   // Basic Information
@@ -263,14 +273,14 @@ export default function RestaurantFormModal({
   };
 
   const tabs = [
-    { id: "basic", label: "Basic Info", icon: "📋" },
-    { id: "location", label: "Location", icon: "📍" },
-    { id: "capacity", label: "Capacity", icon: "🪑" },
-    { id: "hours", label: "Hours", icon: "🕐" },
-    { id: "services", label: "Services", icon: "🍽️" },
-    { id: "amenities", label: "Amenities", icon: "✨" },
-    { id: "dietary", label: "Dietary", icon: "🥗" },
-    { id: "reservations", label: "Reservations", icon: "📅" },
+    { id: "basic", label: "Basic Info", Icon: ClipboardList },
+    { id: "location", label: "Location", Icon: MapPin },
+    { id: "capacity", label: "Capacity", Icon: Users },
+    { id: "hours", label: "Hours", Icon: Clock },
+    { id: "services", label: "Services", Icon: Utensils },
+    { id: "amenities", label: "Amenities", Icon: Sparkles },
+    { id: "dietary", label: "Dietary", Icon: Leaf },
+    { id: "reservations", label: "Reservations", Icon: CalendarDays },
   ];
 
   const renderTabContent = () => {
@@ -328,14 +338,10 @@ export default function RestaurantFormModal({
                   value={form.status}
                   onChange={(e) => handleChange("status", e.target.value)}
                 >
-                  <option value="active">✅ Active</option>
-                  <option value="inactive">⏸️ Inactive</option>
-                  <option value="temporarily-closed">
-                    🔒 Temporarily Closed
-                  </option>
-                  <option value="permanently-closed">
-                    ❌ Permanently Closed
-                  </option>
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                  <option value="temporarily-closed">Temporarily Closed</option>
+                  <option value="permanently-closed">Permanently Closed</option>
                 </select>
               </div>
             </div>
@@ -404,9 +410,9 @@ export default function RestaurantFormModal({
                   }
                 >
                   <option value={0}>No Michelin Stars</option>
-                  <option value={1}>⭐ 1 Star</option>
-                  <option value={2}>⭐⭐ 2 Stars</option>
-                  <option value={3}>⭐⭐⭐ 3 Stars</option>
+                  <option value={1}>1 Star</option>
+                  <option value={2}>2 Stars</option>
+                  <option value={3}>3 Stars</option>
                 </select>
               </div>
             </div>
@@ -755,9 +761,9 @@ export default function RestaurantFormModal({
               }}
             >
               {Object.entries({
-                cash: "💵 Cash",
-                creditCard: "💳 Credit Card",
-                debitCard: "💳 Debit Card",
+                cash: "Cash",
+                creditCard: "Credit Card",
+                debitCard: "Debit Card",
                 applePay: "🍎 Apple Pay",
                 googlePay: "📱 Google Pay",
                 crypto: "₿ Crypto",
@@ -1182,7 +1188,8 @@ export default function RestaurantFormModal({
                 fontSize: 13,
               }}
             >
-              {tab.icon} {tab.label}
+              {tab.Icon && <tab.Icon size={13} className="inline -mt-0.5" />}{" "}
+              {tab.label}
             </button>
           ))}
         </div>

@@ -9,6 +9,14 @@ import {
 } from "lucide-react";
 import { useLanguage } from "../context/LanguageContext";
 
+const STEP_STORAGE_KEYS = [
+  "hotel_details_main",
+  "hotel_details_description",
+  "hotel_details_icons",
+  "hotel_details_policy",
+  "hotel_details_photos",
+];
+
 export default function HotelDetailsStepBar() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
@@ -44,9 +52,10 @@ export default function HotelDetailsStepBar() {
     <div className="mb-8 flex justify-center overflow-x-auto px-1 py-1 select-none lg:mb-10">
       <div className="flex min-w-max items-start px-1 lg:px-2">
         {steps.map((step, idx) => {
-          const isDone = idx < currentIdx;
+          const isDone = !!sessionStorage.getItem(STEP_STORAGE_KEYS[idx]);
           const isCurrent = idx === currentIdx;
-          const isReachable = idx <= currentIdx;
+          const isReachable =
+            idx === 0 || !!sessionStorage.getItem(STEP_STORAGE_KEYS[idx - 1]);
           const { Icon } = step;
 
           return (

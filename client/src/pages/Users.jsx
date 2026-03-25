@@ -5,7 +5,19 @@ import LoadingScreen from "../components/LoadingScreen";
 import DeleteConfirmModal from "../components/DeleteConfirmModal";
 import { useLanguage } from "../context/LanguageContext";
 import { useGetUsersQuery, useDeleteUserMutation } from "../store/services/api";
-import { Pencil, Trash2, Search, Download, Plus } from "lucide-react";
+import DataModal from "../components/DataModal";
+import {
+  Pencil,
+  Trash2,
+  Search,
+  Download,
+  Plus,
+  Users,
+  ShieldCheck,
+  CalendarDays,
+  MoreVertical,
+} from "lucide-react";
+import PermissionWrapper from "../components/PermissionWrapper";
 
 const ROLE_CONFIG = {
   super_admin: {
@@ -71,27 +83,57 @@ const ROLE_CONFIG = {
 };
 
 const ROLE_BADGE = {
-  super_admin: { bg: "#3b0764", color: "#d8b4fe", label: "Super Admin" },
-  superadminuser: { bg: "#4c1d95", color: "#ddd6fe", label: "SA Staff" },
-  admin: { bg: "#1e3a8a", color: "#93c5fd", label: "Admin" },
-  adminuser: { bg: "#1d4ed8", color: "#bfdbfe", label: "Admin Staff" },
-  hotel: { bg: "#14532d", color: "#86efac", label: "Hotel" },
-  hoteluser: { bg: "#166534", color: "#bbf7d0", label: "Hotel Staff" },
-  restaurant: { bg: "#78350f", color: "#fcd34d", label: "Restaurant" },
-  restaurantuser: { bg: "#92400e", color: "#fde68a", label: "Rest. Staff" },
-  activity: { bg: "#134e4a", color: "#5eead4", label: "Activity" },
-  activityuser: { bg: "#115e59", color: "#99f6e4", label: "Act. Staff" },
+  super_admin: {
+    cls: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
+    label: "Super Admin",
+  },
+  superadminuser: {
+    cls: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
+    label: "SA Staff",
+  },
+  admin: {
+    cls: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+    label: "Admin",
+  },
+  adminuser: {
+    cls: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+    label: "Admin Staff",
+  },
+  hotel: {
+    cls: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
+    label: "Hotel",
+  },
+  hoteluser: {
+    cls: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
+    label: "Hotel Staff",
+  },
+  restaurant: {
+    cls: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+    label: "Restaurant",
+  },
+  restaurantuser: {
+    cls: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+    label: "Rest. Staff",
+  },
+  activity: {
+    cls: "bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400",
+    label: "Activity",
+  },
+  activityuser: {
+    cls: "bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400",
+    label: "Act. Staff",
+  },
 };
 
 const AVATAR_COLORS = [
-  "#6366f1",
-  "#3b82f6",
-  "#0ea5e9",
-  "#10b981",
-  "#f59e0b",
-  "#ef4444",
-  "#8b5cf6",
-  "#ec4899",
+  "from-indigo-500 to-blue-500",
+  "from-blue-500 to-sky-500",
+  "from-sky-500 to-cyan-500",
+  "from-emerald-500 to-teal-500",
+  "from-amber-500 to-orange-500",
+  "from-rose-500 to-red-500",
+  "from-violet-500 to-purple-500",
+  "from-pink-500 to-rose-500",
 ];
 function avatarColor(name) {
   return AVATAR_COLORS[(name?.charCodeAt(0) || 0) % AVATAR_COLORS.length];
@@ -100,7 +142,8 @@ function avatarColor(name) {
 export default function UsersPage() {
   const currentUser = useSelector((s) => s.auth.user);
   const config = ROLE_CONFIG[currentUser?.role] || ROLE_CONFIG.super_admin;
-  const { t, lang } = useLanguage();
+  const { t, lang, dir } = useLanguage();
+  const isRtl = dir === "rtl";
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [deleteTarget, setDeleteTarget] = useState(null);
@@ -122,13 +165,18 @@ export default function UsersPage() {
     setDeleteTarget(null);
   };
 
+  const openAdd = () =>
+    navigate("/users/new", {
+      state: { fixedRole: config.teamRole, backTo: "/users" },
+    });
+
   if (isLoading)
     return (
       <LoadingScreen label={t("loadingUsers")} tableRows={6} tableCols={4} />
     );
   if (error)
     return (
-      <div className="card p-6 text-center text-rose-500">
+      <div className="p-6 text-center text-rose-500 font-bold">
         {t("errorLoadingUsers")}
       </div>
     );
@@ -143,184 +191,226 @@ export default function UsersPage() {
       u.email?.toLowerCase().includes(search.toLowerCase()),
   );
 
-  const exportCsv = () => {
-    const csv = [
-      "Name,Email,Role,Permissions,Created",
-      ...rows.map(
-        (u) =>
-          `"${u.name}","${u.email}","${u.role}","${(u.permissions || []).length}","${u.createdAt ? new Date(u.createdAt).toLocaleDateString() : ""}"`,
-      ),
-    ].join("\n");
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
-    a.download = "users.csv";
-    a.click();
-  };
+  const userToDelete = rows.find((u) => u._id === deleteTarget);
 
   return (
-    <div className="p-6">
-      <DeleteConfirmModal
-        open={!!deleteTarget}
-        onClose={() => setDeleteTarget(null)}
-        onConfirm={confirmDelete}
-      />
-      {/* Header */}
-      <div className="flex items-start justify-between gap-4 mb-6">
-        <div>
-          <nav className="flex items-center gap-1.5 text-sm text-slate-400 mb-1">
-            <span>{t("dashboard")}</span>
-            <span>/</span>
-            <span className="text-slate-600 dark:text-slate-300">
-              {t("users")}
-            </span>
-          </nav>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
-            {t(config.titleKey)}
-          </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-            {t(config.subtitleKey)}
+    <div
+      className="space-y-6 pb-10 animate-in fade-in duration-300"
+      style={{ direction: isRtl ? "rtl" : "ltr" }}
+    >
+      {/* Page Title */}
+      <div>
+        <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+          {t(config.titleKey)}
+        </h1>
+        <p className="text-slate-500 dark:text-slate-400 text-sm font-medium mt-1">
+          {t(config.subtitleKey)}
+        </p>
+      </div>
+
+      {/* Toolbar */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Search */}
+          <div className="relative">
+            <Search
+              size={15}
+              className={`absolute top-1/2 -translate-y-1/2 text-slate-400 ${isRtl ? "right-3.5" : "left-3.5"}`}
+            />
+            <input
+              className={`h-10 ${isRtl ? "pr-9 pl-4" : "pl-9 pr-4"} rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-[13px] font-medium text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all w-56 lg:w-72`}
+              placeholder={t("search") + "..."}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <DataModal
+            resourcePath="users"
+            resourceLabel={t("usersPage_title")}
+          />
+          <PermissionWrapper permission="users:add">
+            <button
+              onClick={openAdd}
+              className="h-10 px-5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-[13px] flex items-center gap-2 shadow-lg shadow-blue-500/25 hover:-translate-y-0.5 transition-all"
+            >
+              {t("usersPage_addUser")}
+            </button>
+          </PermissionWrapper>
+        </div>
+      </div>
+
+      {/* Table / Empty */}
+      {rows.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-20 gap-4 bg-white/60 dark:bg-slate-900/40 rounded-3xl border border-slate-200/50 dark:border-slate-800/50 backdrop-blur-xl">
+          <div className="w-16 h-16 rounded-3xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+            <Users size={28} className="text-slate-400" strokeWidth={1.5} />
+          </div>
+          <p className="text-slate-500 dark:text-slate-400 font-semibold text-[15px]">
+            {t("noData")}
           </p>
+          <PermissionWrapper permission="users:add">
+            <button
+              onClick={handleAdd}
+              className="h-10 px-5 rounded-xl bg-blue-600 text-white font-bold text-[13px] flex items-center gap-2 shadow-md"
+            >
+              {t(config.addLabelKey)}
+            </button>
+          </PermissionWrapper>
         </div>
-        <button
-          onClick={handleAdd}
-          className="flex items-center gap-2 bg-slate-900 dark:bg-slate-700 text-white dark:text-slate-100 px-4 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition shrink-0"
-        >
-          <Plus size={16} /> {t(config.addLabelKey)}
-        </button>
-      </div>
-
-      {/* Search + Export */}
-      <div className="flex items-center gap-3 mb-4">
-        <div className="relative flex-1 max-w-sm">
-          <Search
-            size={15}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-          />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder={t("search") + "..."}
-            className="input pl-9 py-2 text-sm w-full"
-          />
-        </div>
-        <button
-          onClick={exportCsv}
-          className="flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
-        >
-          <Download size={15} /> {t("exportCsv")}
-        </button>
-      </div>
-
-      {/* Table */}
-      <div className="bg-white dark:bg-slate-800/70 rounded-2xl border border-slate-200 dark:border-slate-700/60 overflow-hidden">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-slate-100 dark:border-slate-700">
-              <th className="text-left px-5 py-3.5 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-                {t("name")}
-              </th>
-              <th className="text-left px-5 py-3.5 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-                {t("role")}
-              </th>
-              <th className="text-left px-5 py-3.5 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-                {t("permissions")}
-              </th>
-              <th className="text-left px-5 py-3.5 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-                {t("createdAt")}
-              </th>
-              <th className="px-5 py-3.5" />
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-50 dark:divide-slate-700/60">
-            {rows.length === 0 ? (
-              <tr>
-                <td
-                  colSpan={5}
-                  className="px-5 py-12 text-center text-slate-400 dark:text-slate-500"
-                >
-                  {t("noData")}
-                </td>
-              </tr>
-            ) : (
-              rows.map((u) => {
-                const badge = ROLE_BADGE[u.role] || {
-                  bg: "#f1f5f9",
-                  color: "#64748b",
-                  label: u.role,
-                };
-                const bg = avatarColor(u.name);
-                return (
-                  <tr
-                    key={u._id}
-                    className="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition"
-                  >
-                    <td className="px-5 py-3.5">
-                      <div className="flex items-center gap-3">
-                        {u.logo ? (
-                          <img
-                            src={u.logo}
-                            className="h-9 w-9 rounded-full object-cover shrink-0"
-                            alt=""
-                          />
-                        ) : (
-                          <div
-                            className="h-9 w-9 rounded-full shrink-0 grid place-items-center text-white text-xs font-bold"
-                            style={{ background: bg }}
-                          >
-                            {(u.name || "?")[0].toUpperCase()}
-                          </div>
-                        )}
-                        <div>
-                          <div className="font-medium text-slate-800 dark:text-slate-100">
-                            {u.name}
-                          </div>
-                          <div className="text-xs text-slate-400 dark:text-slate-500">
-                            {u.email}
+      ) : (
+        <div className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl rounded-3xl border border-slate-200/60 dark:border-slate-800/50 shadow-sm overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-[13.5px]">
+              <thead>
+                <tr className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-800/30">
+                  {[
+                    { label: t("name"), Icon: Users },
+                    { label: t("role"), Icon: ShieldCheck },
+                    { label: t("permissions"), Icon: ShieldCheck },
+                    { label: t("createdAt"), Icon: CalendarDays },
+                    { label: "" },
+                  ].map((h, i) => (
+                    <th
+                      key={i}
+                      className="px-4 py-3.5 text-center text-[11px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 whitespace-nowrap"
+                    >
+                      <span className="flex items-center justify-center gap-1.5">
+                        {h.Icon && <h.Icon size={12} />}
+                        {h.label}
+                      </span>
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                {rows.map((u) => {
+                  const badge = ROLE_BADGE[u.role] || {
+                    cls: "bg-slate-100 text-slate-600",
+                    label: u.role,
+                  };
+                  const bgGrad = avatarColor(u.name);
+                  return (
+                    <tr
+                      key={u._id}
+                      className="group hover:bg-blue-50/30 dark:hover:bg-blue-900/10 transition-colors"
+                    >
+                      <td className="px-4 py-4 text-center">
+                        <div className="flex items-center justify-center gap-3 text-center">
+                          {u.logo ? (
+                            <img
+                              src={u.logo}
+                              className="h-10 w-10 rounded-xl object-cover shrink-0 shadow-sm border border-slate-200 dark:border-slate-700"
+                              alt=""
+                            />
+                          ) : (
+                            <div
+                              className={`h-10 w-10 rounded-xl shrink-0 flex items-center justify-center text-white text-[13px] font-black bg-gradient-to-br ${bgGrad} shadow-sm border border-slate-200/50 dark:border-slate-700/50`}
+                            >
+                              {(u.name || "?")[0].toUpperCase()}
+                            </div>
+                          )}
+                          <div className="text-start">
+                            <p className="font-bold text-slate-900 dark:text-white leading-snug">
+                              {u.name}
+                            </p>
+                            <p className="text-[12px] font-medium text-slate-400 dark:text-slate-500">
+                              {u.email}
+                            </p>
                           </div>
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-5 py-3.5">
-                      <span
-                        className="px-2.5 py-1 rounded-full text-xs font-semibold"
-                        style={{ background: badge.bg, color: badge.color }}
-                      >
-                        {badge.label}
-                      </span>
-                    </td>
-                    <td className="px-5 py-3.5 text-slate-500 dark:text-slate-400">
-                      {(u.permissions || []).length} {t("permissionsSelected")}
-                    </td>
-                    <td className="px-5 py-3.5 text-slate-500 dark:text-slate-400">
-                      {u.createdAt
-                        ? new Date(u.createdAt).toLocaleDateString(
-                            lang === "ar" ? "ar-EG" : "en-US",
-                          )
-                        : "—"}
-                    </td>
-                    <td className="px-5 py-3.5">
-                      <div className="flex items-center justify-end gap-1">
-                        <button
-                          onClick={() => handleEdit(u)}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition"
+                      </td>
+                      <td className="px-4 py-4 text-center">
+                        <span
+                          className={`inline-flex items-center justify-center px-2.5 py-1 rounded-full text-[11px] font-black uppercase tracking-wider ${badge.cls}`}
                         >
-                          <Pencil size={15} />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(u._id)}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition"
-                        >
-                          <Trash2 size={15} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
-      </div>
+                          {badge.label}
+                        </span>
+                      </td>
+                      <td className="px-4 py-4 text-center text-slate-600 dark:text-slate-400 font-semibold">
+                        <span className="bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded text-[12px]">
+                          {(u.permissions || []).length}
+                        </span>{" "}
+                        {t("permissionsSelected")}
+                      </td>
+                      <td className="px-4 py-4 text-center text-slate-600 dark:text-slate-400 font-medium whitespace-nowrap">
+                        {u.createdAt
+                          ? new Date(u.createdAt).toLocaleDateString(
+                              lang === "ar" ? "ar-EG" : "en-US",
+                            )
+                          : "—"}
+                      </td>
+                      <td className="px-4 py-4 text-center">
+                        <div className="flex items-center justify-center gap-2">
+                          <PermissionWrapper permission="users:edit">
+                            <button
+                              onClick={() => handleEdit(u)}
+                              className="h-8 w-8 flex items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100 transition-colors"
+                              title={t("edit")}
+                            >
+                              <Pencil size={14} strokeWidth={2.5} />
+                            </button>
+                          </PermissionWrapper>
+                          <PermissionWrapper permission="users:delete">
+                            <button
+                              onClick={() => handleDelete(u._id)}
+                              className="h-8 w-8 flex items-center justify-center rounded-xl bg-red-50 dark:bg-red-900/20 text-red-500 hover:bg-red-100 transition-colors"
+                              title={t("delete")}
+                            >
+                              <Trash2 size={14} strokeWidth={2.5} />
+                            </button>
+                          </PermissionWrapper>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          <div className="px-5 py-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+            <p className="text-[12px] text-slate-400 font-semibold">
+              {rows.length} {rows.length === 1 ? "user" : "users"}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Delete confirmation modal */}
+      {deleteTarget && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-[1100] p-4 animate-in fade-in duration-200">
+          <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-3xl rounded-3xl border border-slate-200/60 dark:border-slate-800/50 shadow-2xl p-8 w-full max-w-sm">
+            <div className="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-2xl flex items-center justify-center mb-5">
+              <Trash2 size={22} className="text-red-600 dark:text-red-400" />
+            </div>
+            <h3 className="text-[18px] font-black text-slate-900 dark:text-white mb-2">
+              {t("deleteConfirmTitle") || "Delete User"}
+            </h3>
+            <p className="text-slate-600 dark:text-slate-300 font-semibold mb-1">
+              {userToDelete?.name}
+            </p>
+            <p className="text-[13px] text-slate-500 dark:text-slate-400 mb-6">
+              {t("deleteCannotUndo") || "This action cannot be undone."}
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setDeleteTarget(null)}
+                className="flex-1 h-11 rounded-2xl border border-slate-200 dark:border-slate-700 font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-[14px]"
+              >
+                {t("cancel")}
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="flex-1 h-11 rounded-2xl bg-red-600 hover:bg-red-700 text-white font-bold text-[14px] shadow-lg shadow-red-500/25 transition-colors"
+              >
+                {t("delete")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

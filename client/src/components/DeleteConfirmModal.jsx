@@ -1,4 +1,5 @@
 import { useLanguage } from "../context/LanguageContext";
+import { AlertTriangle } from "lucide-react";
 
 export default function DeleteConfirmModal({
   open,
@@ -55,7 +56,11 @@ export default function DeleteConfirmModal({
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <span style={{ fontSize: 22 }}>⚠️</span>
+            <AlertTriangle
+              size={22}
+              strokeWidth={2}
+              style={{ color: "var(--danger)", flexShrink: 0 }}
+            />
             <h3
               style={{
                 margin: 0,

@@ -1,4 +1,11 @@
 import { useState, useEffect } from "react";
+import {
+  Target,
+  MapPin,
+  ClipboardList,
+  CheckSquare,
+  CalendarDays,
+} from "lucide-react";
 
 const initialFormState = {
   name: "",
@@ -186,11 +193,11 @@ export default function ActivityFormModal({
   };
 
   const tabs = [
-    { id: "basic", label: "🎯 Basic" },
-    { id: "location", label: "📍 Location" },
-    { id: "details", label: "📋 Details" },
-    { id: "features", label: "✅ Features" },
-    { id: "schedule", label: "� Schedule" },
+    { id: "basic", label: "Basic", Icon: Target },
+    { id: "location", label: "Location", Icon: MapPin },
+    { id: "details", label: "Details", Icon: ClipboardList },
+    { id: "features", label: "Features", Icon: CheckSquare },
+    { id: "schedule", label: "Schedule", Icon: CalendarDays },
   ];
 
   const renderTabContent = () => {
@@ -843,6 +850,16 @@ export default function ActivityFormModal({
                 fontSize: 13,
               }}
             >
+              {tab.Icon && (
+                <tab.Icon
+                  size={13}
+                  style={{
+                    display: "inline",
+                    marginRight: 5,
+                    verticalAlign: "middle",
+                  }}
+                />
+              )}
               {tab.label}
             </button>
           ))}

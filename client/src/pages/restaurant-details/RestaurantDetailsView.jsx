@@ -8,6 +8,8 @@ import {
   Trash2,
   ChevronLeft,
   ChevronRight,
+  FileText,
+  ShieldCheck,
 } from "lucide-react";
 import { useLanguage } from "../../context/LanguageContext";
 import DeleteConfirmModal from "../../components/DeleteConfirmModal";
@@ -137,7 +139,7 @@ function PhotoSlider({ photos }) {
   );
 }
 
-function SectionCard({ title, icon, children, className = "" }) {
+function SectionCard({ title, Icon, children, className = "" }) {
   return (
     <div
       className={`rounded-2xl p-5 ${className}`}
@@ -147,7 +149,12 @@ function SectionCard({ title, icon, children, className = "" }) {
       }}
     >
       <div className="mb-4 flex items-center gap-2">
-        <span className="text-base leading-none">{icon}</span>
+        {Icon && (
+          <Icon
+            size={14}
+            style={{ color: "var(--text-muted)", flexShrink: 0 }}
+          />
+        )}
         <h3
           className="text-[11px] font-bold uppercase tracking-widest"
           style={{ color: "var(--text-muted)" }}
@@ -415,7 +422,7 @@ export default function RestaurantDetailsView() {
       </div>
 
       {/* Description */}
-      <SectionCard title={copy.sectionDescription} icon="📝">
+      <SectionCard title={copy.sectionDescription} Icon={FileText}>
         {primaryDesc ? (
           <p
             className="text-sm leading-relaxed"
@@ -444,7 +451,7 @@ export default function RestaurantDetailsView() {
       </SectionCard>
 
       {/* Policy */}
-      <SectionCard title={copy.sectionPolicy} icon="🛡️">
+      <SectionCard title={copy.sectionPolicy} Icon={ShieldCheck}>
         {policy ? (
           <div className="flex flex-col gap-2">
             <PolicyRow label={pl.openingHours} value={policy.openingHours} />

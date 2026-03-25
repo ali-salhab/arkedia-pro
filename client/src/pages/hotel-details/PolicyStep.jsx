@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ShieldCheck, Info } from "lucide-react";
 import HotelDetailsStepBar from "../../components/HotelDetailsStepBar";
@@ -18,6 +18,12 @@ export default function HotelPolicyStep() {
   const navigate = useNavigate();
   const { lang: uiLang, dir } = useLanguage();
   const isAr = uiLang === "ar";
+
+  useEffect(() => {
+    if (!sessionStorage.getItem("hotel_details_icons")) {
+      navigate("/hotel/details/icons", { replace: true });
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const saved = loadPolicy();
   const [checkIn, setCheckIn] = useState(saved.checkIn || "14:00");

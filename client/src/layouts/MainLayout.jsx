@@ -111,7 +111,7 @@ export default function MainLayout({ children }) {
         notifications={notifications}
         onClearNotifications={clearAllNotifications}
       />
-      <div className="layout h-screen pt-[60px]" dir={dir}>
+      <div className="layout" dir={dir}>
         <Sidebar
           mobileOpen={mobileSidebarOpen}
           onClose={() => setMobileSidebarOpen(false)}

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Lightbulb } from "lucide-react";
 import HotelDetailsStepBar from "../../components/HotelDetailsStepBar";
@@ -93,6 +93,13 @@ export default function HotelDescriptionStep() {
   const navigate = useNavigate();
   const { lang: uiLang } = useLanguage();
   const copy = COPY[uiLang] || COPY.en;
+
+  useEffect(() => {
+    if (!sessionStorage.getItem("hotel_details_main")) {
+      navigate("/hotel/details/main", { replace: true });
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   const [lang, setLang] = useState("en");
   const [descEn, setDescEn] = useState(
     () =>
