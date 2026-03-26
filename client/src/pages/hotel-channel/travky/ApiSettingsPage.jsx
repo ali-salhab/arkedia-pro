@@ -136,14 +136,13 @@ const COPY = {
     docsStep1: "١. أنشئ رمز وصول أعلاه وانسخه.",
     docsStep2:
       "٢. أرسل طلبات HTTP إلى عنوان URL الأساسي أدناه، متضمنًا الرمز في رأس التفويض.",
-    docsStep3:
-      "٣. يمكنك إلغاء صلاحية الرمز في أي وقت لحجب وصول المطور فورًا.",
+    docsStep3: "٣. يمكنك إلغاء صلاحية الرمز في أي وقت لحجب وصول المطور فورًا.",
     baseUrl: "عنوان URL الأساسي",
     exampleRequest: "مثال على الطلب",
     exampleResponse: "مثال على الاستجابة (الغرف)",
-    tokenWarning: "هذا الرمز يُعرض مرة واحدة فقط. انسخه الآن — لن تتمكن من رؤيته مجددًا.",
-    confirmRevoke:
-      "إلغاء صلاحية هذا الرمز؟ سيفقد المطور وصوله إلى API فورًا.",
+    tokenWarning:
+      "هذا الرمز يُعرض مرة واحدة فقط. انسخه الآن — لن تتمكن من رؤيته مجددًا.",
+    confirmRevoke: "إلغاء صلاحية هذا الرمز؟ سيفقد المطور وصوله إلى API فورًا.",
     confirmDelete: "حذف هذا الرمز نهائيًا؟",
     revoke: "إلغاء الصلاحية",
     delete: "حذف",
@@ -204,11 +203,7 @@ export default function ApiSettingsPage() {
   const [formError, setFormError] = useState("");
   const [newlyCreatedToken, setNewlyCreatedToken] = useState(null);
 
-  const {
-    data: config,
-    isLoading,
-    refetch,
-  } = useGetApiConfigQuery();
+  const { data: config, isLoading, refetch } = useGetApiConfigQuery();
   const [createDevToken, { isLoading: creating }] = useCreateDevTokenMutation();
   const [revokeDevToken] = useRevokeDevTokenMutation();
   const [deleteDevToken] = useDeleteDevTokenMutation();
@@ -225,8 +220,7 @@ export default function ApiSettingsPage() {
         name: newName,
         email: newEmail,
       }).unwrap();
-      const created =
-        result.developerTokens[result.developerTokens.length - 1];
+      const created = result.developerTokens[result.developerTokens.length - 1];
       setNewlyCreatedToken(created.token);
       setNewName("");
       setNewEmail("");
@@ -236,13 +230,17 @@ export default function ApiSettingsPage() {
 
   const handleRevoke = async (tokenId) => {
     if (!window.confirm(c.confirmRevoke)) return;
-    await revokeDevToken(tokenId).unwrap().catch(() => {});
+    await revokeDevToken(tokenId)
+      .unwrap()
+      .catch(() => {});
   };
 
   const handleDelete = async (tokenId) => {
     if (!window.confirm(c.confirmDelete)) return;
     setNewlyCreatedToken(null);
-    await deleteDevToken(tokenId).unwrap().catch(() => {});
+    await deleteDevToken(tokenId)
+      .unwrap()
+      .catch(() => {});
   };
 
   const handleToggleEndpoint = async (key, currentlyEnabled) => {
@@ -261,9 +259,7 @@ export default function ApiSettingsPage() {
   ];
 
   return (
-    <div
-      className={`max-w-3xl mx-auto px-4 py-6 space-y-5 ${isRtl ? "text-right" : "text-left"}`}
-    >
+    <div className={`page-shell ${isRtl ? "text-right" : "text-left"}`}>
       {/* Header */}
       <div
         className={`flex items-start gap-4 ${isRtl ? "flex-row-reverse" : ""}`}
@@ -396,9 +392,7 @@ export default function ApiSettingsPage() {
                   dir="ltr"
                 />
               </div>
-              <div
-                className={`flex gap-2 ${isRtl ? "flex-row-reverse" : ""}`}
-              >
+              <div className={`flex gap-2 ${isRtl ? "flex-row-reverse" : ""}`}>
                 <button
                   onClick={handleCreate}
                   disabled={creating}
@@ -531,11 +525,7 @@ export default function ApiSettingsPage() {
                     <div
                       className={`w-9 h-9 rounded-xl ${ep.bg} flex items-center justify-center shrink-0`}
                     >
-                      <ep.Icon
-                        size={17}
-                        className={ep.color}
-                        strokeWidth={2}
-                      />
+                      <ep.Icon size={17} className={ep.color} strokeWidth={2} />
                     </div>
                     <div
                       className={`flex-1 min-w-0 ${isRtl ? "text-right" : "text-left"}`}

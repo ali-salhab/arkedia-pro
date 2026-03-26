@@ -57,6 +57,10 @@ import RoomTypesPage from "./pages/hotel-channel/travky/RoomTypesPage";
 import RatesPage from "./pages/hotel-channel/travky/RatesPage";
 import AvailabilityPage from "./pages/hotel-channel/travky/AvailabilityPage";
 import ApiSettingsPage from "./pages/hotel-channel/travky/ApiSettingsPage";
+import CommissionPage from "./pages/hotel-channel/travky/CommissionPage";
+import StopSalePage from "./pages/hotel-channel/travky/StopSalePage";
+import PlatformFeesHotelsPage from "./pages/super-admin/PlatformFeesHotelsPage";
+import ManualBookingPage from "./pages/super-admin/ManualBookingPage";
 
 const ALL_ROLES = [
   "super_admin",
@@ -124,6 +128,14 @@ export default function App() {
           <Route
             path="/super-admin/icons"
             element={<DashboardRoute element={<SuperAdminIconsPage />} />}
+          />
+          <Route
+            path="/super-admin/platform-fees/hotels"
+            element={<DashboardRoute element={<PlatformFeesHotelsPage />} />}
+          />
+          <Route
+            path="/super-admin/customer-services/manual-booking"
+            element={<DashboardRoute element={<ManualBookingPage />} />}
           />
         </Route>
 
@@ -268,6 +280,10 @@ export default function App() {
             }
           />
           <Route
+            path="/hotel/channel-manager/travky/commission"
+            element={<DashboardRoute element={<CommissionPage />} />}
+          />
+          <Route
             path="/hotel/channel-manager/travky/availability"
             element={
               <DashboardRoute
@@ -279,6 +295,10 @@ export default function App() {
                 }
               />
             }
+          />
+          <Route
+            path="/hotel/channel-manager/travky/stop-sale"
+            element={<DashboardRoute element={<StopSalePage />} />}
           />
           <Route
             path="/hotel/channel-manager/travky/api-settings"

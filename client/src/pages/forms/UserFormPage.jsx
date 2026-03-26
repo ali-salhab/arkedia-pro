@@ -8,7 +8,8 @@ import {
 export default function UserFormPage() {
   const navigate = useNavigate();
   const { state } = useLocation();
-  const user = state?.user || null;
+  const user =
+    state?.user || state?.hotel || state?.restaurant || state?.activity || null;
   const fixedRole = state?.fixedRole || null;
   const adminsList = state?.adminsList || [];
   const backTo = state?.backTo || -1;

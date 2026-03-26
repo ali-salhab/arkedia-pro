@@ -93,7 +93,7 @@ export default function Navbar({
 
           <div className="flex items-center gap-3">
             {/* Logo */}
-            <div className="h-16 w-16 shrink-0 -ml-1">
+            <div className="h-12 w-12 shrink-0 -ml-1">
               <img
                 src="/logo_transparent.png"
                 alt="Travky"
@@ -179,7 +179,7 @@ export default function Navbar({
           <div style={{ position: "relative" }} ref={profileRef}>
             <button
               onClick={() => setProfileOpen((v) => !v)}
-              className={`${isRtl ? "mr-1" : "ml-1"} h-9 w-9 rounded-xl overflow-hidden ring-2 ring-offset-2 ring-offset-white dark:ring-offset-slate-900 ring-blue-500/50 hover:ring-blue-500 transition-all shadow-sm`}
+              className={`${isRtl ? "mr-1" : "ml-1"} h-9 w-9 rounded-lg overflow-hidden ring-1 ring-offset-2 ring-offset-white dark:ring-offset-slate-900 ring-blue-300 hover:ring-blue-500 transition-all shadow-sm`}
               aria-label="User profile"
             >
               {user?.logo ? (
@@ -196,7 +196,10 @@ export default function Navbar({
                 </div>
               )}
             </button>
-            <ProfileModal open={profileOpen} onClose={() => setProfileOpen(false)} />
+            <ProfileModal
+              open={profileOpen}
+              onClose={() => setProfileOpen(false)}
+            />
           </div>
         </div>
       </header>

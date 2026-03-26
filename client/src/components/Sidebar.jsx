@@ -22,6 +22,7 @@ import {
   ChevronDown,
   Circle,
   X,
+  Check,
   ClipboardList,
   FileSearch,
   AlignLeft,
@@ -31,6 +32,8 @@ import {
   Link2,
   Globe,
   MoreVertical,
+  Landmark,
+  BookOpen,
 } from "lucide-react";
 
 const ROLE_MENUS = {
@@ -51,6 +54,32 @@ const ROLE_MENUS = {
     { name: "Finance", route: "/finance", perm: "finance:view" },
     { name: "Reports", route: "/reports", perm: "reports:view" },
     { name: "Settings", route: "/settings", perm: "settings:view" },
+    {
+      name: "Platform Fees",
+      perm: null,
+      matchPrefix: "/super-admin/platform-fees",
+      children: [
+        {
+          name: "Hotel Fees",
+          route: "/super-admin/platform-fees/hotels",
+          perm: null,
+          Icon: Landmark,
+        },
+      ],
+    },
+    {
+      name: "Customer Services",
+      perm: null,
+      matchPrefix: "/super-admin/customer-services",
+      children: [
+        {
+          name: "Manual Booking",
+          route: "/super-admin/customer-services/manual-booking",
+          perm: null,
+          Icon: BookOpen,
+        },
+      ],
+    },
   ],
   admin: [
     { name: "Dashboard", route: "/admin", perm: null },
@@ -142,6 +171,12 @@ const ROLE_MENUS = {
               Icon: BedDouble,
             },
             {
+              name: "Commission",
+              route: "/hotel/channel-manager/travky/commission",
+              perm: null,
+              Icon: DollarSign,
+            },
+            {
               name: "Rates",
               route: "/hotel/channel-manager/travky/rates",
               perm: "rates:view",
@@ -151,6 +186,12 @@ const ROLE_MENUS = {
               name: "Availability",
               route: "/hotel/channel-manager/travky/availability",
               perm: "availability:view",
+              Icon: BarChart2,
+            },
+            {
+              name: "Stop Sale",
+              route: "/hotel/channel-manager/travky/stop-sale",
+              perm: null,
               Icon: BarChart2,
             },
             {
@@ -249,6 +290,12 @@ const ROLE_MENUS = {
               Icon: BedDouble,
             },
             {
+              name: "Commission",
+              route: "/hotel/channel-manager/travky/commission",
+              perm: null,
+              Icon: DollarSign,
+            },
+            {
               name: "Rates",
               route: "/hotel/channel-manager/travky/rates",
               perm: "rates:view",
@@ -258,6 +305,12 @@ const ROLE_MENUS = {
               name: "Availability",
               route: "/hotel/channel-manager/travky/availability",
               perm: "availability:view",
+              Icon: BarChart2,
+            },
+            {
+              name: "Stop Sale",
+              route: "/hotel/channel-manager/travky/stop-sale",
+              perm: null,
               Icon: BarChart2,
             },
             {
@@ -352,6 +405,28 @@ const ROLE_MENUS = {
   ],
 };
 
+const TRAVKY_BADGE_KEYS = {
+  "/hotel/channel-manager/travky/guest-groups": "travky_guest_groups",
+  "/hotel/channel-manager/travky/meal-plans": "travky_meal_plans",
+  "/hotel/channel-manager/travky/periods": "travky_periods",
+  "/hotel/channel-manager/travky/supplements": "travky_supplements",
+  "/hotel/channel-manager/travky/refund-policies": "travky_refund_policies",
+  "/hotel/channel-manager/travky/rooms": "travky_room_types",
+  "/hotel/channel-manager/travky/commission": "travky_commissions",
+};
+
+function getTravkyBadge(route) {
+  const lsKey = TRAVKY_BADGE_KEYS[route];
+  if (!lsKey) return null;
+  try {
+    const raw = localStorage.getItem(lsKey);
+    const data = raw ? JSON.parse(raw) : null;
+    return Array.isArray(data) ? data.length : 0;
+  } catch {
+    return 0;
+  }
+}
+
 const ROLE_MENU_ALIASES = {
   superadminuser: "super_admin",
   adminuser: "admin",
@@ -382,14 +457,20 @@ const SIDEBAR_NAME_MAP = {
   Supplement: "supplements",
   "Refund Policy": "refundPolicies",
   "Channel Rooms": "channelManagerRooms",
+  Commission: "commission",
   Rates: "rates",
   Availability: "availability",
+  "Stop Sale": "stopSale",
   "Main Details": "hotelStepMain",
   "Hotel Description": "hotelStepDescription",
   "Hotel Icons": "hotelStepIcons",
   "Hotel Policy": "hotelStepPolicy",
   Photos: "hotelStepPhotos",
   "API Settings": "apiSettings",
+  "Platform Fees": "platformFees",
+  "Hotel Fees": "platformFeesHotels",
+  "Customer Services": "customerServices",
+  "Manual Booking": "manualBooking",
   Dashboard: "dashboard",
   Users: "users",
   Admins: "admins",
@@ -438,6 +519,8 @@ const ICON_MAP = {
   Reports: <BarChart2 size={18} strokeWidth={2} />,
   Settings: <Settings size={18} strokeWidth={2} />,
   "API Settings": <Settings size={18} strokeWidth={2} />,
+  "Platform Fees": <Landmark size={18} strokeWidth={2} />,
+  "Customer Services": <Users size={18} strokeWidth={2} />,
 };
 
 const ROLE_HEADER_CONFIG = {
@@ -656,28 +739,51 @@ export default function Sidebar({ mobileOpen = false, onClose }) {
               }`
             }
           >
-            {({ isActive: navActive }) => (
-              <>
-                {indexed ? (
-                  <span
-                    className={`shrink-0 ${isRtl ? "ml-2.5" : "mr-2.5"} flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold ${navActive ? "bg-blue-600 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700"}`}
-                  >
-                    {index + 1}
-                  </span>
-                ) : (
-                  <span
-                    className={`shrink-0 ${isRtl ? "ml-2.5" : "mr-2.5"} flex items-center justify-center w-4 h-4`}
-                  >
+            {({ isActive: navActive }) => {
+              const travkyCount = getTravkyBadge(item.route);
+              const isTravkyStep = travkyCount !== null;
+              const isDone = isTravkyStep && travkyCount > 0;
+              return (
+                <>
+                  {indexed ? (
                     <span
-                      className={`block w-1.5 h-1.5 rounded-full ${navActive ? "bg-blue-500" : "bg-slate-400 dark:bg-slate-500"}`}
-                    />
+                      className={`shrink-0 ${isRtl ? "ml-2.5" : "mr-2.5"} flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold ${navActive ? "bg-blue-600 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700"}`}
+                    >
+                      {index + 1}
+                    </span>
+                  ) : isTravkyStep ? (
+                    <span
+                      className={`shrink-0 ${isRtl ? "ml-2.5" : "mr-2.5"} flex h-5 w-5 items-center justify-center rounded-full`}
+                      style={
+                        isDone
+                          ? { backgroundColor: "#1e293b", color: "#fff" }
+                          : {
+                              backgroundColor: "transparent",
+                              border: "1.5px solid #cbd5e1",
+                            }
+                      }
+                    >
+                      {isDone ? (
+                        <Check size={10} strokeWidth={3.5} />
+                      ) : (
+                        <span className="block w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-slate-600" />
+                      )}
+                    </span>
+                  ) : (
+                    <span
+                      className={`shrink-0 ${isRtl ? "ml-2.5" : "mr-2.5"} flex items-center justify-center w-4 h-4`}
+                    >
+                      <span
+                        className={`block w-1.5 h-1.5 rounded-full ${navActive ? "bg-blue-500" : "bg-slate-400 dark:bg-slate-500"}`}
+                      />
+                    </span>
+                  )}
+                  <span className="truncate">
+                    {t(SIDEBAR_NAME_MAP[item.name] || item.name)}
                   </span>
-                )}
-                <span className="truncate">
-                  {t(SIDEBAR_NAME_MAP[item.name] || item.name)}
-                </span>
-              </>
-            )}
+                </>
+              );
+            }}
           </NavLink>
         );
       }

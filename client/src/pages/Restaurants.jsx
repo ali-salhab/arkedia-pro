@@ -7,7 +7,16 @@ import DeleteConfirmModal from "../components/DeleteConfirmModal";
 import DataModal from "../components/DataModal";
 import { useLanguage } from "../context/LanguageContext";
 import { useGetUsersQuery, useDeleteUserMutation } from "../store/services/api";
-import { Pencil, Trash2, Search, Plus, UtensilsCrossed, ShieldCheck, CalendarDays, UserCheck } from "lucide-react";
+import {
+  Pencil,
+  Trash2,
+  Search,
+  Plus,
+  UtensilsCrossed,
+  ShieldCheck,
+  CalendarDays,
+  UserCheck,
+} from "lucide-react";
 
 const AVATAR_COLORS = [
   "from-indigo-500 to-blue-500",
@@ -49,7 +58,9 @@ export default function RestaurantsPage() {
   useEffect(() => {
     if (resumeCreation && adminsList.length > 0) {
       setResumeCreation(false);
-      navigate("/restaurants/new", { state: { fixedRole: "restaurant", adminsList, backTo: "/restaurants" } });
+      navigate("/restaurants/new", {
+        state: { fixedRole: "restaurant", adminsList, backTo: "/restaurants" },
+      });
     }
   }, [adminsList.length, resumeCreation, navigate]);
 
@@ -58,9 +69,19 @@ export default function RestaurantsPage() {
       setAdminRequiredModalOpen(true);
       return;
     }
-    navigate("/restaurants/new", { state: { fixedRole: "restaurant", adminsList, backTo: "/restaurants" } });
+    navigate("/restaurants/new", {
+      state: { fixedRole: "restaurant", adminsList, backTo: "/restaurants" },
+    });
   };
-  const handleEdit = (r) => navigate(`/restaurants/${r._id}/edit`, { state: { restaurant: r, backTo: "/restaurants" } });
+  const handleEdit = (r) =>
+    navigate(`/restaurants/${r._id}/edit`, {
+      state: {
+        restaurant: r,
+        fixedRole: r.role || "restaurant",
+        adminsList,
+        backTo: "/restaurants",
+      },
+    });
   const handleDelete = (id) => setDeleteTarget(id);
   const confirmDelete = async () => {
     if (deleteTarget) await deleteUser(deleteTarget);
@@ -70,22 +91,52 @@ export default function RestaurantsPage() {
   const handleOpenAdminCreation = () => {
     setAdminRequiredModalOpen(false);
     setResumeCreation(true);
-    navigate("/admins/new", { state: { fixedRole: "admin", backTo: "/restaurants", resumeCreation: true } });
+    navigate("/admins/new", {
+      state: {
+        fixedRole: "admin",
+        backTo: "/restaurants",
+        resumeCreation: true,
+      },
+    });
   };
 
-  if (isLoading) return <LoadingScreen label={t("loadingRestaurants")} tableRows={6} tableCols={4} />;
-  if (error) return <div className="p-6 text-center text-rose-500 font-bold">{t("errorLoadingRestaurants")}</div>;
+  if (isLoading)
+    return (
+      <LoadingScreen
+        label={t("loadingRestaurants")}
+        tableRows={6}
+        tableCols={4}
+      />
+    );
+  if (error)
+    return (
+      <div className="p-6 text-center text-rose-500 font-bold">
+        {t("errorLoadingRestaurants")}
+      </div>
+    );
 
-  const rows = restaurants.filter((r) => !search || r.name?.toLowerCase().includes(search.toLowerCase()) || r.email?.toLowerCase().includes(search.toLowerCase()));
+  const rows = restaurants.filter(
+    (r) =>
+      !search ||
+      r.name?.toLowerCase().includes(search.toLowerCase()) ||
+      r.email?.toLowerCase().includes(search.toLowerCase()),
+  );
 
-const restaurantToDelete = rows.find(r => r._id === deleteTarget);
+  const restaurantToDelete = rows.find((r) => r._id === deleteTarget);
 
   return (
-    <div className="space-y-6 pb-10 animate-in fade-in duration-300" style={{ direction: isRtl ? "rtl" : "ltr" }}>
+    <div
+      className="space-y-6 pb-10 animate-in fade-in duration-300"
+      style={{ direction: isRtl ? "rtl" : "ltr" }}
+    >
       {/* Page Title */}
       <div>
-        <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">{t("allRestaurants")}</h1>
-        <p className="text-slate-500 dark:text-slate-400 text-sm font-medium mt-1">{t("restaurantsSubtitle") || "Manage restaurant accounts"}</p>
+        <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+          {t("allRestaurants")}
+        </h1>
+        <p className="text-slate-500 dark:text-slate-400 text-sm font-medium mt-1">
+          {t("restaurantsSubtitle") || "Manage restaurant accounts"}
+        </p>
       </div>
 
       {/* Toolbar */}
@@ -93,9 +144,12 @@ const restaurantToDelete = rows.find(r => r._id === deleteTarget);
         <div className="flex flex-wrap items-center gap-3">
           {/* Search */}
           <div className="relative">
-            <Search size={15} className={`absolute top-1/2 -translate-y-1/2 text-slate-400 ${isRtl ? 'right-3.5' : 'left-3.5'}`} />
+            <Search
+              size={15}
+              className={`absolute top-1/2 -translate-y-1/2 text-slate-400 ${isRtl ? "right-3.5" : "left-3.5"}`}
+            />
             <input
-              className={`h-10 ${isRtl ? 'pr-9 pl-4' : 'pl-9 pr-4'} rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-[13px] font-medium text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all w-56 lg:w-72`}
+              className={`h-10 ${isRtl ? "pr-9 pl-4" : "pl-9 pr-4"} rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-[13px] font-medium text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all w-56 lg:w-72`}
               placeholder={t("search") + "..."}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -104,7 +158,10 @@ const restaurantToDelete = rows.find(r => r._id === deleteTarget);
         </div>
 
         <div className="flex items-center gap-2">
-          <DataModal resourcePath="restaurants" resourceLabel={t("allRestaurants")} />
+          <DataModal
+            resourcePath="restaurants"
+            resourceLabel={t("allRestaurants")}
+          />
           <button
             onClick={handleAddNew}
             className="h-10 px-5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-bold text-[13px] flex items-center gap-2 shadow-lg shadow-orange-500/25 hover:-translate-y-0.5 transition-all"
@@ -118,10 +175,19 @@ const restaurantToDelete = rows.find(r => r._id === deleteTarget);
       {rows.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 gap-4 bg-white/60 dark:bg-slate-900/40 rounded-3xl border border-slate-200/50 dark:border-slate-800/50 backdrop-blur-xl">
           <div className="w-16 h-16 rounded-3xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
-            <UtensilsCrossed size={28} className="text-slate-400" strokeWidth={1.5} />
+            <UtensilsCrossed
+              size={28}
+              className="text-slate-400"
+              strokeWidth={1.5}
+            />
           </div>
-          <p className="text-slate-500 dark:text-slate-400 font-semibold text-[15px]">{t("noData")}</p>
-          <button onClick={handleAddNew} className="h-10 px-5 rounded-xl bg-orange-600 text-white font-bold text-[13px] flex items-center gap-2 shadow-md">
+          <p className="text-slate-500 dark:text-slate-400 font-semibold text-[15px]">
+            {t("noData")}
+          </p>
+          <button
+            onClick={handleAddNew}
+            className="h-10 px-5 rounded-xl bg-orange-600 text-white font-bold text-[13px] flex items-center gap-2 shadow-md"
+          >
             {t("addRestaurant")}
           </button>
         </div>
@@ -138,7 +204,10 @@ const restaurantToDelete = rows.find(r => r._id === deleteTarget);
                     { label: t("createdAt"), Icon: CalendarDays },
                     { label: "" },
                   ].map((h, i) => (
-                    <th key={i} className="px-4 py-3.5 text-center text-[11px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 whitespace-nowrap">
+                    <th
+                      key={i}
+                      className="px-4 py-3.5 text-center text-[11px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 whitespace-nowrap"
+                    >
                       <span className="flex items-center justify-center gap-1.5">
                         {h.Icon && <h.Icon size={12} />}
                         {h.label}
@@ -152,26 +221,41 @@ const restaurantToDelete = rows.find(r => r._id === deleteTarget);
                   const admin = resolveLinkedAdmin(r);
                   const bgGrad = avatarColor(r.name);
                   return (
-                    <tr key={r._id} className="group hover:bg-orange-50/30 dark:hover:bg-orange-900/10 transition-colors">
+                    <tr
+                      key={r._id}
+                      className="group hover:bg-orange-50/30 dark:hover:bg-orange-900/10 transition-colors"
+                    >
                       <td className="px-4 py-4">
                         <div className="flex items-center justify-center gap-3 text-center">
                           {r.logo ? (
-                            <img src={r.logo} className="h-10 w-10 rounded-xl object-cover shrink-0 shadow-sm border border-slate-200 dark:border-slate-700" alt="" />
+                            <img
+                              src={r.logo}
+                              className="h-10 w-10 rounded-xl object-cover shrink-0 shadow-sm border border-slate-200 dark:border-slate-700"
+                              alt=""
+                            />
                           ) : (
-                            <div className={`h-10 w-10 rounded-xl shrink-0 flex items-center justify-center text-white text-[13px] font-black bg-gradient-to-br ${bgGrad} shadow-sm border border-slate-200/50 dark:border-slate-700/50`}>
+                            <div
+                              className={`h-10 w-10 rounded-xl shrink-0 flex items-center justify-center text-white text-[13px] font-black bg-gradient-to-br ${bgGrad} shadow-sm border border-slate-200/50 dark:border-slate-700/50`}
+                            >
                               {(r.name || "?")[0].toUpperCase()}
                             </div>
                           )}
                           <div className="text-start">
-                            <p className="font-bold text-slate-900 dark:text-white leading-snug">{r.name}</p>
-                            <p className="text-[12px] font-medium text-slate-400 dark:text-slate-500">{r.email}</p>
+                            <p className="font-bold text-slate-900 dark:text-white leading-snug">
+                              {r.name}
+                            </p>
+                            <p className="text-[12px] font-medium text-slate-400 dark:text-slate-500">
+                              {r.email}
+                            </p>
                           </div>
                         </div>
                       </td>
                       <td className="px-4 py-4 text-center">
                         {admin ? (
                           <div className="flex items-center justify-center gap-2">
-                            <div className={`h-6 w-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold bg-gradient-to-br ${avatarColor(admin.name)} shadow-sm`}>
+                            <div
+                              className={`h-6 w-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold bg-gradient-to-br ${avatarColor(admin.name)} shadow-sm`}
+                            >
                               {(admin.name || "?")[0].toUpperCase()}
                             </div>
                             <span className="text-slate-700 dark:text-slate-300 font-semibold text-[13px]">
@@ -179,21 +263,38 @@ const restaurantToDelete = rows.find(r => r._id === deleteTarget);
                             </span>
                           </div>
                         ) : (
-                          <span className="text-slate-400 dark:text-slate-500 text-[13px] font-medium">—</span>
+                          <span className="text-slate-400 dark:text-slate-500 text-[13px] font-medium">
+                            —
+                          </span>
                         )}
                       </td>
                       <td className="px-4 py-4 text-center text-slate-600 dark:text-slate-400 font-semibold">
-                        <span className="bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded text-[12px]">{(r.permissions || []).length}</span> {t("permissionsSelected")}
+                        <span className="bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded text-[12px]">
+                          {(r.permissions || []).length}
+                        </span>{" "}
+                        {t("permissionsSelected")}
                       </td>
                       <td className="px-4 py-4 text-center text-slate-600 dark:text-slate-400 font-medium whitespace-nowrap">
-                         {r.createdAt ? new Date(r.createdAt).toLocaleDateString(lang === "ar" ? "ar-EG" : "en-US") : "—"}
+                        {r.createdAt
+                          ? new Date(r.createdAt).toLocaleDateString(
+                              lang === "ar" ? "ar-EG" : "en-US",
+                            )
+                          : "—"}
                       </td>
                       <td className="px-4 py-4 text-center">
                         <div className="flex items-center justify-center gap-2">
-                          <button onClick={() => handleEdit(r)} className="h-8 w-8 flex items-center justify-center rounded-xl bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 hover:bg-orange-100 transition-colors" title={t("edit")}>
+                          <button
+                            onClick={() => handleEdit(r)}
+                            className="h-8 w-8 flex items-center justify-center rounded-xl bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 hover:bg-orange-100 transition-colors"
+                            title={t("edit")}
+                          >
                             <Pencil size={14} strokeWidth={2.5} />
                           </button>
-                          <button onClick={() => handleDelete(r._id)} className="h-8 w-8 flex items-center justify-center rounded-xl bg-red-50 dark:bg-red-900/20 text-red-500 hover:bg-red-100 transition-colors" title={t("delete")}>
+                          <button
+                            onClick={() => handleDelete(r._id)}
+                            className="h-8 w-8 flex items-center justify-center rounded-xl bg-red-50 dark:bg-red-900/20 text-red-500 hover:bg-red-100 transition-colors"
+                            title={t("delete")}
+                          >
                             <Trash2 size={14} strokeWidth={2.5} />
                           </button>
                         </div>
@@ -205,7 +306,9 @@ const restaurantToDelete = rows.find(r => r._id === deleteTarget);
             </table>
           </div>
           <div className="px-5 py-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-            <p className="text-[12px] text-slate-400 font-semibold">{rows.length} {rows.length === 1 ? "restaurant" : "restaurants"}</p>
+            <p className="text-[12px] text-slate-400 font-semibold">
+              {rows.length} {rows.length === 1 ? "restaurant" : "restaurants"}
+            </p>
           </div>
         </div>
       )}
@@ -217,14 +320,26 @@ const restaurantToDelete = rows.find(r => r._id === deleteTarget);
             <div className="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-2xl flex items-center justify-center mb-5">
               <Trash2 size={22} className="text-red-600 dark:text-red-400" />
             </div>
-            <h3 className="text-[18px] font-black text-slate-900 dark:text-white mb-2">{t("deleteConfirmTitle") || "Delete Restaurant"}</h3>
-            <p className="text-slate-600 dark:text-slate-300 font-semibold mb-1">{restaurantToDelete?.name}</p>
-            <p className="text-[13px] text-slate-500 dark:text-slate-400 mb-6">{t("deleteCannotUndo") || "This action cannot be undone."}</p>
+            <h3 className="text-[18px] font-black text-slate-900 dark:text-white mb-2">
+              {t("deleteConfirmTitle") || "Delete Restaurant"}
+            </h3>
+            <p className="text-slate-600 dark:text-slate-300 font-semibold mb-1">
+              {restaurantToDelete?.name}
+            </p>
+            <p className="text-[13px] text-slate-500 dark:text-slate-400 mb-6">
+              {t("deleteCannotUndo") || "This action cannot be undone."}
+            </p>
             <div className="flex gap-3">
-              <button onClick={() => setDeleteTarget(null)} className="flex-1 h-11 rounded-2xl border border-slate-200 dark:border-slate-700 font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-[14px]">
+              <button
+                onClick={() => setDeleteTarget(null)}
+                className="flex-1 h-11 rounded-2xl border border-slate-200 dark:border-slate-700 font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-[14px]"
+              >
                 {t("cancel")}
               </button>
-              <button onClick={confirmDelete} className="flex-1 h-11 rounded-2xl bg-red-600 hover:bg-red-700 text-white font-bold text-[14px] shadow-lg shadow-red-500/25 transition-colors">
+              <button
+                onClick={confirmDelete}
+                className="flex-1 h-11 rounded-2xl bg-red-600 hover:bg-red-700 text-white font-bold text-[14px] shadow-lg shadow-red-500/25 transition-colors"
+              >
                 {t("delete")}
               </button>
             </div>
@@ -233,13 +348,26 @@ const restaurantToDelete = rows.find(r => r._id === deleteTarget);
       )}
 
       {/* Admin Required Modal */}
-      <Modal open={adminRequiredModalOpen} onClose={() => setAdminRequiredModalOpen(false)} title={t("adminRequired")}>
-        <p className="text-sm text-slate-600 dark:text-slate-300 mb-5">{t("adminRequiredForRestaurantMessage") || t("adminRequiredForHotelMessage")}</p>
+      <Modal
+        open={adminRequiredModalOpen}
+        onClose={() => setAdminRequiredModalOpen(false)}
+        title={t("adminRequired")}
+      >
+        <p className="text-sm text-slate-600 dark:text-slate-300 mb-5">
+          {t("adminRequiredForRestaurantMessage") ||
+            t("adminRequiredForHotelMessage")}
+        </p>
         <div className="flex justify-end gap-3">
-          <button onClick={() => setAdminRequiredModalOpen(false)} className="px-4 py-2 rounded-xl text-sm border border-slate-200 dark:border-slate-600 font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition">
+          <button
+            onClick={() => setAdminRequiredModalOpen(false)}
+            className="px-4 py-2 rounded-xl text-sm border border-slate-200 dark:border-slate-600 font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition"
+          >
             {t("cancel")}
           </button>
-          <button onClick={handleOpenAdminCreation} className="px-4 py-2 rounded-xl text-sm font-bold bg-blue-600 text-white hover:bg-blue-700 shadow-lg transition">
+          <button
+            onClick={handleOpenAdminCreation}
+            className="px-4 py-2 rounded-xl text-sm font-bold bg-blue-600 text-white hover:bg-blue-700 shadow-lg transition"
+          >
             {t("createAdminNow")}
           </button>
         </div>
