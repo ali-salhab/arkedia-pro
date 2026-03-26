@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   DoorOpen,
   Plus,
@@ -7,11 +7,13 @@ import {
   Eye,
   X,
   Check,
+  CheckCircle2,
   ChevronRight,
   ChevronLeft,
   Users,
   Baby,
-  Image as ImageIcon,
+  Trash2,
+  BedSingle,
 } from "lucide-react";
 import { useLocalStorage } from "../../../hooks/useLocalStorage";
 import DeleteConfirmModal from "../../../components/DeleteConfirmModal";
@@ -38,6 +40,14 @@ const ROOM_TYPES_OPTIONS = [
   "Studio",
 ];
 
+const PRICE_FORMULA_OPTIONS = [
+  "Person In DBL ×3",
+  "Person In DBL ×2",
+  "Person In DBL ×1",
+  "Room Rate",
+  "Per Person",
+];
+
 const AMENITIES = [
   "تكييف هواء",
   "مني بار",
@@ -58,15 +68,32 @@ const INITIAL_ROOM_TYPES = [
   {
     id: "dbl",
     code: "DBL",
-    nameEn: "Double Room",
-    nameAr: "غرفة مزدوجة",
-    descEn: "Standard double room with garden view",
-    descAr: "غرفة مزدوجة قياسية مع إطلالة على الحديقة",
+    nameEn: "Standard Double room - Sea View",
+    nameAr: "غرفة مزدوجة قياسية - إطلالة بحرية",
+    descEn: "Double room with sea view",
+    descAr: "غرفة مزدوجة مع إطلالة على البحر",
     roomType: "DBL Room",
-    amenities: ["تكييف هواء", "مني بار", "خزنة", "شرفة", "تلفاز"],
-    capacityOptions: [{ adults: 2, children: 1 }],
+    amenities: ["تكييف هواء", "تلفاز", "مكواة", "ماكينة قهوة", "مجفف شعر"],
+    capacityOptions: [{ adults: 1, children: 1 }],
     priceDiffs: {},
     isBase: true,
+    mainImage: null,
+    gallery: [],
+  },
+  {
+    id: "dbl2",
+    code: "DBL",
+    nameEn: "Standard Double room",
+    nameAr: "غرفة مزدوجة قياسية",
+    descEn: "Standard double room",
+    descAr: "غرفة مزدوجة قياسية",
+    roomType: "DBL Room",
+    amenities: ["تكييف هواء", "تلفاز", "مكواة", "ماكينة قهوة", "مجفف شعر"],
+    capacityOptions: [{ adults: 1, children: 1 }],
+    priceDiffs: {},
+    isBase: false,
+    mainImage: null,
+    gallery: [],
   },
 ];
 
@@ -128,10 +155,35 @@ const EMPTY_FORM = {
   descEn: "",
   descAr: "",
   roomType: "DBL Room",
+  priceFormula: "Person In DBL ×3",
   amenities: [],
   capacityOptions: [{ adults: 2, children: 0 }],
   priceDiffs: {},
+  mainImage: null,
+  gallery: [],
 };
+
+// Resize image to max 800x600 at 0.8 quality and return base64
+function resizeImage(file, maxW = 800, maxH = 600, quality = 0.8) {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const ratio = Math.min(maxW / img.width, maxH / img.height, 1);
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.round(img.width * ratio);
+        canvas.height = Math.round(img.height * ratio);
+        canvas
+          .getContext("2d")
+          .drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL("image/jpeg", quality));
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
 
 export default function RoomTypesPage() {
   const [groups] = useLocalStorage("travky_guest_groups", INITIAL_GROUPS);
@@ -148,6 +200,10 @@ export default function RoomTypesPage() {
   const [langTab, setLangTab] = useState("en");
   const [errors, setErrors] = useState({});
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleteBaseTarget, setDeleteBaseTarget] = useState(null);
+
+  const mainImageRef = useRef(null);
+  const galleryRef = useRef(null);
 
   const filtered = roomTypes.filter(
     (r) =>
@@ -185,9 +241,12 @@ export default function RoomTypesPage() {
       descEn: room.descEn,
       descAr: room.descAr,
       roomType: room.roomType,
+      priceFormula: room.priceFormula || "Person In DBL ×3",
       amenities: [...room.amenities],
       capacityOptions: room.capacityOptions.map((c) => ({ ...c })),
       priceDiffs,
+      mainImage: room.mainImage || null,
+      gallery: room.gallery ? [...room.gallery] : [],
     });
     setStep(1);
     setErrors({});
@@ -241,11 +300,28 @@ export default function RoomTypesPage() {
     }));
   }
 
+  async function handleMainImageChange(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const b64 = await resizeImage(file);
+    setForm((p) => ({ ...p, mainImage: b64 }));
+  }
+
+  async function handleGalleryChange(e) {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+    const newImages = await Promise.all(files.map((f) => resizeImage(f)));
+    setForm((p) => ({ ...p, gallery: [...(p.gallery || []), ...newImages] }));
+  }
+
+  function removeGalleryImage(idx) {
+    setForm((p) => ({ ...p, gallery: p.gallery.filter((_, i) => i !== idx) }));
+  }
+
   function validateStep() {
     const errs = {};
     if (step === 1) {
       if (!form.nameEn.trim()) errs.nameEn = "Room name (EN) is required";
-      if (!form.code.trim()) errs.code = "Room code is required";
     }
     return errs;
   }
@@ -279,12 +355,9 @@ export default function RoomTypesPage() {
     closeModal();
   }
 
-  function formatCapacity(opts) {
-    return opts.map((o) => `${o.adults}A + ${o.children}C`).join(", ");
-  }
-
   return (
-    <div className="page-shell">
+    <div className="page-shell" dir="rtl">
+      {/* Regular delete confirm */}
       <DeleteConfirmModal
         open={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
@@ -293,6 +366,85 @@ export default function RoomTypesPage() {
           setDeleteTarget(null);
         }}
       />
+
+      {/* Base room delete warning modal */}
+      {deleteBaseTarget && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+        >
+          <div
+            className="w-full max-w-md rounded-2xl p-6 shadow-xl text-center"
+            style={{
+              backgroundColor: "var(--bg-surface)",
+              border: "1px solid var(--border)",
+            }}
+            dir="rtl"
+          >
+            {/* Trash icon */}
+            <div
+              className="w-16 h-16 rounded-full grid place-items-center mx-auto mb-4"
+              style={{ backgroundColor: "#fee2e2" }}
+            >
+              <Trash2 size={28} style={{ color: "#ef4444" }} />
+            </div>
+
+            <h2
+              className="text-xl font-bold mb-3"
+              style={{ color: "var(--text-primary)" }}
+            >
+              حذف الغرفة الأساسية
+            </h2>
+
+            <p
+              className="text-sm leading-relaxed mb-5"
+              style={{ color: "var(--text-secondary)" }}
+            >
+              هذه هي الغرفة الأساسية (DBL) التي يتم بناء جميع حسابات الأسعار
+              عليها. لا يمكن حذفها بشكل منفرد. في حالة التأكيد سيتم حذف جميع
+              الغرف المرتبطة بها.
+            </p>
+
+            {/* Warning badge */}
+            <div
+              className="rounded-xl px-4 py-3 text-sm font-semibold mb-6"
+              style={{
+                backgroundColor: "#fff7ed",
+                border: "1px solid #fed7aa",
+                color: "#92400e",
+              }}
+            >
+              ⚠️ سيتم حذف {roomTypes.length} غرفة نهائياً
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setRoomTypes([]);
+                  setDeleteBaseTarget(null);
+                }}
+                className="flex-1 py-3 rounded-xl text-base font-bold text-white transition-colors"
+                style={{ backgroundColor: "#ef4444" }}
+              >
+                حذف الكل
+              </button>
+              <button
+                onClick={() => setDeleteBaseTarget(null)}
+                className="flex-1 py-3 rounded-xl text-base font-semibold transition-colors"
+                style={{
+                  backgroundColor: "var(--bg-raised)",
+                  color: "var(--text-primary)",
+                  border: "1px solid var(--border)",
+                }}
+              >
+                إلغاء
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
@@ -337,179 +489,54 @@ export default function RoomTypesPage() {
         أسعار باقي الغرف
       </div>
 
-      {/* Table */}
-      <div className="card">
-        <div className="flex justify-start mb-4">
-          <div className="relative">
-            <Search
-              size={15}
-              className="absolute top-1/2 -translate-y-1/2 pointer-events-none"
-              style={{ insetInlineEnd: "0.75rem", color: "var(--text-muted)" }}
-            />
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="بحث..."
-              className="input"
-              style={{ paddingInlineEnd: "2.5rem", width: "16rem" }}
-            />
-          </div>
+      {/* Search */}
+      <div className="flex justify-center">
+        <div
+          className="relative w-full max-w-lg rounded-2xl"
+          style={{
+            backgroundColor: "var(--bg-surface)",
+            border: "1px solid var(--border)",
+          }}
+        >
+          <Search
+            size={16}
+            className="absolute top-1/2 -translate-y-1/2 pointer-events-none"
+            style={{ right: "1rem", color: "var(--text-muted)" }}
+          />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="بحث..."
+            className="w-full bg-transparent outline-none py-3 px-4 text-sm"
+            style={{ paddingInlineEnd: "2.8rem", color: "var(--text-primary)" }}
+          />
         </div>
+      </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr style={{ borderBottom: "2px solid var(--border)" }}>
-                <th
-                  className="pb-3 text-start font-semibold"
-                  style={{ color: "var(--text-secondary)", width: 48 }}
-                >
-                  #
-                </th>
-                <th
-                  className="pb-3 text-start font-semibold"
-                  style={{ color: "var(--text-secondary)" }}
-                >
-                  الاسم
-                </th>
-                <th
-                  className="pb-3 text-start font-semibold"
-                  style={{ color: "var(--text-secondary)" }}
-                >
-                  نوع الغرفة
-                </th>
-                <th
-                  className="pb-3 text-start font-semibold"
-                  style={{ color: "var(--text-secondary)" }}
-                >
-                  السعة
-                </th>
-                {groups.map((g) => (
-                  <th
-                    key={g.id}
-                    className="pb-3 text-start font-semibold"
-                    style={{ color: "var(--text-secondary)" }}
-                  >
-                    فرق السعر
-                    <br />
-                    <span
-                      className="text-xs font-normal"
-                      style={{ color: "var(--text-muted)" }}
-                    >
-                      {g.name}
-                    </span>
-                  </th>
-                ))}
-                <th
-                  className="pb-3 text-end font-semibold"
-                  style={{ color: "var(--text-secondary)" }}
-                >
-                  إجراءات
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={5 + groups.length}
-                    className="py-10 text-center"
-                    style={{ color: "var(--text-muted)" }}
-                  >
-                    لا توجد غرف بعد
-                  </td>
-                </tr>
-              ) : (
-                filtered.map((room, idx) => (
-                  <tr
-                    key={room.id}
-                    style={{ borderBottom: "1px solid var(--border)" }}
-                  >
-                    <td
-                      className="py-4 font-medium"
-                      style={{ color: "var(--text-secondary)" }}
-                    >
-                      {idx + 1}
-                    </td>
-                    <td className="py-4">
-                      <div className="flex items-center gap-2">
-                        {room.isBase && (
-                          <span
-                            className="inline-flex items-center justify-center w-9 h-6 rounded-lg text-xs font-bold text-white"
-                            style={{
-                              backgroundColor: "var(--sidebar-active-text)",
-                            }}
-                          >
-                            {room.code}
-                          </span>
-                        )}
-                        {!room.isBase && (
-                          <span className="chip text-xs font-bold">
-                            {room.code}
-                          </span>
-                        )}
-                        <span
-                          className="font-semibold"
-                          style={{ color: "var(--text-primary)" }}
-                        >
-                          {room.nameAr || room.nameEn}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="py-4">
-                      <span className="chip text-xs">{room.roomType}</span>
-                    </td>
-                    <td
-                      className="py-4"
-                      style={{ color: "var(--text-secondary)" }}
-                    >
-                      {formatCapacity(room.capacityOptions)}
-                    </td>
-                    {groups.map((g) => (
-                      <td
-                        key={g.id}
-                        className="py-4 font-medium"
-                        style={{ color: "var(--text-secondary)" }}
-                      >
-                        {room.isBase ? "—" : "varies"}
-                      </td>
-                    ))}
-                    <td className="py-4">
-                      <div className="flex items-center gap-1 justify-end">
-                        {!room.isBase && (
-                          <button
-                            onClick={() => setDeleteTarget(room.id)}
-                            className="p-1.5 rounded-lg transition-colors hover:bg-red-50 dark:hover:bg-red-900/20"
-                            style={{ color: "#ef4444" }}
-                          >
-                            <Plus
-                              size={15}
-                              style={{ transform: "rotate(45deg)" }}
-                            />
-                          </button>
-                        )}
-                        <button
-                          onClick={() => openEdit(room)}
-                          className="p-1.5 rounded-lg transition-colors hover:bg-amber-50 dark:hover:bg-amber-900/20"
-                          style={{ color: "#f59e0b" }}
-                        >
-                          <Pencil size={15} />
-                        </button>
-                        <button
-                          onClick={() => setViewItem(room)}
-                          className="p-1.5 rounded-lg transition-colors hover:bg-blue-50 dark:hover:bg-blue-900/20"
-                          style={{ color: "#3b82f6" }}
-                        >
-                          <Eye size={15} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+      {/* Card Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        {filtered.length === 0 ? (
+          <div
+            className="col-span-full py-16 text-center text-sm"
+            style={{ color: "var(--text-muted)" }}
+          >
+            لا توجد غرف بعد
+          </div>
+        ) : (
+          filtered.map((room) => (
+            <RoomCard
+              key={room.id}
+              room={room}
+              onEdit={() => openEdit(room)}
+              onView={() => setViewItem(room)}
+              onDelete={() =>
+                room.isBase
+                  ? setDeleteBaseTarget(room.id)
+                  : setDeleteTarget(room.id)
+              }
+            />
+          ))
+        )}
       </div>
 
       {/* View Modal */}
@@ -543,6 +570,13 @@ export default function RoomTypesPage() {
                 تفاصيل الغرفة
               </h2>
             </div>
+            {viewItem.mainImage && (
+              <img
+                src={viewItem.mainImage}
+                alt={viewItem.nameEn}
+                className="w-full h-48 object-cover rounded-xl mb-4"
+              />
+            )}
             <div className="space-y-3">
               <div>
                 <p
@@ -649,11 +683,10 @@ export default function RoomTypesPage() {
           style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
         >
           <div
-            className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl p-6 shadow-xl"
+            className="w-full max-w-lg max-h-[92vh] overflow-y-auto rounded-2xl p-6 shadow-xl"
             style={{
               backgroundColor: "var(--bg-surface)",
               border: "1px solid var(--border)",
-              maxHeight: "92vh",
             }}
           >
             {/* Modal header */}
@@ -672,7 +705,8 @@ export default function RoomTypesPage() {
                 className="text-lg font-bold"
                 style={{ color: "var(--text-primary)" }}
               >
-                إضافة نوع غرفة — {STEP_TITLES[step - 1]}
+                {modal === "add" ? "إضافة نوع غرفة" : "تعديل الغرفة"} —{" "}
+                {STEP_TITLES[step - 1]}
               </h2>
             </div>
 
@@ -680,9 +714,9 @@ export default function RoomTypesPage() {
 
             {/* Step 1: Details */}
             {step === 1 && (
-              <div className="space-y-4">
+              <div className="space-y-5" dir="rtl">
                 {/* Language toggle */}
-                <div className="flex items-center gap-2 justify-end">
+                <div className="flex items-center gap-2">
                   {[
                     { v: "en", flag: "us", label: "EN" },
                     { v: "ar", flag: "eg", label: "AR" },
@@ -691,13 +725,12 @@ export default function RoomTypesPage() {
                       key={l.v}
                       type="button"
                       onClick={() => setLangTab(l.v)}
-                      className="flex items-center gap-1 h-7 px-2 rounded-lg text-xs font-semibold transition-all"
+                      className="flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-bold transition-all"
                       style={
                         langTab === l.v
                           ? {
                               backgroundColor: "var(--sidebar-active-text)",
                               color: "#fff",
-                              border: "1px solid var(--sidebar-active-text)",
                             }
                           : {
                               backgroundColor: "var(--bg-raised)",
@@ -709,16 +742,17 @@ export default function RoomTypesPage() {
                       <img
                         src={`https://flagcdn.com/w20/${l.flag}.png`}
                         alt={l.label}
-                        className="h-4 w-5 rounded object-cover"
+                        className="h-3.5 w-5 rounded object-cover"
                       />
                       {l.label}
                     </button>
                   ))}
                 </div>
 
+                {/* Name */}
                 <div>
                   <label
-                    className="block text-sm font-medium mb-1.5"
+                    className="block text-sm font-semibold mb-2"
                     style={{ color: "var(--text-primary)" }}
                   >
                     الاسم
@@ -729,7 +763,8 @@ export default function RoomTypesPage() {
                       onChange={(e) =>
                         setForm((p) => ({ ...p, nameEn: e.target.value }))
                       }
-                      className="input"
+                      className="input w-full"
+                      style={{ textAlign: "right" }}
                       placeholder="Room name in English"
                     />
                   ) : (
@@ -738,7 +773,7 @@ export default function RoomTypesPage() {
                       onChange={(e) =>
                         setForm((p) => ({ ...p, nameAr: e.target.value }))
                       }
-                      className="input"
+                      className="input w-full"
                       placeholder="اسم الغرفة بالعربية"
                     />
                   )}
@@ -747,9 +782,10 @@ export default function RoomTypesPage() {
                   )}
                 </div>
 
+                {/* Description */}
                 <div>
                   <label
-                    className="block text-sm font-medium mb-1.5"
+                    className="block text-sm font-semibold mb-2"
                     style={{ color: "var(--text-primary)" }}
                   >
                     الوصف
@@ -760,7 +796,8 @@ export default function RoomTypesPage() {
                       onChange={(e) =>
                         setForm((p) => ({ ...p, descEn: e.target.value }))
                       }
-                      className="input h-20 resize-none"
+                      className="input w-full h-24 resize-none"
+                      style={{ textAlign: "right" }}
                       placeholder="Description in English"
                     />
                   ) : (
@@ -769,92 +806,103 @@ export default function RoomTypesPage() {
                       onChange={(e) =>
                         setForm((p) => ({ ...p, descAr: e.target.value }))
                       }
-                      className="input h-20 resize-none"
+                      className="input w-full h-24 resize-none"
                       placeholder="الوصف بالعربية"
                     />
                   )}
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label
-                      className="block text-sm font-medium mb-1.5"
-                      style={{ color: "var(--text-primary)" }}
-                    >
-                      الرمز
-                    </label>
-                    <input
-                      value={form.code}
-                      onChange={(e) =>
-                        setForm((p) => ({
-                          ...p,
-                          code: e.target.value.toUpperCase(),
-                        }))
-                      }
-                      className="input font-mono"
-                      placeholder="DBL, SGL..."
-                      maxLength={4}
-                    />
-                    {errors.code && (
-                      <p className="input-error mt-1">{errors.code}</p>
-                    )}
-                  </div>
-                  <div>
-                    <label
-                      className="block text-sm font-medium mb-1.5"
-                      style={{ color: "var(--text-primary)" }}
-                    >
-                      نوع الغرفة
-                    </label>
-                    <select
-                      value={form.roomType}
-                      onChange={(e) =>
-                        setForm((p) => ({ ...p, roomType: e.target.value }))
-                      }
-                      className="input"
-                    >
-                      {ROOM_TYPES_OPTIONS.map((t) => (
-                        <option key={t} value={t}>
-                          {t}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
+                {/* Room Type */}
                 <div>
                   <label
-                    className="block text-sm font-medium mb-2"
+                    className="block text-sm font-semibold mb-2"
+                    style={{ color: "var(--text-primary)" }}
+                  >
+                    نوع الغرفة
+                  </label>
+                  <select
+                    value={form.roomType}
+                    onChange={(e) =>
+                      setForm((p) => ({ ...p, roomType: e.target.value }))
+                    }
+                    className="input w-full"
+                    style={{ textAlign: "right", direction: "rtl" }}
+                  >
+                    {ROOM_TYPES_OPTIONS.map((t) => (
+                      <option key={t} value={t}>
+                        {t}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Price Formula */}
+                <div>
+                  <label
+                    className="block text-sm font-semibold mb-2"
+                    style={{ color: "var(--text-primary)" }}
+                  >
+                    معادلة حساب السعر
+                  </label>
+                  <select
+                    value={form.priceFormula}
+                    onChange={(e) =>
+                      setForm((p) => ({ ...p, priceFormula: e.target.value }))
+                    }
+                    className="input w-full"
+                    style={{
+                      textAlign: "right",
+                      direction: "rtl",
+                      color: "var(--sidebar-active-text)",
+                      fontWeight: 600,
+                    }}
+                  >
+                    {PRICE_FORMULA_OPTIONS.map((t) => (
+                      <option key={t} value={t}>
+                        {t}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Amenities — 2-column card grid */}
+                <div>
+                  <label
+                    className="block text-sm font-semibold mb-3"
                     style={{ color: "var(--text-primary)" }}
                   >
                     مرافق الغرفة
                   </label>
-                  <div
-                    className="flex flex-wrap gap-1.5 p-3 rounded-xl"
-                    style={{
-                      backgroundColor: "var(--bg-raised)",
-                      border: "1px solid var(--border)",
-                    }}
-                  >
-                    {AMENITIES.map((a) => (
-                      <button
-                        key={a}
-                        type="button"
-                        onClick={() => toggleAmenity(a)}
-                        className="chip cursor-pointer transition-all text-xs"
-                        style={
-                          form.amenities.includes(a)
-                            ? {
-                                backgroundColor: "rgba(29,78,216,0.1)",
-                                borderColor: "var(--sidebar-active-text)",
-                                color: "var(--sidebar-active-text)",
-                              }
-                            : {}
-                        }
-                      >
-                        {a}
-                      </button>
-                    ))}
+                  <div className="grid grid-cols-2 gap-2">
+                    {AMENITIES.map((a) => {
+                      const selected = form.amenities.includes(a);
+                      return (
+                        <button
+                          key={a}
+                          type="button"
+                          onClick={() => toggleAmenity(a)}
+                          className="flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium transition-all"
+                          style={{
+                            backgroundColor: "var(--bg-surface)",
+                            border: selected
+                              ? "1.5px solid var(--sidebar-active-text)"
+                              : "1.5px solid var(--border)",
+                            color: "var(--text-primary)",
+                          }}
+                        >
+                          <CheckCircle2
+                            size={18}
+                            style={{
+                              color: selected
+                                ? "var(--sidebar-active-text)"
+                                : "var(--border)",
+                              flexShrink: 0,
+                            }}
+                          />
+                          <span>{a}</span>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               </div>
@@ -862,7 +910,7 @@ export default function RoomTypesPage() {
 
             {/* Step 2: Images */}
             {step === 2 && (
-              <div className="space-y-4">
+              <div className="space-y-5">
                 <div>
                   <label
                     className="block text-sm font-medium mb-2"
@@ -870,25 +918,51 @@ export default function RoomTypesPage() {
                   >
                     الصورة الرئيسية
                   </label>
-                  <div
-                    className="rounded-xl border-2 border-dashed flex flex-col items-center justify-center h-36 cursor-pointer transition-colors"
-                    style={{
-                      borderColor: "var(--border)",
-                      backgroundColor: "var(--bg-raised)",
-                    }}
-                  >
-                    <ImageIcon
-                      size={24}
-                      style={{ color: "var(--text-muted)" }}
-                    />
-                    <button
-                      type="button"
-                      className="mt-2 text-sm font-medium"
-                      style={{ color: "var(--sidebar-active-text)" }}
+                  <input
+                    ref={mainImageRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleMainImageChange}
+                  />
+                  {form.mainImage ? (
+                    <div className="relative rounded-xl overflow-hidden h-44">
+                      <img
+                        src={form.mainImage}
+                        alt="main"
+                        className="w-full h-full object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setForm((p) => ({ ...p, mainImage: null }))
+                        }
+                        className="absolute top-2 left-2 h-7 w-7 rounded-full grid place-items-center bg-black/50 text-white"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ) : (
+                    <div
+                      onClick={() => mainImageRef.current?.click()}
+                      className="rounded-xl border-2 border-dashed flex flex-col items-center justify-center h-36 cursor-pointer transition-colors hover:opacity-80"
+                      style={{
+                        borderColor: "var(--border)",
+                        backgroundColor: "var(--bg-raised)",
+                      }}
                     >
-                      رفع صور
-                    </button>
-                  </div>
+                      <DoorOpen
+                        size={24}
+                        style={{ color: "var(--text-muted)" }}
+                      />
+                      <p
+                        className="mt-2 text-sm font-medium"
+                        style={{ color: "var(--sidebar-active-text)" }}
+                      >
+                        انقر لرفع صورة رئيسية
+                      </p>
+                    </div>
+                  )}
                 </div>
                 <div>
                   <label
@@ -897,30 +971,57 @@ export default function RoomTypesPage() {
                   >
                     معرض الصور
                   </label>
+                  <input
+                    ref={galleryRef}
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="hidden"
+                    onChange={handleGalleryChange}
+                  />
+                  {(form.gallery || []).length > 0 && (
+                    <div className="grid grid-cols-3 gap-2 mb-3">
+                      {form.gallery.map((img, i) => (
+                        <div
+                          key={i}
+                          className="relative rounded-lg overflow-hidden aspect-square"
+                        >
+                          <img
+                            src={img}
+                            alt={`gallery-${i}`}
+                            className="w-full h-full object-cover"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeGalleryImage(i)}
+                            className="absolute top-1 left-1 h-6 w-6 rounded-full grid place-items-center bg-black/50 text-white"
+                          >
+                            <X size={12} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                   <div
-                    className="rounded-xl border-2 border-dashed flex flex-col items-center justify-center h-32 cursor-pointer"
+                    onClick={() => galleryRef.current?.click()}
+                    className="rounded-xl border-2 border-dashed flex flex-col items-center justify-center h-28 cursor-pointer transition-colors hover:opacity-80"
                     style={{
                       borderColor: "var(--border)",
                       backgroundColor: "var(--bg-raised)",
                     }}
                   >
-                    <ImageIcon
-                      size={22}
-                      style={{ color: "var(--text-muted)" }}
-                    />
                     <p
                       className="text-xs mt-1"
                       style={{ color: "var(--text-muted)" }}
                     >
                       اسحب الصور هنا أو انقر للرفع
                     </p>
-                    <button
-                      type="button"
+                    <p
                       className="mt-1.5 text-sm font-medium"
                       style={{ color: "var(--sidebar-active-text)" }}
                     >
                       رفع صور
-                    </button>
+                    </p>
                   </div>
                 </div>
               </div>
@@ -1097,7 +1198,6 @@ export default function RoomTypesPage() {
                   إلغاء
                 </button>
               )}
-
               {step < 4 ? (
                 <button
                   onClick={handleNext}
@@ -1120,6 +1220,150 @@ export default function RoomTypesPage() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function RoomCard({ room, onEdit, onView, onDelete }) {
+  const MAX_AMENITIES_SHOWN = 5;
+  const visibleAmenities = room.amenities.slice(0, MAX_AMENITIES_SHOWN);
+  const extraCount = room.amenities.length - MAX_AMENITIES_SHOWN;
+
+  return (
+    <div
+      className="rounded-2xl overflow-hidden shadow-sm"
+      style={{
+        backgroundColor: "var(--bg-surface)",
+        border: "1px solid var(--border)",
+      }}
+    >
+      {/* Image area */}
+      <div
+        className="relative h-48"
+        style={{ backgroundColor: "var(--bg-raised)" }}
+      >
+        {room.mainImage ? (
+          <img
+            src={room.mainImage}
+            alt={room.nameEn}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <DoorOpen size={40} className="opacity-20" />
+          </div>
+        )}
+
+        {/* Action buttons top-right (RTL: visual left) */}
+        <div className="absolute top-3 right-3 flex gap-1.5">
+          <button
+            onClick={onDelete}
+            className="w-8 h-8 rounded-full grid place-items-center shadow-md bg-white dark:bg-slate-800"
+            style={{ color: "#ef4444" }}
+          >
+            <Trash2 size={14} />
+          </button>
+          <button
+            onClick={onEdit}
+            className="w-8 h-8 rounded-full grid place-items-center shadow-md bg-white dark:bg-slate-800"
+            style={{ color: "#f59e0b" }}
+          >
+            <Pencil size={14} />
+          </button>
+          <button
+            onClick={onView}
+            className="w-8 h-8 rounded-full grid place-items-center shadow-md bg-white dark:bg-slate-800"
+            style={{ color: "#3b82f6" }}
+          >
+            <Eye size={14} />
+          </button>
+        </div>
+
+        {/* Badges top-left (RTL: visual right) */}
+        <div className="absolute top-3 left-3 flex gap-1.5">
+          {room.isBase ? (
+            <span
+              className="px-2.5 py-1 rounded-lg text-xs font-bold text-white"
+              style={{ backgroundColor: "var(--sidebar-active-text)" }}
+            >
+              {room.code}
+            </span>
+          ) : (
+            <span className="chip text-xs font-bold">{room.code}</span>
+          )}
+          <span className="chip text-xs">{room.roomType}</span>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="p-4 space-y-3">
+        {/* Name */}
+        <h3
+          className="text-base font-bold text-center"
+          style={{ color: "var(--text-primary)" }}
+        >
+          {room.nameEn}
+        </h3>
+
+        {/* Capacity row */}
+        <div className="flex items-center justify-center gap-2 flex-wrap">
+          {room.capacityOptions.map((opt, i) => (
+            <span
+              key={`bed-${i}`}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium"
+              style={{
+                backgroundColor: "var(--bg-raised)",
+                border: "1px solid var(--border)",
+                color: "var(--text-secondary)",
+              }}
+            >
+              <BedSingle size={12} />
+              Single Bed {opt.adults}
+            </span>
+          ))}
+          {room.capacityOptions.map((opt, i) => (
+            <span
+              key={`cap-${i}`}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium"
+              style={{
+                backgroundColor: "var(--bg-raised)",
+                border: "1px solid var(--border)",
+                color: "var(--text-secondary)",
+              }}
+            >
+              {opt.adults} <Users size={11} /> + {opt.children}{" "}
+              <Baby size={11} />
+            </span>
+          ))}
+        </div>
+
+        {/* Amenities */}
+        {room.amenities.length > 0 && (
+          <div className="flex flex-wrap justify-center gap-x-3 gap-y-1.5">
+            {visibleAmenities.map((a) => (
+              <span
+                key={a}
+                className="flex items-center gap-1 text-xs"
+                style={{ color: "var(--text-secondary)" }}
+              >
+                <Check
+                  size={13}
+                  style={{ color: "var(--sidebar-active-text)" }}
+                />
+                {a}
+              </span>
+            ))}
+            {extraCount > 0 && (
+              <span
+                className="text-xs font-medium"
+                style={{ color: "var(--text-muted)" }}
+              >
+                {extraCount}+
+              </span>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
