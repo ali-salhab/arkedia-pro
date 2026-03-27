@@ -59,6 +59,9 @@ import AvailabilityPage from "./pages/hotel-channel/travky/AvailabilityPage";
 import ApiSettingsPage from "./pages/hotel-channel/travky/ApiSettingsPage";
 import CommissionPage from "./pages/hotel-channel/travky/CommissionPage";
 import StopSalePage from "./pages/hotel-channel/travky/StopSalePage";
+import GuestGroupMainDetailsStep from "./pages/hotel-channel/travky/guest-group/MainDetailsStep";
+import GuestGroupNationalitiesStep from "./pages/hotel-channel/travky/guest-group/NationalitiesStep";
+import GuestGroupDetailsView from "./pages/hotel-channel/travky/guest-group/GuestGroupDetailsView";
 import PlatformFeesHotelsPage from "./pages/super-admin/PlatformFeesHotelsPage";
 import ManualBookingPage from "./pages/super-admin/ManualBookingPage";
 
@@ -303,6 +306,54 @@ export default function App() {
           <Route
             path="/hotel/channel-manager/travky/api-settings"
             element={<DashboardRoute element={<ApiSettingsPage />} />}
+          />
+          <Route
+            path="/hotel/channel-manager/travky/guest-group"
+            element={
+              <Navigate
+                to="/hotel/channel-manager/travky/guest-group/main"
+                replace
+              />
+            }
+          />
+          <Route
+            path="/hotel/channel-manager/travky/guest-group/main"
+            element={
+              <DashboardRoute
+                element={
+                  <PermissionRoute
+                    permission="guest_groups:view"
+                    element={<GuestGroupMainDetailsStep />}
+                  />
+                }
+              />
+            }
+          />
+          <Route
+            path="/hotel/channel-manager/travky/guest-group/nationalities"
+            element={
+              <DashboardRoute
+                element={
+                  <PermissionRoute
+                    permission="guest_groups:view"
+                    element={<GuestGroupNationalitiesStep />}
+                  />
+                }
+              />
+            }
+          />
+          <Route
+            path="/hotel/channel-manager/travky/guest-group/view"
+            element={
+              <DashboardRoute
+                element={
+                  <PermissionRoute
+                    permission="guest_groups:view"
+                    element={<GuestGroupDetailsView />}
+                  />
+                }
+              />
+            }
           />
           <Route
             path="/hotel/channel-manager/external"

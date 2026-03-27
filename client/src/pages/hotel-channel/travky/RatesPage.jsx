@@ -1,5 +1,11 @@
 import { useState, useMemo } from "react";
-import { DollarSign, ChevronDown, Filter } from "lucide-react";
+import {
+  DollarSign,
+  ChevronDown,
+  Filter,
+  DoorOpen,
+  Users,
+} from "lucide-react";
 import { useLocalStorage } from "../../../hooks/useLocalStorage";
 
 const INITIAL_GROUPS = [
@@ -37,8 +43,8 @@ const INITIAL_MEAL_PLANS = [
 ];
 
 const INITIAL_SUPPLEMENTS = [
-  { id: "1", name: "Extra Bed", prices: { 1: 250, 2: 25, 3: 20 } },
-  { id: "2", name: "Sea View", prices: { 1: 500, 2: 50, 3: 40 } },
+  { id: "1", name: "Extra Bed", prices: {} },
+  { id: "2", name: "Sea View", prices: {} },
 ];
 
 const INITIAL_REFUND = [
@@ -92,7 +98,11 @@ export default function RatesPage() {
   const [filterOpen, setFilterOpen] = useState(false);
   const [filterRoom, setFilterRoom] = useState("all");
   const [filterPeriod, setFilterPeriod] = useState("all");
-  const [filterGroup, setFilterGroup] = useState("all");
+  const [expandedRows, setExpandedRows] = useState({});
+
+  function toggleRow(key) {
+    setExpandedRows((p) => ({ ...p, [key]: !p[key] }));
+  }
 
   function setDblPrice(periodId, groupId, val) {
     setDblPrices((prev) => ({
@@ -101,49 +111,33 @@ export default function RatesPage() {
     }));
   }
 
-  // Generate all price combinations
-  const generatedRows = useMemo(() => {
+  /**
+   * Generated rate rows — one per (room × supplement).
+   * Prices per group are computed: basePrice (from dblPrices) + room priceDiff + supplement roomPrice per group.
+   */
+  const rateRows = useMemo(() => {
     const rows = [];
     roomTypes.forEach((room) => {
-      periods.forEach((period) => {
-        if (filterPeriod !== "all" && period.id !== filterPeriod) return;
-        if (filterRoom !== "all" && room.id !== filterRoom) return;
-        groups.forEach((group) => {
-          if (filterGroup !== "all" && group.id !== filterGroup) return;
-          const basePrice = dblPrices[period.id]?.[group.id] ?? 0;
-          mealPlans.forEach((meal) => {
-            const mealPrice = meal.prices[group.id] ?? 0;
-            refundPolicies.forEach((refund) => {
-              const refundExtra = refund.extraPrices[group.id] ?? 0;
-              const total = basePrice + mealPrice + refundExtra;
-              rows.push({
-                room,
-                period,
-                group,
-                basePrice,
-                meal,
-                mealPrice,
-                refund,
-                refundExtra,
-                total,
-              });
-            });
-          });
-        });
+      if (filterRoom !== "all" && room.id !== filterRoom) return;
+
+      // Always add the base room row (no supplement)
+      rows.push({ room, supplement: null });
+
+      // Then one row per supplement
+      supplements.forEach((supp) => {
+        rows.push({ room, supplement: supp });
       });
     });
     return rows;
-  }, [
-    roomTypes,
-    periods,
-    groups,
-    dblPrices,
-    mealPlans,
-    refundPolicies,
-    filterRoom,
-    filterPeriod,
-    filterGroup,
-  ]);
+  }, [roomTypes, supplements, filterRoom]);
+
+  /** Compute per-group total for a (room, supplement, period, group) */
+  function calcPrice(room, supplement, periodId, groupId) {
+    const base = dblPrices[periodId]?.[groupId] ?? 0;
+    const roomDiff = room.priceDiffs?.[periodId]?.[groupId] ?? 0;
+    const suppPrice = supplement?.prices?.[groupId] ?? 0;
+    return base + roomDiff + suppPrice;
+  }
 
   return (
     <div className="page-shell">
@@ -254,30 +248,32 @@ export default function RatesPage() {
         </div>
       </div>
 
-      {/* Section 2: Generated Prices */}
+      {/* Section 2: Auto-Generated Rates */}
       <div className="card">
+        {/* Header row */}
         <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setFilterOpen((v) => !v)}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-colors"
+          {/* Filter button */}
+          <button
+            onClick={() => setFilterOpen((v) => !v)}
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-colors"
+            style={{
+              backgroundColor: "var(--bg-raised)",
+              color: "var(--text-secondary)",
+              border: "1px solid var(--border)",
+            }}
+          >
+            <ChevronDown
+              size={14}
               style={{
-                backgroundColor: "var(--bg-raised)",
-                color: "var(--text-secondary)",
-                border: "1px solid var(--border)",
+                transform: filterOpen ? "rotate(180deg)" : "none",
+                transition: "transform 0.2s",
               }}
-            >
-              <ChevronDown
-                size={14}
-                style={{
-                  transform: filterOpen ? "rotate(180deg)" : "none",
-                  transition: "transform 0.2s",
-                }}
-              />
-              <Filter size={14} />
-              <span>فلتر</span>
-            </button>
-          </div>
+            />
+            <Filter size={14} />
+            <span>Filter</span>
+          </button>
+
+          {/* Title + count */}
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
               <div
@@ -286,229 +282,246 @@ export default function RatesPage() {
               >
                 2
               </div>
-              <p
-                className="font-semibold"
-                style={{ color: "var(--text-primary)" }}
-              >
-                الأسعار المولدة تلقائياً
+              <p className="font-semibold" style={{ color: "var(--text-primary)" }}>
+                Auto-Generated Rates
               </p>
             </div>
-            <span className="chip font-semibold">
-              {generatedRows.length} نتيجة
-            </span>
+            <span className="chip font-semibold">{rateRows.length}</span>
           </div>
         </div>
 
+        {/* Filter panel */}
         {filterOpen && (
           <div
-            className="mb-4 p-4 rounded-xl grid grid-cols-3 gap-3"
+            className="mb-4 p-4 rounded-xl grid grid-cols-2 gap-3"
             style={{
               backgroundColor: "var(--bg-raised)",
               border: "1px solid var(--border)",
             }}
           >
             <div>
-              <label
-                className="block text-xs font-medium mb-1"
-                style={{ color: "var(--text-secondary)" }}
-              >
-                الغرفة
+              <label className="block text-xs font-medium mb-1" style={{ color: "var(--text-secondary)" }}>
+                Room
               </label>
               <select
                 value={filterRoom}
                 onChange={(e) => setFilterRoom(e.target.value)}
-                className="input text-sm"
+                className="input text-sm w-full"
               >
-                <option value="all">الكل</option>
+                <option value="all">All</option>
                 {roomTypes.map((r) => (
-                  <option key={r.id} value={r.id}>
-                    {r.nameAr || r.nameEn}
-                  </option>
+                  <option key={r.id} value={r.id}>{r.nameEn}</option>
                 ))}
               </select>
             </div>
             <div>
-              <label
-                className="block text-xs font-medium mb-1"
-                style={{ color: "var(--text-secondary)" }}
-              >
-                الفترة
+              <label className="block text-xs font-medium mb-1" style={{ color: "var(--text-secondary)" }}>
+                Period
               </label>
               <select
                 value={filterPeriod}
                 onChange={(e) => setFilterPeriod(e.target.value)}
-                className="input text-sm"
+                className="input text-sm w-full"
               >
-                <option value="all">الكل</option>
+                <option value="all">All</option>
                 {periods.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label
-                className="block text-xs font-medium mb-1"
-                style={{ color: "var(--text-secondary)" }}
-              >
-                مجموعة الضيوف
-              </label>
-              <select
-                value={filterGroup}
-                onChange={(e) => setFilterGroup(e.target.value)}
-                className="input text-sm"
-              >
-                <option value="all">الكل</option>
-                {groups.map((g) => (
-                  <option key={g.id} value={g.id}>
-                    {g.name}
-                  </option>
+                  <option key={p.id} value={p.id}>{p.name}</option>
                 ))}
               </select>
             </div>
           </div>
         )}
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr style={{ borderBottom: "2px solid var(--border)" }}>
-                <th
-                  className="pb-3 text-start font-semibold whitespace-nowrap"
-                  style={{ color: "var(--text-secondary)" }}
+        {/* Group header pills */}
+        <div className="flex flex-wrap gap-2 mb-5">
+          {groups.map((g) => (
+            <div
+              key={g.id}
+              className="flex items-center gap-2 px-4 py-2 rounded-full"
+              style={{
+                backgroundColor: "var(--bg-raised)",
+                border: "1px solid var(--border)",
+              }}
+            >
+              <Users size={14} style={{ color: "var(--text-muted)" }} />
+              <div>
+                <p className="text-xs font-bold leading-none" style={{ color: "var(--text-primary)" }}>
+                  {g.name.toUpperCase()}
+                </p>
+                <p className="text-xs leading-none mt-0.5" style={{ color: "var(--text-muted)" }}>
+                  {g.currency}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Accordion rows */}
+        {rateRows.length === 0 ? (
+          <p className="py-10 text-center text-sm" style={{ color: "var(--text-muted)" }}>
+            No rooms configured yet.
+          </p>
+        ) : (
+          <div className="space-y-2">
+            {rateRows.map((row, idx) => {
+              const key = `${row.room.id}-${row.supplement?.id ?? "base"}`;
+              const isOpen = !!expandedRows[key];
+              const title = row.supplement
+                ? `${row.room.nameEn} - ${row.supplement.name}`
+                : row.room.nameEn;
+
+              // Total count across all periods & groups
+              const totalCount = periods.length * groups.length;
+
+              return (
+                <div
+                  key={key}
+                  className="rounded-2xl overflow-hidden"
+                  style={{
+                    backgroundColor: "var(--bg-surface)",
+                    border: "1px solid var(--border)",
+                  }}
                 >
-                  الغرفة
-                </th>
-                <th
-                  className="pb-3 text-start font-semibold whitespace-nowrap"
-                  style={{ color: "var(--text-secondary)" }}
-                >
-                  الفترة
-                </th>
-                <th
-                  className="pb-3 text-start font-semibold whitespace-nowrap"
-                  style={{ color: "var(--text-secondary)" }}
-                >
-                  مجموعات الضيوف
-                </th>
-                <th
-                  className="pb-3 text-start font-semibold whitespace-nowrap"
-                  style={{ color: "var(--text-secondary)" }}
-                >
-                  السعر الأساسي
-                </th>
-                <th
-                  className="pb-3 text-start font-semibold whitespace-nowrap"
-                  style={{ color: "var(--text-secondary)" }}
-                >
-                  خطط الوجبات
-                </th>
-                <th
-                  className="pb-3 text-start font-semibold whitespace-nowrap"
-                  style={{ color: "var(--text-secondary)" }}
-                >
-                  سياسات الاسترداد
-                </th>
-                <th
-                  className="pb-3 text-start font-semibold whitespace-nowrap"
-                  style={{ color: "var(--text-secondary)" }}
-                >
-                  الإجمالي
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {generatedRows.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={7}
-                    className="py-10 text-center"
-                    style={{ color: "var(--text-muted)" }}
+                  {/* Row header */}
+                  <button
+                    type="button"
+                    onClick={() => toggleRow(key)}
+                    className="w-full flex items-center justify-between px-4 py-3 gap-3"
                   >
-                    أدخل أسعار الغرفة المزدوجة أعلاه لعرض الأسعار المولدة
-                  </td>
-                </tr>
-              ) : (
-                generatedRows.slice(0, 50).map((row, idx) => (
-                  <tr
-                    key={idx}
-                    style={{ borderBottom: "1px solid var(--border)" }}
-                  >
-                    <td
-                      className="py-3 font-medium"
-                      style={{ color: "var(--text-primary)" }}
-                    >
-                      {row.room.nameAr || row.room.nameEn} ({row.room.code})
-                    </td>
-                    <td
-                      className="py-3"
-                      style={{ color: "var(--text-secondary)" }}
-                    >
-                      {row.period.name}
-                    </td>
-                    <td
-                      className="py-3"
-                      style={{ color: "var(--text-secondary)" }}
-                    >
-                      {row.group.name}
-                    </td>
-                    <td
-                      className="py-3 font-semibold"
-                      style={{ color: "var(--text-primary)" }}
-                    >
-                      {row.group.currency} {row.basePrice}
-                    </td>
-                    <td className="py-3">
-                      <span className="chip text-xs font-semibold">
-                        {row.meal.code}
-                        {row.mealPrice > 0 && (
-                          <span className="text-green-600 dark:text-green-400">
-                            +{row.mealPrice}
-                          </span>
+                    {/* Left: door icon + info */}
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div
+                        className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                        style={{ backgroundColor: "var(--bg-raised)" }}
+                      >
+                        {row.room.mainImage ? (
+                          <img
+                            src={row.room.mainImage}
+                            alt=""
+                            className="w-full h-full object-cover rounded-xl"
+                          />
+                        ) : (
+                          <DoorOpen size={18} style={{ color: "var(--border)", opacity: 0.6 }} />
                         )}
-                      </span>
-                    </td>
-                    <td className="py-3">
+                      </div>
+                      <div className="min-w-0 text-left">
+                        <p
+                          className="text-sm font-bold truncate"
+                          style={{ color: "var(--text-primary)", textTransform: "uppercase" }}
+                        >
+                          {title}
+                        </p>
+                        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                          <span
+                            className="text-xs px-2 py-0.5 rounded-md font-medium"
+                            style={{
+                              backgroundColor: "var(--bg-raised)",
+                              border: "1px solid var(--border)",
+                              color: "var(--text-secondary)",
+                            }}
+                          >
+                            {row.room.roomType}
+                          </span>
+                          {row.supplement && (
+                            <span
+                              className="text-xs px-2 py-0.5 rounded-md font-medium"
+                              style={{
+                                backgroundColor: "var(--bg-raised)",
+                                border: "1px solid var(--border)",
+                                color: "var(--sidebar-active-text)",
+                              }}
+                            >
+                              {row.supplement.name}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Right: count badge + chevron */}
+                    <div className="flex items-center gap-2 flex-shrink-0">
                       <span
-                        className="text-xs"
+                        className="w-8 h-8 rounded-full grid place-items-center text-sm font-bold"
                         style={{
-                          color:
-                            row.refund.type === "non_refundable"
-                              ? "var(--danger)"
-                              : row.refund.type === "free_cancellation"
-                                ? "var(--success)"
-                                : "var(--warning)",
+                          backgroundColor: "var(--bg-raised)",
+                          color: "var(--text-primary)",
+                          border: "1px solid var(--border)",
                         }}
                       >
-                        {row.refund.name}
+                        {totalCount}
                       </span>
-                    </td>
-                    <td className="py-3">
-                      <span
-                        className="font-bold text-sm"
-                        style={{ color: "var(--sidebar-active-text)" }}
-                      >
-                        {row.group.currency} {row.total}
-                      </span>
-                    </td>
-                  </tr>
-                ))
-              )}
-              {generatedRows.length > 50 && (
-                <tr>
-                  <td
-                    colSpan={7}
-                    className="py-3 text-center text-sm"
-                    style={{ color: "var(--text-muted)" }}
-                  >
-                    يتم عرض أول 50 نتيجة. استخدم الفلتر لتضييق النتائج.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+                      <ChevronDown
+                        size={16}
+                        style={{
+                          color: "var(--text-muted)",
+                          transform: isOpen ? "rotate(180deg)" : "none",
+                          transition: "transform 0.2s",
+                        }}
+                      />
+                    </div>
+                  </button>
+
+                  {/* Expanded content — periods × groups grid */}
+                  {isOpen && (
+                    <div
+                      className="px-4 pb-4 pt-1"
+                      style={{ borderTop: "1px solid var(--border)" }}
+                    >
+                      {periods
+                        .filter((p) => filterPeriod === "all" || p.id === filterPeriod)
+                        .map((period) => (
+                          <div key={period.id} className="mb-4">
+                            <p
+                              className="text-xs font-semibold mb-2 uppercase tracking-wide"
+                              style={{ color: "var(--text-secondary)" }}
+                            >
+                              {period.name}
+                            </p>
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                              {groups.map((g) => {
+                                const price = calcPrice(row.room, row.supplement, period.id, g.id);
+                                return (
+                                  <div
+                                    key={g.id}
+                                    className="flex items-center justify-between px-3 py-2.5 rounded-xl"
+                                    style={{
+                                      backgroundColor: "var(--bg-raised)",
+                                      border: "1px solid var(--border)",
+                                    }}
+                                  >
+                                    <span
+                                      className="text-sm font-bold"
+                                      style={{ color: "var(--sidebar-active-text)" }}
+                                    >
+                                      {price.toLocaleString()}
+                                    </span>
+                                    <div className="text-right">
+                                      <p
+                                        className="text-xs font-semibold leading-none"
+                                        style={{ color: "var(--text-primary)" }}
+                                      >
+                                        {g.name.split(" ")[0].toUpperCase()}
+                                      </p>
+                                      <p
+                                        className="text-xs leading-none mt-0.5"
+                                        style={{ color: "var(--text-muted)" }}
+                                      >
+                                        {g.currency}
+                                      </p>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

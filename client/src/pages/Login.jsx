@@ -205,7 +205,7 @@ export default function LoginPage() {
                 {/* Logo circle */}
                 <div
                   className="lgp relative rounded-full overflow-hidden
-                  w-16 h-16 md:w-40 md:h-40
+                  w-28 h-28 md:w-56 md:h-56
                   flex items-center justify-center"
                   style={{
                     background: "linear-gradient(145deg,#0d1e50,#08122e)",

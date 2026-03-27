@@ -10,12 +10,17 @@ import {
   CheckCircle2,
   ChevronRight,
   ChevronLeft,
+  ChevronDown,
   Users,
   Baby,
   Trash2,
   BedSingle,
+  BedDouble,
+  Layers,
+  Smile,
 } from "lucide-react";
 import { useLocalStorage } from "../../../hooks/useLocalStorage";
+import { useLanguage } from "../../../context/LanguageContext";
 import DeleteConfirmModal from "../../../components/DeleteConfirmModal";
 
 const INITIAL_GROUPS = [
@@ -146,6 +151,122 @@ function StepIndicator({ step, total }) {
   );
 }
 
+const CHILD_TYPES = ["Infant", "under 6 y", "at 12 year"];
+const CHILD_PRICE_TYPES = ["Free", "Fixed Percent", "Adult 1/2", "Fixed Amount"];
+
+const BED_TYPES = [
+  { key: "singleBed", labelKey: "singleBed", Icon: BedSingle },
+  { key: "extraDoubleBed", labelKey: "extraDoubleBed", Icon: BedDouble },
+  { key: "extraLargeBed", labelKey: "extraLargeBed", Icon: BedDouble },
+];
+
+const TXT = {
+  en: {
+    pageTitle: "Room Types",
+    pageSubtitle: "Manage room types and capacity",
+    add: "Add",
+    dblInfo: "Double Room (DBL) is the required first room and is used as the base for pricing all other rooms",
+    searchPlaceholder: "Search...",
+    noRooms: "No rooms yet",
+    deleteBaseTitle: "Delete Base Room",
+    deleteBaseMsg: "This is the base room (DBL) on which all price calculations are built. It cannot be deleted individually. Confirming will delete all associated rooms.",
+    deleteBaseWarning: "rooms will be permanently deleted",
+    deleteAll: "Delete All",
+    cancel: "Cancel",
+    roomDetails: "Room Details",
+    nameArLabel: "Name (Arabic)",
+    nameEnLabel: "Name (English)",
+    codeLabel: "Code",
+    roomTypeLabel: "Room Type",
+    amenitiesLabel: "Amenities",
+    capacityLabel: "Capacity",
+    optionLabel: "Option",
+    adultLabel: "adults",
+    childLabel: "children",
+    close: "Close",
+    addRoomTitle: "Add Room Type",
+    editRoomTitle: "Edit Room",
+    stepTitles: ["Details", "Images", "Capacity", "Beds & Prices"],
+    nameLabel: "Name",
+    descLabel: "Description",
+    roomAmenities: "Room Amenities",
+    mainImageLabel: "Main Image",
+    clickToUpload: "Click to upload main image",
+    galleryLabel: "Gallery",
+    dragOrClick: "Drag images here or click to upload",
+    uploadPhotos: "Upload Photos",
+    capacityOption: "Capacity Option",
+    childSettings: "Child Settings",
+    addCapacityOption: "+ Add Capacity Option",
+    removeOption: "Remove this option",
+    priceDiffNote: "Price difference from DBL room per period and guest group",
+    singleBed: "Single Bed",
+    extraDoubleBed: "Extra Double Bed",
+    extraLargeBed: "Extra Large Bed",
+    otherBeds: "Other",
+    bedNamePlaceholder: "Bed name",
+    priceDiffPerGroup: "Price difference per group (+ or -)",
+    addBedOption: "Add Bed Option",
+    bedOptions: "Bed Options",
+    back: "Back",
+    save: "Save",
+    priceFormulaLabel: "Price Formula",
+    roomTypeFormLabel: "Room Type",
+  },
+  ar: {
+    pageTitle: "أنواع الغرف",
+    pageSubtitle: "إدارة أنواع الغرف والسعة",
+    add: "إضافة",
+    dblInfo: "الغرفة المزدوجة (DBL) هي الغرفة الإجبارية الأولى وتُستخدم كأساس لحساب أسعار باقي الغرف",
+    searchPlaceholder: "بحث...",
+    noRooms: "لا توجد غرف بعد",
+    deleteBaseTitle: "حذف الغرفة الأساسية",
+    deleteBaseMsg: "هذه هي الغرفة الأساسية (DBL) التي يتم بناء جميع حسابات الأسعار عليها. لا يمكن حذفها بشكل منفرد. في حالة التأكيد سيتم حذف جميع الغرف المرتبطة بها.",
+    deleteBaseWarning: "غرفة نهائياً",
+    deleteAll: "حذف الكل",
+    cancel: "إلغاء",
+    roomDetails: "تفاصيل الغرفة",
+    nameArLabel: "الاسم (عربي)",
+    nameEnLabel: "الاسم (إنجليزي)",
+    codeLabel: "الرمز",
+    roomTypeLabel: "نوع الغرفة",
+    amenitiesLabel: "المرافق",
+    capacityLabel: "السعة",
+    optionLabel: "خيار",
+    adultLabel: "بالغ",
+    childLabel: "طفل",
+    close: "إغلاق",
+    addRoomTitle: "إضافة نوع غرفة",
+    editRoomTitle: "تعديل الغرفة",
+    stepTitles: ["التفاصيل", "الصور", "السعة", "الأسرة والأسعار"],
+    nameLabel: "الاسم",
+    descLabel: "الوصف",
+    roomAmenities: "مرافق الغرفة",
+    mainImageLabel: "الصورة الرئيسية",
+    clickToUpload: "انقر لرفع صورة رئيسية",
+    galleryLabel: "معرض الصور",
+    dragOrClick: "اسحب الصور هنا أو انقر للرفع",
+    uploadPhotos: "رفع صور",
+    capacityOption: "خيار السعة",
+    childSettings: "إعدادات الأطفال",
+    addCapacityOption: "+ إضافة خيار سعة",
+    removeOption: "حذف هذا الخيار",
+    priceDiffNote: "فرق السعر بين هذه الغرفة والغرفة المزدوجة (DBL) لكل فترة ومجموعة ضيوف",
+    singleBed: "Single Bed",
+    extraDoubleBed: "Extra Double Bed",
+    extraLargeBed: "Extra Large Bed",
+    otherBeds: "Other",
+    bedNamePlaceholder: "Bed name",
+    priceDiffPerGroup: "فرق السعر لكل مجموعة (+ أو -)",
+    addBedOption: "إضافة خيار سرير",
+    bedOptions: "خيارات الأسرة",
+    back: "رجوع",
+    save: "حفظ",
+    priceFormulaLabel: "معادلة حساب السعر",
+    roomTypeFormLabel: "نوع الغرفة",
+  },
+};
+
 const STEP_TITLES = ["التفاصيل", "الصور", "السعة", "الأسرة والأسعار"];
 
 const EMPTY_FORM = {
@@ -157,7 +278,8 @@ const EMPTY_FORM = {
   roomType: "DBL Room",
   priceFormula: "Person In DBL ×3",
   amenities: [],
-  capacityOptions: [{ adults: 2, children: 0 }],
+  capacityOptions: [{ adults: 2, children: 0, childConfigs: [] }],
+  bedOptionSets: [{ singleBed: 0, extraDoubleBed: 0, extraLargeBed: 0, otherBeds: [] }],
   priceDiffs: {},
   mainImage: null,
   gallery: [],
@@ -186,8 +308,13 @@ function resizeImage(file, maxW = 800, maxH = 600, quality = 0.8) {
 }
 
 export default function RoomTypesPage() {
+  const { lang } = useLanguage();
+  const t = TXT[lang] || TXT.ar;
+  const dir = lang === "en" ? "ltr" : "rtl";
+
   const [groups] = useLocalStorage("travky_guest_groups", INITIAL_GROUPS);
   const [periods] = useLocalStorage("travky_periods", INITIAL_PERIODS);
+  const [supplements] = useLocalStorage("travky_supplements", []);
   const [roomTypes, setRoomTypes] = useLocalStorage(
     "travky_room_types",
     INITIAL_ROOM_TYPES,
@@ -243,7 +370,15 @@ export default function RoomTypesPage() {
       roomType: room.roomType,
       priceFormula: room.priceFormula || "Person In DBL ×3",
       amenities: [...room.amenities],
-      capacityOptions: room.capacityOptions.map((c) => ({ ...c })),
+      capacityOptions: room.capacityOptions.map((c) => ({
+        ...c,
+        childConfigs: c.childConfigs
+          ? c.childConfigs.map((cc) => ({ ...cc }))
+          : Array.from({ length: c.children || 0 }, () => ({ type: "Infant", priceType: "Free", amount: 0 })),
+      })),
+      bedOptionSets: room.bedOptionSets
+        ? room.bedOptionSets.map((s) => ({ ...s, otherBeds: (s.otherBeds || []).map((b) => ({ ...b, prices: { ...b.prices } })) }))
+        : [{ singleBed: room.beds?.singleBed || 0, extraDoubleBed: room.beds?.extraDoubleBed || 0, extraLargeBed: room.beds?.extraLargeBed || 0, otherBeds: (room.bedOptions || []).map((b) => ({ ...b, prices: { ...b.prices } })) }],
       priceDiffs,
       mainImage: room.mainImage || null,
       gallery: room.gallery ? [...room.gallery] : [],
@@ -269,9 +404,28 @@ export default function RoomTypesPage() {
 
   function updateCapacity(idx, field, delta) {
     setForm((p) => {
-      const opts = p.capacityOptions.map((c, i) =>
-        i === idx ? { ...c, [field]: Math.max(0, c[field] + delta) } : c,
-      );
+      const opts = p.capacityOptions.map((c, i) => {
+        if (i !== idx) return c;
+        const newVal = Math.max(0, c[field] + delta);
+        const updated = { ...c, [field]: newVal };
+        // sync childConfigs array length with children count
+        if (field === "children") {
+          const cur = updated.childConfigs || [];
+          if (newVal > cur.length) {
+            updated.childConfigs = [
+              ...cur,
+              ...Array.from({ length: newVal - cur.length }, () => ({
+                type: "Infant",
+                priceType: "Free",
+                amount: 0,
+              })),
+            ];
+          } else {
+            updated.childConfigs = cur.slice(0, newVal);
+          }
+        }
+        return updated;
+      });
       return { ...p, capacityOptions: opts };
     });
   }
@@ -279,7 +433,10 @@ export default function RoomTypesPage() {
   function addCapacityOption() {
     setForm((p) => ({
       ...p,
-      capacityOptions: [...p.capacityOptions, { adults: 1, children: 0 }],
+      capacityOptions: [
+        ...p.capacityOptions,
+        { adults: 1, children: 0, childConfigs: [] },
+      ],
     }));
   }
 
@@ -289,6 +446,72 @@ export default function RoomTypesPage() {
       capacityOptions: p.capacityOptions.filter((_, i) => i !== idx),
     }));
   }
+
+  function addBedOptionSet() {
+    setForm((p) => ({
+      ...p,
+      bedOptionSets: [...(p.bedOptionSets || []), { singleBed: 0, extraDoubleBed: 0, extraLargeBed: 0, otherBeds: [] }],
+    }));
+  }
+
+  function removeBedOptionSet(setIdx) {
+    setForm((p) => ({
+      ...p,
+      bedOptionSets: (p.bedOptionSets || []).filter((_, i) => i !== setIdx),
+    }));
+  }
+
+  function updateBedSetCount(setIdx, key, delta) {
+    setForm((p) => ({
+      ...p,
+      bedOptionSets: (p.bedOptionSets || []).map((s, i) =>
+        i === setIdx ? { ...s, [key]: Math.max(0, (s[key] || 0) + delta) } : s,
+      ),
+    }));
+  }
+
+  function addOtherBed(setIdx) {
+    const prices = {};
+    groups.forEach((g) => { prices[g.id] = 0; });
+    setForm((p) => ({
+      ...p,
+      bedOptionSets: (p.bedOptionSets || []).map((s, i) =>
+        i === setIdx ? { ...s, otherBeds: [...(s.otherBeds || []), { name: "", type: "Free", count: 1, prices }] } : s,
+      ),
+    }));
+  }
+
+  function removeOtherBed(setIdx, bedIdx) {
+    setForm((p) => ({
+      ...p,
+      bedOptionSets: (p.bedOptionSets || []).map((s, i) =>
+        i === setIdx ? { ...s, otherBeds: (s.otherBeds || []).filter((_, j) => j !== bedIdx) } : s,
+      ),
+    }));
+  }
+
+  function updateOtherBed(setIdx, bedIdx, field, value) {
+    setForm((p) => ({
+      ...p,
+      bedOptionSets: (p.bedOptionSets || []).map((s, i) =>
+        i === setIdx
+          ? { ...s, otherBeds: (s.otherBeds || []).map((b, j) => j === bedIdx ? { ...b, [field]: value } : b) }
+          : s,
+      ),
+    }));
+  }
+
+  function setOtherBedPrice(setIdx, bedIdx, groupId, value) {
+    setForm((p) => ({
+      ...p,
+      bedOptionSets: (p.bedOptionSets || []).map((s, i) =>
+        i === setIdx
+          ? { ...s, otherBeds: (s.otherBeds || []).map((b, j) => j === bedIdx ? { ...b, prices: { ...b.prices, [groupId]: Number(value) } } : b) }
+          : s,
+      ),
+    }));
+  }
+
 
   function setPriceDiff(periodId, groupId, val) {
     setForm((p) => ({
@@ -356,7 +579,7 @@ export default function RoomTypesPage() {
   }
 
   return (
-    <div className="page-shell" dir="rtl">
+    <div className="page-shell" dir={dir}>
       {/* Regular delete confirm */}
       <DeleteConfirmModal
         open={!!deleteTarget}
@@ -393,16 +616,14 @@ export default function RoomTypesPage() {
               className="text-xl font-bold mb-3"
               style={{ color: "var(--text-primary)" }}
             >
-              حذف الغرفة الأساسية
+              {t.deleteBaseTitle}
             </h2>
 
             <p
               className="text-sm leading-relaxed mb-5"
               style={{ color: "var(--text-secondary)" }}
             >
-              هذه هي الغرفة الأساسية (DBL) التي يتم بناء جميع حسابات الأسعار
-              عليها. لا يمكن حذفها بشكل منفرد. في حالة التأكيد سيتم حذف جميع
-              الغرف المرتبطة بها.
+              {t.deleteBaseMsg}
             </p>
 
             {/* Warning badge */}
@@ -414,7 +635,7 @@ export default function RoomTypesPage() {
                 color: "#92400e",
               }}
             >
-              ⚠️ سيتم حذف {roomTypes.length} غرفة نهائياً
+              ⚠️ {t.deleteBaseWarning ? `${roomTypes.length} ${t.deleteBaseWarning}` : `سيتم حذف ${roomTypes.length} غرفة نهائياً`}
             </div>
 
             {/* Actions */}
@@ -427,7 +648,7 @@ export default function RoomTypesPage() {
                 className="flex-1 py-3 rounded-xl text-base font-bold text-white transition-colors"
                 style={{ backgroundColor: "#ef4444" }}
               >
-                حذف الكل
+                {t.deleteAll}
               </button>
               <button
                 onClick={() => setDeleteBaseTarget(null)}
@@ -438,7 +659,7 @@ export default function RoomTypesPage() {
                   border: "1px solid var(--border)",
                 }}
               >
-                إلغاء
+                {t.cancel}
               </button>
             </div>
           </div>
@@ -459,10 +680,10 @@ export default function RoomTypesPage() {
               className="text-2xl font-bold"
               style={{ color: "var(--text-primary)" }}
             >
-              أنواع الغرف
+              {t.pageTitle}
             </h1>
             <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
-              إدارة أنواع الغرف والسعة
+              {t.pageSubtitle}
             </p>
           </div>
         </div>
@@ -472,7 +693,7 @@ export default function RoomTypesPage() {
           style={{ backgroundColor: "var(--sidebar-active-text)" }}
         >
           <Plus size={15} />
-          <span>إضافة</span>
+          <span>{t.add}</span>
         </button>
       </div>
 
@@ -485,8 +706,7 @@ export default function RoomTypesPage() {
           color: "var(--sidebar-active-text)",
         }}
       >
-        الغرفة المزدوجة (DBL) هي الغرفة الإجبارية الأولى وتُستخدم كأساس لحساب
-        أسعار باقي الغرف
+        {t.dblInfo}
       </div>
 
       {/* Search */}
@@ -506,7 +726,7 @@ export default function RoomTypesPage() {
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="بحث..."
+            placeholder={t.searchPlaceholder}
             className="w-full bg-transparent outline-none py-3 px-4 text-sm"
             style={{ paddingInlineEnd: "2.8rem", color: "var(--text-primary)" }}
           />
@@ -520,13 +740,14 @@ export default function RoomTypesPage() {
             className="col-span-full py-16 text-center text-sm"
             style={{ color: "var(--text-muted)" }}
           >
-            لا توجد غرف بعد
+            {t.noRooms}
           </div>
         ) : (
-          filtered.map((room) => (
+          filtered.flatMap((room) => [
             <RoomCard
               key={room.id}
               room={room}
+              supplement={null}
               onEdit={() => openEdit(room)}
               onView={() => setViewItem(room)}
               onDelete={() =>
@@ -534,8 +755,22 @@ export default function RoomTypesPage() {
                   ? setDeleteBaseTarget(room.id)
                   : setDeleteTarget(room.id)
               }
-            />
-          ))
+            />,
+            ...supplements.map((supp) => (
+              <RoomCard
+                key={`${room.id}-${supp.id}`}
+                room={room}
+                supplement={supp}
+                onEdit={() => openEdit(room)}
+                onView={() => setViewItem(room)}
+                onDelete={() =>
+                  room.isBase
+                    ? setDeleteBaseTarget(room.id)
+                    : setDeleteTarget(room.id)
+                }
+              />
+            )),
+          ])
         )}
       </div>
 
@@ -567,7 +802,7 @@ export default function RoomTypesPage() {
                 className="text-lg font-bold"
                 style={{ color: "var(--text-primary)" }}
               >
-                تفاصيل الغرفة
+                {t.roomDetails}
               </h2>
             </div>
             {viewItem.mainImage && (
@@ -583,7 +818,7 @@ export default function RoomTypesPage() {
                   className="text-xs mb-1"
                   style={{ color: "var(--text-secondary)" }}
                 >
-                  الاسم (عربي)
+                  {t.nameArLabel}
                 </p>
                 <p
                   className="font-semibold"
@@ -597,7 +832,7 @@ export default function RoomTypesPage() {
                   className="text-xs mb-1"
                   style={{ color: "var(--text-secondary)" }}
                 >
-                  الاسم (إنجليزي)
+                  {t.nameEnLabel}
                 </p>
                 <p
                   className="font-semibold"
@@ -611,7 +846,7 @@ export default function RoomTypesPage() {
                   className="text-xs mb-1"
                   style={{ color: "var(--text-secondary)" }}
                 >
-                  الرمز
+                  {t.codeLabel}
                 </p>
                 <span className="chip">{viewItem.code}</span>
               </div>
@@ -620,7 +855,7 @@ export default function RoomTypesPage() {
                   className="text-xs mb-1"
                   style={{ color: "var(--text-secondary)" }}
                 >
-                  نوع الغرفة
+                  {t.roomTypeLabel}
                 </p>
                 <span className="chip">{viewItem.roomType}</span>
               </div>
@@ -629,7 +864,7 @@ export default function RoomTypesPage() {
                   className="text-xs mb-2"
                   style={{ color: "var(--text-secondary)" }}
                 >
-                  المرافق
+                  {t.amenitiesLabel}
                 </p>
                 <div className="flex flex-wrap gap-1">
                   {viewItem.amenities.map((a) => (
@@ -644,7 +879,7 @@ export default function RoomTypesPage() {
                   className="text-xs mb-2"
                   style={{ color: "var(--text-secondary)" }}
                 >
-                  السعة
+                  {t.capacityLabel}
                 </p>
                 {viewItem.capacityOptions.map((c, i) => (
                   <div
@@ -656,11 +891,11 @@ export default function RoomTypesPage() {
                       className="text-xs"
                       style={{ color: "var(--text-secondary)" }}
                     >
-                      خيار {i + 1}
+                      {t.optionLabel} {i + 1}
                     </span>
-                    <span className="text-sm font-medium">{c.adults} بالغ</span>
+                    <span className="text-sm font-medium">{c.adults} {t.adultLabel}</span>
                     <span className="text-sm font-medium">
-                      {c.children} طفل
+                      {c.children} {t.childLabel}
                     </span>
                   </div>
                 ))}
@@ -670,7 +905,7 @@ export default function RoomTypesPage() {
               onClick={() => setViewItem(null)}
               className="btn btn-secondary w-full mt-4"
             >
-              إغلاق
+              {t.close}
             </button>
           </div>
         </div>
@@ -705,8 +940,8 @@ export default function RoomTypesPage() {
                 className="text-lg font-bold"
                 style={{ color: "var(--text-primary)" }}
               >
-                {modal === "add" ? "إضافة نوع غرفة" : "تعديل الغرفة"} —{" "}
-                {STEP_TITLES[step - 1]}
+                {modal === "add" ? t.addRoomTitle : t.editRoomTitle} —{" "}
+                {(t.stepTitles || STEP_TITLES)[step - 1]}
               </h2>
             </div>
 
@@ -755,7 +990,7 @@ export default function RoomTypesPage() {
                     className="block text-sm font-semibold mb-2"
                     style={{ color: "var(--text-primary)" }}
                   >
-                    الاسم
+                    {t.nameLabel}
                   </label>
                   {langTab === "en" ? (
                     <input
@@ -788,7 +1023,7 @@ export default function RoomTypesPage() {
                     className="block text-sm font-semibold mb-2"
                     style={{ color: "var(--text-primary)" }}
                   >
-                    الوصف
+                    {t.descLabel}
                   </label>
                   {langTab === "en" ? (
                     <textarea
@@ -818,7 +1053,7 @@ export default function RoomTypesPage() {
                     className="block text-sm font-semibold mb-2"
                     style={{ color: "var(--text-primary)" }}
                   >
-                    نوع الغرفة
+                    {t.roomTypeFormLabel}
                   </label>
                   <select
                     value={form.roomType}
@@ -827,6 +1062,7 @@ export default function RoomTypesPage() {
                     }
                     className="input w-full"
                     style={{ textAlign: "right", direction: "rtl" }}
+                    disabled={!roomTypes.some((r) => r.isBase)}
                   >
                     {ROOM_TYPES_OPTIONS.map((t) => (
                       <option key={t} value={t}>
@@ -836,34 +1072,36 @@ export default function RoomTypesPage() {
                   </select>
                 </div>
 
-                {/* Price Formula */}
-                <div>
-                  <label
-                    className="block text-sm font-semibold mb-2"
-                    style={{ color: "var(--text-primary)" }}
-                  >
-                    معادلة حساب السعر
-                  </label>
-                  <select
-                    value={form.priceFormula}
-                    onChange={(e) =>
-                      setForm((p) => ({ ...p, priceFormula: e.target.value }))
-                    }
-                    className="input w-full"
-                    style={{
-                      textAlign: "right",
-                      direction: "rtl",
-                      color: "var(--sidebar-active-text)",
-                      fontWeight: 600,
-                    }}
-                  >
-                    {PRICE_FORMULA_OPTIONS.map((t) => (
-                      <option key={t} value={t}>
-                        {t}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                {/* Price Formula — only shown for non-base rooms (when a base DBL already exists) */}
+                {roomTypes.some((r) => r.isBase) && (
+                  <div>
+                    <label
+                      className="block text-sm font-semibold mb-2"
+                      style={{ color: "var(--text-primary)" }}
+                    >
+                      {t.priceFormulaLabel}
+                    </label>
+                    <select
+                      value={form.priceFormula}
+                      onChange={(e) =>
+                        setForm((p) => ({ ...p, priceFormula: e.target.value }))
+                      }
+                      className="input w-full"
+                      style={{
+                        textAlign: "right",
+                        direction: "rtl",
+                        color: "var(--sidebar-active-text)",
+                        fontWeight: 600,
+                      }}
+                    >
+                      {PRICE_FORMULA_OPTIONS.map((t) => (
+                        <option key={t} value={t}>
+                          {t}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
 
                 {/* Amenities — 2-column card grid */}
                 <div>
@@ -871,7 +1109,7 @@ export default function RoomTypesPage() {
                     className="block text-sm font-semibold mb-3"
                     style={{ color: "var(--text-primary)" }}
                   >
-                    مرافق الغرفة
+                    {t.roomAmenities}
                   </label>
                   <div className="grid grid-cols-2 gap-2">
                     {AMENITIES.map((a) => {
@@ -916,7 +1154,7 @@ export default function RoomTypesPage() {
                     className="block text-sm font-medium mb-2"
                     style={{ color: "var(--text-primary)" }}
                   >
-                    الصورة الرئيسية
+                    {t.mainImageLabel}
                   </label>
                   <input
                     ref={mainImageRef}
@@ -959,7 +1197,7 @@ export default function RoomTypesPage() {
                         className="mt-2 text-sm font-medium"
                         style={{ color: "var(--sidebar-active-text)" }}
                       >
-                        انقر لرفع صورة رئيسية
+                        {t.clickToUpload}
                       </p>
                     </div>
                   )}
@@ -969,7 +1207,7 @@ export default function RoomTypesPage() {
                     className="block text-sm font-medium mb-2"
                     style={{ color: "var(--text-primary)" }}
                   >
-                    معرض الصور
+                    {t.galleryLabel}
                   </label>
                   <input
                     ref={galleryRef}
@@ -1014,13 +1252,13 @@ export default function RoomTypesPage() {
                       className="text-xs mt-1"
                       style={{ color: "var(--text-muted)" }}
                     >
-                      اسحب الصور هنا أو انقر للرفع
+                      {t.dragOrClick}
                     </p>
                     <p
                       className="mt-1.5 text-sm font-medium"
                       style={{ color: "var(--sidebar-active-text)" }}
                     >
-                      رفع صور
+                      {t.uploadPhotos}
                     </p>
                   </div>
                 </div>
@@ -1044,7 +1282,7 @@ export default function RoomTypesPage() {
                         className="text-sm font-semibold"
                         style={{ color: "var(--text-primary)" }}
                       >
-                        خيار السعة {idx + 1}
+                      {t.capacityOption} {idx + 1}
                       </p>
                       <div
                         className="text-xs"
@@ -1110,6 +1348,106 @@ export default function RoomTypesPage() {
                         </div>
                       ))}
                     </div>
+
+                    {/* Per-child configuration rows */}
+                    {opt.children > 0 && (
+                      <div className="mt-4 space-y-2" dir="rtl">
+                        <p className="text-xs font-semibold mb-2" style={{ color: "var(--text-secondary)" }}>
+                          {t.childSettings}
+                        </p>
+                        {(opt.childConfigs || []).map((cfg, ci) => {
+                          function updateChildCfg(patch) {
+                            setForm((p) => ({
+                              ...p,
+                              capacityOptions: p.capacityOptions.map((o, oi) => {
+                                if (oi !== idx) return o;
+                                return {
+                                  ...o,
+                                  childConfigs: o.childConfigs.map((cc, cii) =>
+                                    cii === ci ? { ...cc, ...patch } : cc,
+                                  ),
+                                };
+                              }),
+                            }));
+                          }
+                          return (
+                            <div key={ci} className="space-y-2">
+                              {/* Price type + Child type row */}
+                              <div className="grid grid-cols-2 gap-2">
+                                {/* Price type select */}
+                                <div className="flex items-center px-3 py-2.5 rounded-xl" style={{ backgroundColor: "var(--bg-surface)", border: "1px solid var(--border)" }}>
+                                  <select
+                                    value={cfg.priceType}
+                                    onChange={(e) => updateChildCfg({ priceType: e.target.value, amount: 0, groupPrices: {} })}
+                                    className="bg-transparent outline-none text-sm w-full"
+                                    style={{ color: "var(--sidebar-active-text)", fontWeight: 600 }}
+                                  >
+                                    {CHILD_PRICE_TYPES.map((pt) => (
+                                      <option key={pt} value={pt}>{pt}</option>
+                                    ))}
+                                  </select>
+                                </div>
+                                {/* Child age type select */}
+                                <div className="flex items-center px-3 py-2.5 rounded-xl" style={{ backgroundColor: "var(--bg-surface)", border: "1px solid var(--border)" }}>
+                                  <select
+                                    value={cfg.type}
+                                    onChange={(e) => updateChildCfg({ type: e.target.value })}
+                                    className="bg-transparent outline-none text-sm w-full"
+                                    style={{ color: "#f59e0b", fontWeight: 600 }}
+                                  >
+                                    {CHILD_TYPES.map((ct) => (
+                                      <option key={ct} value={ct}>{ct}</option>
+                                    ))}
+                                  </select>
+                                </div>
+                              </div>
+
+                              {/* Fixed Amount: per-group prices */}
+                              {cfg.priceType === "Fixed Amount" && (
+                                <div className="rounded-xl px-3 py-3 space-y-2" style={{ backgroundColor: "var(--bg-surface)", border: "1px solid var(--border)" }}>
+                                  <p className="text-xs font-semibold text-right" style={{ color: "var(--text-secondary)" }}>(-/+) Price difference per group</p>
+                                  {groups.map((g) => (
+                                    <div key={g.id} className="flex items-center justify-between gap-2">
+                                      <input
+                                        type="number"
+                                        value={cfg.groupPrices?.[g.id] ?? 0}
+                                        onChange={(e) => updateChildCfg({ groupPrices: { ...(cfg.groupPrices || {}), [g.id]: Number(e.target.value) } })}
+                                        className="input"
+                                        style={{ width: "5rem", flexShrink: 0 }}
+                                      />
+                                      <span className="text-xs font-bold text-right" style={{ color: "var(--text-secondary)" }}>
+                                        {g.name.toUpperCase()} <span style={{ color: "var(--sidebar-active-text)" }}>({g.currency})</span>
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+
+                              {/* Fixed Percent: percentage slider */}
+                              {cfg.priceType === "Fixed Percent" && (
+                                <div className="rounded-xl px-3 py-3" style={{ backgroundColor: "var(--bg-surface)", border: "1px solid var(--border)" }}>
+                                  <div className="flex items-center justify-between mb-2">
+                                    <input
+                                      type="range"
+                                      min={0} max={100} step={1}
+                                      value={cfg.amount ?? 0}
+                                      onChange={(e) => updateChildCfg({ amount: Number(e.target.value) })}
+                                      className="flex-1"
+                                      style={{ accentColor: "var(--sidebar-active-text)" }}
+                                    />
+                                  </div>
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-xs" style={{ color: "var(--text-muted)" }}>% Percentage</span>
+                                    <span className="text-sm font-bold" style={{ color: "var(--sidebar-active-text)" }}>{cfg.amount ?? 0}%</span>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+
                     {idx > 0 && (
                       <button
                         type="button"
@@ -1117,7 +1455,7 @@ export default function RoomTypesPage() {
                         className="mt-3 text-xs"
                         style={{ color: "var(--danger)" }}
                       >
-                        حذف هذا الخيار
+                        {t.removeOption}
                       </button>
                     )}
                   </div>
@@ -1131,52 +1469,212 @@ export default function RoomTypesPage() {
                     color: "var(--text-secondary)",
                   }}
                 >
-                  + إضافة خيار سعة
+                  {t.addCapacityOption}
                 </button>
               </div>
             )}
 
-            {/* Step 4: Price Diffs */}
+            {/* Step 4: Beds & Prices */}
             {step === 4 && (
               <div className="space-y-4">
-                <p
-                  className="text-sm"
-                  style={{ color: "var(--text-secondary)" }}
-                >
-                  فرق السعر بين هذه الغرفة والغرفة المزدوجة (DBL) لكل فترة
-                  ومجموعة ضيوف
-                </p>
-                {periods.map((period) => (
-                  <div key={period.id}>
-                    <p
-                      className="text-sm font-semibold mb-2"
-                      style={{ color: "var(--text-primary)" }}
+                {/* ── Bed Option Set cards ── */}
+                {(form.bedOptionSets || []).map((bSet, setIdx) => (
+                  <div
+                    key={setIdx}
+                    className="rounded-xl overflow-hidden"
+                    style={{ border: "1px solid var(--border)" }}
+                  >
+                    {/* Dark header */}
+                    <div
+                      className="flex items-center justify-between px-4 py-3"
+                      style={{ backgroundColor: "#1e3a5f" }}
                     >
-                      {period.name}
-                    </p>
-                    <div className="space-y-2">
-                      {groups.map((g) => (
-                        <div key={g.id} className="flex items-center gap-3">
-                          <input
-                            type="number"
-                            value={form.priceDiffs[period.id]?.[g.id] ?? 0}
-                            onChange={(e) =>
-                              setPriceDiff(period.id, g.id, e.target.value)
-                            }
-                            className="input"
-                            style={{ width: "6rem" }}
-                          />
-                          <span
-                            className="text-sm"
-                            style={{ color: "var(--text-secondary)" }}
-                          >
-                            {g.name} ({g.currency})
+                      {(form.bedOptionSets || []).length > 1 ? (
+                        <button
+                          type="button"
+                          onClick={() => removeBedOptionSet(setIdx)}
+                          className="w-6 h-6 grid place-items-center rounded"
+                          style={{ color: "white", opacity: 0.7 }}
+                        >
+                          <X size={14} />
+                        </button>
+                      ) : (
+                        <span style={{ width: 24 }} />
+                      )}
+                      <span className="text-sm font-bold text-white">
+                        {t.bedOptions} {setIdx + 1}
+                      </span>
+                    </div>
+
+                    {/* Bed rows body */}
+                    <div
+                      className="px-4 py-3 space-y-4"
+                      style={{ backgroundColor: "var(--bg-raised)" }}
+                    >
+                      {/* Standard bed rows */}
+                      {BED_TYPES.map(({ key, labelKey, Icon }) => (
+                        <div key={key} className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <button
+                              type="button"
+                              onClick={() => updateBedSetCount(setIdx, key, 1)}
+                              className="w-8 h-8 rounded-full grid place-items-center font-bold text-white text-xl"
+                              style={{ backgroundColor: "var(--sidebar-active-text)" }}
+                            >+</button>
+                            <span className="w-6 text-center font-semibold" style={{ color: "var(--text-primary)" }}>
+                              {bSet[key] || 0}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => updateBedSetCount(setIdx, key, -1)}
+                              className="w-8 h-8 rounded-full grid place-items-center font-bold"
+                              style={{ backgroundColor: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
+                            >—</button>
+                          </div>
+                          <div className="flex items-center gap-2" style={{ color: "var(--text-secondary)" }}>
+                            <span className="text-sm font-medium">{t[labelKey]}</span>
+                            <Icon size={18} />
+                          </div>
+                        </div>
+                      ))}
+
+                      {/* Other summary row */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <button
+                            type="button"
+                            onClick={() => addOtherBed(setIdx)}
+                            className="w-8 h-8 rounded-full grid place-items-center font-bold text-white text-xl"
+                            style={{ backgroundColor: "var(--sidebar-active-text)" }}
+                          >+</button>
+                          <span className="w-6 text-center font-semibold" style={{ color: "var(--text-primary)" }}>
+                            {(bSet.otherBeds || []).length}
                           </span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const len = (bSet.otherBeds || []).length;
+                              if (len > 0) removeOtherBed(setIdx, len - 1);
+                            }}
+                            className="w-8 h-8 rounded-full grid place-items-center font-bold"
+                            style={{ backgroundColor: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
+                          >—</button>
+                        </div>
+                        <div className="flex items-center gap-2" style={{ color: "var(--text-secondary)" }}>
+                          <span className="text-sm font-medium">{t.otherBeds}</span>
+                          <button
+                            type="button"
+                            onClick={() => addOtherBed(setIdx)}
+                            className="w-6 h-6 rounded-full grid place-items-center text-sm font-bold border"
+                            style={{ borderColor: "var(--border)", color: "var(--text-secondary)", backgroundColor: "var(--bg-surface)" }}
+                          >+</button>
+                        </div>
+                      </div>
+
+                      {/* Inline "Other" bed entries */}
+                      {(bSet.otherBeds || []).map((opt, bedIdx) => (
+                        <div key={bedIdx} className="space-y-2">
+                          {/* Row: + count − | Other [+] */}
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <button
+                                type="button"
+                                onClick={() => updateOtherBed(setIdx, bedIdx, "count", (opt.count || 1) + 1)}
+                                className="w-8 h-8 rounded-full grid place-items-center font-bold text-white text-xl"
+                                style={{ backgroundColor: "var(--sidebar-active-text)" }}
+                              >+</button>
+                              <span className="w-6 text-center font-semibold" style={{ color: "var(--text-primary)" }}>
+                                {opt.count || 1}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => updateOtherBed(setIdx, bedIdx, "count", Math.max(1, (opt.count || 1) - 1))}
+                                className="w-8 h-8 rounded-full grid place-items-center font-bold"
+                                style={{ backgroundColor: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
+                              >—</button>
+                            </div>
+                            <div className="flex items-center gap-2" style={{ color: "var(--text-secondary)" }}>
+                              <span className="text-sm font-medium">{t.otherBeds}</span>
+                              <button
+                                type="button"
+                                onClick={() => addOtherBed(setIdx)}
+                                className="w-6 h-6 rounded-full grid place-items-center text-sm font-bold border"
+                                style={{ borderColor: "var(--border)", color: "var(--text-secondary)", backgroundColor: "var(--bg-surface)" }}
+                              >+</button>
+                            </div>
+                          </div>
+
+                          {/* Expanded config box */}
+                          <div
+                            className="rounded-xl p-3 space-y-2"
+                            style={{ backgroundColor: "var(--bg-surface)", border: `1.5px solid ${opt.type === "Fixed" ? "var(--sidebar-active-text)" : "var(--border)"}` }}
+                          >
+                            <div className="grid grid-cols-2 gap-2">
+                              {/* Type dropdown */}
+                              <div
+                                className="flex items-center gap-1 px-3 py-2.5 rounded-xl"
+                                style={{ backgroundColor: "var(--bg-raised)", border: "1px solid var(--border)" }}
+                              >
+                                <ChevronDown size={13} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
+                                <select
+                                  value={opt.type}
+                                  onChange={(e) => updateOtherBed(setIdx, bedIdx, "type", e.target.value)}
+                                  className="bg-transparent outline-none text-sm w-full"
+                                  style={{ color: opt.type === "Fixed" ? "var(--sidebar-active-text)" : "var(--text-secondary)", fontWeight: 600 }}
+                                >
+                                  <option value="Free">Free</option>
+                                  <option value="Fixed">Fixed</option>
+                                </select>
+                              </div>
+                              {/* Bed name input */}
+                              <input
+                                type="text"
+                                value={opt.name}
+                                onChange={(e) => updateOtherBed(setIdx, bedIdx, "name", e.target.value)}
+                                placeholder={t.bedNamePlaceholder}
+                                className="input text-right"
+                              />
+                            </div>
+
+                            {/* Per-group prices when Fixed */}
+                            {opt.type === "Fixed" && (
+                              <div className="pt-1 space-y-2">
+                                <p className="text-xs font-semibold text-right" style={{ color: "var(--text-secondary)" }}>
+                                  {t.priceDiffPerGroup}
+                                </p>
+                                {groups.map((g) => (
+                                  <div key={g.id} className="flex items-center justify-between gap-2">
+                                    <input
+                                      type="number"
+                                      value={opt.prices?.[g.id] ?? 0}
+                                      onChange={(e) => setOtherBedPrice(setIdx, bedIdx, g.id, e.target.value)}
+                                      className="input"
+                                      style={{ width: "5.5rem", flexShrink: 0 }}
+                                    />
+                                    <span className="text-xs font-bold text-right" style={{ color: "var(--text-secondary)" }}>
+                                      {g.name.toUpperCase()}{" "}
+                                      <span style={{ color: "var(--sidebar-active-text)" }}>({g.currency})</span>
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
                         </div>
                       ))}
                     </div>
                   </div>
                 ))}
+
+                {/* Add Bed Option button */}
+                <button
+                  type="button"
+                  onClick={addBedOptionSet}
+                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold"
+                  style={{ border: "1.5px dashed var(--border)", color: "var(--text-secondary)", backgroundColor: "var(--bg-surface)" }}
+                >
+                  {t.addBedOption}&nbsp;<span className="text-lg leading-none">+</span>
+                </button>
               </div>
             )}
 
@@ -1191,11 +1689,11 @@ export default function RoomTypesPage() {
                   className="btn btn-secondary flex items-center gap-1.5"
                 >
                   <ChevronRight size={16} />
-                  <span>رجوع</span>
+                  <span>{t.back}</span>
                 </button>
               ) : (
                 <button onClick={closeModal} className="btn btn-secondary">
-                  إلغاء
+                  {t.cancel}
                 </button>
               )}
               {step < 4 ? (
@@ -1204,7 +1702,7 @@ export default function RoomTypesPage() {
                   className="btn text-white flex items-center gap-1.5"
                   style={{ backgroundColor: "var(--sidebar-active-text)" }}
                 >
-                  <span>{STEP_TITLES[step]}</span>
+                  <span>{(t.stepTitles || STEP_TITLES)[step]}</span>
                   <ChevronLeft size={16} />
                 </button>
               ) : (
@@ -1213,7 +1711,7 @@ export default function RoomTypesPage() {
                   className="btn text-white"
                   style={{ backgroundColor: "var(--sidebar-active-text)" }}
                 >
-                  حفظ
+                  {t.save}
                 </button>
               )}
             </div>
@@ -1224,23 +1722,27 @@ export default function RoomTypesPage() {
   );
 }
 
-function RoomCard({ room, onEdit, onView, onDelete }) {
-  const MAX_AMENITIES_SHOWN = 5;
-  const visibleAmenities = room.amenities.slice(0, MAX_AMENITIES_SHOWN);
-  const extraCount = room.amenities.length - MAX_AMENITIES_SHOWN;
+function RoomCard({ room, supplement, onEdit, onView, onDelete }) {
+  const totalAdults = room.capacityOptions.reduce((s, o) => s + (o.adults || 0), 0);
+  const totalChildren = room.capacityOptions.reduce((s, o) => s + (o.children || 0), 0);
+  const capCount = room.capacityOptions.length;
+  const singleBedCount = room.beds?.singleBed || 0;
+  const amenityCount = room.amenities.length;
+  const cardTitle = supplement ? `${room.nameEn} — ${supplement.name}` : room.nameEn;
 
   return (
     <div
-      className="rounded-2xl overflow-hidden shadow-sm"
+      className="rounded-2xl overflow-hidden"
       style={{
         backgroundColor: "var(--bg-surface)",
         border: "1px solid var(--border)",
+        boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
       }}
     >
       {/* Image area */}
       <div
-        className="relative h-48"
-        style={{ backgroundColor: "var(--bg-raised)" }}
+        className="relative"
+        style={{ backgroundColor: "var(--bg-raised)", height: 168 }}
       >
         {room.mainImage ? (
           <img
@@ -1250,37 +1752,37 @@ function RoomCard({ room, onEdit, onView, onDelete }) {
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <DoorOpen size={40} className="opacity-20" />
+            <DoorOpen size={44} style={{ color: "var(--border)", opacity: 0.5 }} />
           </div>
         )}
 
-        {/* Action buttons top-right (RTL: visual left) */}
-        <div className="absolute top-3 right-3 flex gap-1.5">
+        {/* Action buttons — top left */}
+        <div className="absolute top-3 left-3 flex gap-1.5">
           <button
             onClick={onDelete}
-            className="w-8 h-8 rounded-full grid place-items-center shadow-md bg-white dark:bg-slate-800"
+            className="w-8 h-8 rounded-full grid place-items-center bg-white shadow-sm"
             style={{ color: "#ef4444" }}
           >
             <Trash2 size={14} />
           </button>
           <button
             onClick={onEdit}
-            className="w-8 h-8 rounded-full grid place-items-center shadow-md bg-white dark:bg-slate-800"
+            className="w-8 h-8 rounded-full grid place-items-center bg-white shadow-sm"
             style={{ color: "#f59e0b" }}
           >
             <Pencil size={14} />
           </button>
           <button
             onClick={onView}
-            className="w-8 h-8 rounded-full grid place-items-center shadow-md bg-white dark:bg-slate-800"
+            className="w-8 h-8 rounded-full grid place-items-center bg-white shadow-sm"
             style={{ color: "#3b82f6" }}
           >
             <Eye size={14} />
           </button>
         </div>
 
-        {/* Badges top-left (RTL: visual right) */}
-        <div className="absolute top-3 left-3 flex gap-1.5">
+        {/* Code + room type — top right */}
+        <div className="absolute top-3 right-3 flex items-center gap-1.5">
           {room.isBase ? (
             <span
               className="px-2.5 py-1 rounded-lg text-xs font-bold text-white"
@@ -1291,76 +1793,74 @@ function RoomCard({ room, onEdit, onView, onDelete }) {
           ) : (
             <span className="chip text-xs font-bold">{room.code}</span>
           )}
-          <span className="chip text-xs">{room.roomType}</span>
+          <span
+            className="text-xs font-semibold"
+            style={{ color: "var(--text-secondary)" }}
+          >
+            {room.roomType}
+          </span>
         </div>
       </div>
 
       {/* Content */}
-      <div className="p-4 space-y-3">
-        {/* Name */}
+      <div className="px-4 pt-4 pb-3 space-y-3">
+        {/* Room name */}
         <h3
-          className="text-base font-bold text-center"
-          style={{ color: "var(--text-primary)" }}
+          className="text-sm font-bold text-center tracking-wide"
+          style={{ color: "var(--text-primary)", textTransform: "uppercase" }}
         >
-          {room.nameEn}
+          {cardTitle}
         </h3>
 
-        {/* Capacity row */}
-        <div className="flex items-center justify-center gap-2 flex-wrap">
-          {room.capacityOptions.map((opt, i) => (
-            <span
-              key={`bed-${i}`}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium"
-              style={{
-                backgroundColor: "var(--bg-raised)",
-                border: "1px solid var(--border)",
-                color: "var(--text-secondary)",
-              }}
-            >
-              <BedSingle size={12} />
-              Single Bed {opt.adults}
+        {/* Two pills row */}
+        <div className="flex items-center justify-between gap-2">
+          {/* Left: capacity options count + single bed count */}
+          <span
+            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium flex-1 justify-center"
+            style={{
+              backgroundColor: "var(--bg-raised)",
+              border: "1px solid var(--border)",
+              color: "var(--text-secondary)",
+            }}
+          >
+            <Layers size={11} />
+            <span className="font-semibold" style={{ color: "var(--text-primary)" }}>
+              {capCount}
             </span>
-          ))}
-          {room.capacityOptions.map((opt, i) => (
-            <span
-              key={`cap-${i}`}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium"
-              style={{
-                backgroundColor: "var(--bg-raised)",
-                border: "1px solid var(--border)",
-                color: "var(--text-secondary)",
-              }}
-            >
-              {opt.adults} <Users size={11} /> + {opt.children}{" "}
-              <Baby size={11} />
+            <span className="mx-0.5">Single Bed {singleBedCount}</span>
+            <BedSingle size={13} />
+          </span>
+
+          {/* Right: capacity count + adults + children */}
+          <span
+            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium flex-1 justify-center"
+            style={{
+              backgroundColor: "var(--bg-raised)",
+              border: "1px solid var(--border)",
+              color: "var(--text-secondary)",
+            }}
+          >
+            <Layers size={11} />
+            <span className="font-semibold" style={{ color: "var(--text-primary)" }}>
+              {capCount}
             </span>
-          ))}
+            <Smile size={12} />
+            <span>{totalAdults}</span>
+            <span>+</span>
+            <span>{totalChildren}</span>
+            <Users size={11} />
+          </span>
         </div>
 
-        {/* Amenities */}
-        {room.amenities.length > 0 && (
-          <div className="flex flex-wrap justify-center gap-x-3 gap-y-1.5">
-            {visibleAmenities.map((a) => (
-              <span
-                key={a}
-                className="flex items-center gap-1 text-xs"
-                style={{ color: "var(--text-secondary)" }}
-              >
-                <Check
-                  size={13}
-                  style={{ color: "var(--sidebar-active-text)" }}
-                />
-                {a}
-              </span>
-            ))}
-            {extraCount > 0 && (
-              <span
-                className="text-xs font-medium"
-                style={{ color: "var(--text-muted)" }}
-              >
-                {extraCount}+
-              </span>
-            )}
+        {/* Amenity count bottom-right */}
+        {amenityCount > 0 && (
+          <div className="flex justify-end">
+            <span
+              className="text-xs font-medium"
+              style={{ color: "var(--text-muted)" }}
+            >
+              {amenityCount}+
+            </span>
           </div>
         )}
       </div>

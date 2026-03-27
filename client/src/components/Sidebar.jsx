@@ -452,6 +452,7 @@ const SIDEBAR_NAME_MAP = {
   Travky: "travky",
   External: "external",
   "Guest Groups": "guestGroups",
+  "Guest Group Details": "guestGroupDetails",
   "Meal Plans": "mealPlans",
   Periods: "periods",
   Supplement: "supplements",
