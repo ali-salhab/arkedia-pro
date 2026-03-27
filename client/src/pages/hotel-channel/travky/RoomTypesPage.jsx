@@ -918,7 +918,7 @@ export default function RoomTypesPage() {
           style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
         >
           <div
-            className="w-full max-w-lg max-h-[92vh] overflow-y-auto rounded-2xl p-6 shadow-xl"
+            className="w-full max-w-lg lg:max-w-4xl max-h-[92vh] overflow-y-auto rounded-2xl p-6 lg:p-8 shadow-xl"
             style={{
               backgroundColor: "var(--bg-surface)",
               border: "1px solid var(--border)",
@@ -949,198 +949,204 @@ export default function RoomTypesPage() {
 
             {/* Step 1: Details */}
             {step === 1 && (
-              <div className="space-y-5" dir="rtl">
-                {/* Language toggle */}
-                <div className="flex items-center gap-2">
-                  {[
-                    { v: "en", flag: "us", label: "EN" },
-                    { v: "ar", flag: "eg", label: "AR" },
-                  ].map((l) => (
-                    <button
-                      key={l.v}
-                      type="button"
-                      onClick={() => setLangTab(l.v)}
-                      className="flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-bold transition-all"
-                      style={
-                        langTab === l.v
-                          ? {
-                              backgroundColor: "var(--sidebar-active-text)",
-                              color: "#fff",
-                            }
-                          : {
-                              backgroundColor: "var(--bg-raised)",
-                              color: "var(--text-secondary)",
-                              border: "1px solid var(--border)",
-                            }
-                      }
-                    >
-                      <img
-                        src={`https://flagcdn.com/w20/${l.flag}.png`}
-                        alt={l.label}
-                        className="h-3.5 w-5 rounded object-cover"
-                      />
-                      {l.label}
-                    </button>
-                  ))}
-                </div>
-
-                {/* Name */}
-                <div>
-                  <label
-                    className="block text-sm font-semibold mb-2"
-                    style={{ color: "var(--text-primary)" }}
-                  >
-                    {t.nameLabel}
-                  </label>
-                  {langTab === "en" ? (
-                    <input
-                      value={form.nameEn}
-                      onChange={(e) =>
-                        setForm((p) => ({ ...p, nameEn: e.target.value }))
-                      }
-                      className="input w-full"
-                      style={{ textAlign: "right" }}
-                      placeholder="Room name in English"
-                    />
-                  ) : (
-                    <input
-                      value={form.nameAr}
-                      onChange={(e) =>
-                        setForm((p) => ({ ...p, nameAr: e.target.value }))
-                      }
-                      className="input w-full"
-                      placeholder="اسم الغرفة بالعربية"
-                    />
-                  )}
-                  {errors.nameEn && (
-                    <p className="input-error mt-1">{errors.nameEn}</p>
-                  )}
-                </div>
-
-                {/* Description */}
-                <div>
-                  <label
-                    className="block text-sm font-semibold mb-2"
-                    style={{ color: "var(--text-primary)" }}
-                  >
-                    {t.descLabel}
-                  </label>
-                  {langTab === "en" ? (
-                    <textarea
-                      value={form.descEn}
-                      onChange={(e) =>
-                        setForm((p) => ({ ...p, descEn: e.target.value }))
-                      }
-                      className="input w-full h-24 resize-none"
-                      style={{ textAlign: "right" }}
-                      placeholder="Description in English"
-                    />
-                  ) : (
-                    <textarea
-                      value={form.descAr}
-                      onChange={(e) =>
-                        setForm((p) => ({ ...p, descAr: e.target.value }))
-                      }
-                      className="input w-full h-24 resize-none"
-                      placeholder="الوصف بالعربية"
-                    />
-                  )}
-                </div>
-
-                {/* Room Type */}
-                <div>
-                  <label
-                    className="block text-sm font-semibold mb-2"
-                    style={{ color: "var(--text-primary)" }}
-                  >
-                    {t.roomTypeFormLabel}
-                  </label>
-                  <select
-                    value={form.roomType}
-                    onChange={(e) =>
-                      setForm((p) => ({ ...p, roomType: e.target.value }))
-                    }
-                    className="input w-full"
-                    style={{ textAlign: "right", direction: "rtl" }}
-                    disabled={!roomTypes.some((r) => r.isBase)}
-                  >
-                    {ROOM_TYPES_OPTIONS.map((t) => (
-                      <option key={t} value={t}>
-                        {t}
-                      </option>
+              <div className="lg:grid lg:grid-cols-2 lg:gap-8" dir="rtl">
+                {/* ── Left column: language toggle + name + description ── */}
+                <div className="space-y-5">
+                  {/* Language toggle */}
+                  <div className="flex items-center gap-2">
+                    {[
+                      { v: "en", flag: "us", label: "EN" },
+                      { v: "ar", flag: "eg", label: "AR" },
+                    ].map((l) => (
+                      <button
+                        key={l.v}
+                        type="button"
+                        onClick={() => setLangTab(l.v)}
+                        className="flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-bold transition-all"
+                        style={
+                          langTab === l.v
+                            ? {
+                                backgroundColor: "var(--sidebar-active-text)",
+                                color: "#fff",
+                              }
+                            : {
+                                backgroundColor: "var(--bg-raised)",
+                                color: "var(--text-secondary)",
+                                border: "1px solid var(--border)",
+                              }
+                        }
+                      >
+                        <img
+                          src={`https://flagcdn.com/w20/${l.flag}.png`}
+                          alt={l.label}
+                          className="h-3.5 w-5 rounded object-cover"
+                        />
+                        {l.label}
+                      </button>
                     ))}
-                  </select>
-                </div>
+                  </div>
 
-                {/* Price Formula — only shown for non-base rooms (when a base DBL already exists) */}
-                {roomTypes.some((r) => r.isBase) && (
+                  {/* Name */}
                   <div>
                     <label
                       className="block text-sm font-semibold mb-2"
                       style={{ color: "var(--text-primary)" }}
                     >
-                      {t.priceFormulaLabel}
+                      {t.nameLabel}
+                    </label>
+                    {langTab === "en" ? (
+                      <input
+                        value={form.nameEn}
+                        onChange={(e) =>
+                          setForm((p) => ({ ...p, nameEn: e.target.value }))
+                        }
+                        className="input w-full"
+                        style={{ textAlign: "right" }}
+                        placeholder="Room name in English"
+                      />
+                    ) : (
+                      <input
+                        value={form.nameAr}
+                        onChange={(e) =>
+                          setForm((p) => ({ ...p, nameAr: e.target.value }))
+                        }
+                        className="input w-full"
+                        placeholder="اسم الغرفة بالعربية"
+                      />
+                    )}
+                    {errors.nameEn && (
+                      <p className="input-error mt-1">{errors.nameEn}</p>
+                    )}
+                  </div>
+
+                  {/* Description */}
+                  <div>
+                    <label
+                      className="block text-sm font-semibold mb-2"
+                      style={{ color: "var(--text-primary)" }}
+                    >
+                      {t.descLabel}
+                    </label>
+                    {langTab === "en" ? (
+                      <textarea
+                        value={form.descEn}
+                        onChange={(e) =>
+                          setForm((p) => ({ ...p, descEn: e.target.value }))
+                        }
+                        className="input w-full h-36 resize-none"
+                        style={{ textAlign: "right" }}
+                        placeholder="Description in English"
+                      />
+                    ) : (
+                      <textarea
+                        value={form.descAr}
+                        onChange={(e) =>
+                          setForm((p) => ({ ...p, descAr: e.target.value }))
+                        }
+                        className="input w-full h-36 resize-none"
+                        placeholder="الوصف بالعربية"
+                      />
+                    )}
+                  </div>
+                </div>
+
+                {/* ── Right column: room type + price formula + amenities ── */}
+                <div className="space-y-5 mt-5 lg:mt-0">
+                  {/* Room Type */}
+                  <div>
+                    <label
+                      className="block text-sm font-semibold mb-2"
+                      style={{ color: "var(--text-primary)" }}
+                    >
+                      {t.roomTypeFormLabel}
                     </label>
                     <select
-                      value={form.priceFormula}
+                      value={form.roomType}
                       onChange={(e) =>
-                        setForm((p) => ({ ...p, priceFormula: e.target.value }))
+                        setForm((p) => ({ ...p, roomType: e.target.value }))
                       }
                       className="input w-full"
-                      style={{
-                        textAlign: "right",
-                        direction: "rtl",
-                        color: "var(--sidebar-active-text)",
-                        fontWeight: 600,
-                      }}
+                      style={{ textAlign: "right", direction: "rtl" }}
+                      disabled={!roomTypes.some((r) => r.isBase)}
                     >
-                      {PRICE_FORMULA_OPTIONS.map((t) => (
+                      {ROOM_TYPES_OPTIONS.map((t) => (
                         <option key={t} value={t}>
                           {t}
                         </option>
                       ))}
                     </select>
                   </div>
-                )}
 
-                {/* Amenities — 2-column card grid */}
-                <div>
-                  <label
-                    className="block text-sm font-semibold mb-3"
-                    style={{ color: "var(--text-primary)" }}
-                  >
-                    {t.roomAmenities}
-                  </label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {AMENITIES.map((a) => {
-                      const selected = form.amenities.includes(a);
-                      return (
-                        <button
-                          key={a}
-                          type="button"
-                          onClick={() => toggleAmenity(a)}
-                          className="flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium transition-all"
-                          style={{
-                            backgroundColor: "var(--bg-surface)",
-                            border: selected
-                              ? "1.5px solid var(--sidebar-active-text)"
-                              : "1.5px solid var(--border)",
-                            color: "var(--text-primary)",
-                          }}
-                        >
-                          <CheckCircle2
-                            size={18}
+                  {/* Price Formula — only shown for non-base rooms (when a base DBL already exists) */}
+                  {roomTypes.some((r) => r.isBase) && (
+                    <div>
+                      <label
+                        className="block text-sm font-semibold mb-2"
+                        style={{ color: "var(--text-primary)" }}
+                      >
+                        {t.priceFormulaLabel}
+                      </label>
+                      <select
+                        value={form.priceFormula}
+                        onChange={(e) =>
+                          setForm((p) => ({ ...p, priceFormula: e.target.value }))
+                        }
+                        className="input w-full"
+                        style={{
+                          textAlign: "right",
+                          direction: "rtl",
+                          color: "var(--sidebar-active-text)",
+                          fontWeight: 600,
+                        }}
+                      >
+                        {PRICE_FORMULA_OPTIONS.map((t) => (
+                          <option key={t} value={t}>
+                            {t}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
+                  {/* Amenities — 2-column card grid */}
+                  <div>
+                    <label
+                      className="block text-sm font-semibold mb-3"
+                      style={{ color: "var(--text-primary)" }}
+                    >
+                      {t.roomAmenities}
+                    </label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {AMENITIES.map((a) => {
+                        const selected = form.amenities.includes(a);
+                        return (
+                          <button
+                            key={a}
+                            type="button"
+                            onClick={() => toggleAmenity(a)}
+                            className="flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium transition-all"
                             style={{
-                              color: selected
-                                ? "var(--sidebar-active-text)"
-                                : "var(--border)",
-                              flexShrink: 0,
+                              backgroundColor: "var(--bg-surface)",
+                              border: selected
+                                ? "1.5px solid var(--sidebar-active-text)"
+                                : "1.5px solid var(--border)",
+                              color: "var(--text-primary)",
                             }}
-                          />
-                          <span>{a}</span>
-                        </button>
-                      );
-                    })}
+                          >
+                            <CheckCircle2
+                              size={18}
+                              style={{
+                                color: selected
+                                  ? "var(--sidebar-active-text)"
+                                  : "var(--border)",
+                                flexShrink: 0,
+                              }}
+                            />
+                            <span>{a}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1148,7 +1154,7 @@ export default function RoomTypesPage() {
 
             {/* Step 2: Images */}
             {step === 2 && (
-              <div className="space-y-5">
+              <div className="lg:grid lg:grid-cols-2 lg:gap-8 space-y-5 lg:space-y-0">
                 <div>
                   <label
                     className="block text-sm font-medium mb-2"
@@ -1268,6 +1274,7 @@ export default function RoomTypesPage() {
             {/* Step 3: Capacity */}
             {step === 3 && (
               <div className="space-y-3">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                 {form.capacityOptions.map((opt, idx) => (
                   <div
                     key={idx}
@@ -1460,6 +1467,7 @@ export default function RoomTypesPage() {
                     )}
                   </div>
                 ))}
+                </div>
                 <button
                   type="button"
                   onClick={addCapacityOption}
@@ -1478,6 +1486,7 @@ export default function RoomTypesPage() {
             {step === 4 && (
               <div className="space-y-4">
                 {/* ── Bed Option Set cards ── */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {(form.bedOptionSets || []).map((bSet, setIdx) => (
                   <div
                     key={setIdx}
@@ -1665,6 +1674,7 @@ export default function RoomTypesPage() {
                     </div>
                   </div>
                 ))}
+                </div>
 
                 {/* Add Bed Option button */}
                 <button

@@ -1,10 +1,11 @@
 ﻿import { useState, useMemo } from "react";
 import {
-  Users, Plus, Search, Trash2, Pencil, Eye, X, DollarSign,
-  ChevronLeft, BedDouble, Building2, ChevronDown, ChevronUp,
+  Users, Search, Trash2, Pencil, Eye, X, DollarSign,
+  ChevronLeft, BedDouble, Building2, ChevronDown, ChevronUp, ShieldCheck,
 } from "lucide-react";
 import { useLocalStorage } from "../../../hooks/useLocalStorage";
 import DeleteConfirmModal from "../../../components/DeleteConfirmModal";
+import AddButton from "../../../components/AddButton";
 
 /* ─────────────── Constants ─────────────── */
 const CURRENCIES = ["EGP", "SAR", "AED", "USD", "EUR", "GBP", "KWD", "QAR", "JOD", "MAD"];
@@ -20,11 +21,7 @@ const COUNTRY_CODES = {
 };
 const NATIONALITIES = Object.keys(COUNTRY_CODES);
 
-const CANCELLATION_POLICIES = [
-  { key: "non", label: "NON", sub: "non-refundable" },
-  { key: "free", label: "FREE", sub: "free-cancellation" },
-  { key: "partial", label: "PARTIAL", sub: "partial" },
-];
+
 
 const INITIAL_GROUPS = [
   { id: "1", name: "Egyptian Market", currency: "EGP", nationalities: ["Egypt"], prices: {} },
@@ -33,31 +30,43 @@ const INITIAL_GROUPS = [
 ];
 
 /* ─────────────── Price Helpers ─────────────── */
-function buildEmptyPrices(supplements = [], roomTypes = []) {
-  const prices = { supplements: {}, cancellation: { non: 0, free: 0, partial: 0 }, rooms: {} };
+function buildEmptyPrices(supplements = [], refundPolicies = [], roomTypes = []) {
+  const prices = { supplements: {}, refundPolicies: {}, rooms: {} };
   supplements.forEach((s) => { prices.supplements[s.id] = 0; });
+  refundPolicies.forEach((p) => { prices.refundPolicies[p.id] = 0; });
   roomTypes.forEach((room) => {
-    const paidBeds = (room.bedOptions || []).filter((b) => b.type !== "Free" && b.name);
-    if (paidBeds.length > 0) {
-      const optMap = {};
-      (room.capacityOptions || []).forEach((_, oi) => {
-        optMap[oi] = {};
-        paidBeds.forEach((_, bi) => { optMap[oi][bi] = 0; });
-      });
-      prices.rooms[room.id] = optMap;
+    const sets = room.bedOptionSets || [];
+    const caps = room.capacityOptions || [];
+    const maxOpts = Math.max(sets.length, caps.length);
+    if (maxOpts === 0) return;
+    const hasContent =
+      sets.some((s) => (s.otherBeds || []).length > 0) ||
+      caps.some((c) => (c.childConfigs || []).some((cc) => cc.priceType === "Fixed Amount"));
+    if (!hasContent) return;
+    const optMap = {};
+    for (let k = 0; k < maxOpts; k++) {
+      optMap[k] = { children: {}, beds: {} };
+      const cap = caps[k];
+      if (cap) (cap.childConfigs || []).forEach((cc, ci) => { if (cc.priceType === "Fixed Amount") optMap[k].children[ci] = 0; });
+      const set = sets[k];
+      if (set) (set.otherBeds || []).forEach((_, bi) => { optMap[k].beds[bi] = 0; });
     }
+    prices.rooms[room.id] = optMap;
   });
   return prices;
 }
 
-function mergePrices(existing = {}, supplements = [], roomTypes = []) {
-  const fresh = buildEmptyPrices(supplements, roomTypes);
+function mergePrices(existing = {}, supplements = [], refundPolicies = [], roomTypes = []) {
+  const fresh = buildEmptyPrices(supplements, refundPolicies, roomTypes);
   Object.keys(fresh.supplements).forEach((sid) => { fresh.supplements[sid] = existing.supplements?.[sid] ?? 0; });
-  Object.keys(fresh.cancellation).forEach((k) => { fresh.cancellation[k] = existing.cancellation?.[k] ?? 0; });
+  Object.keys(fresh.refundPolicies).forEach((pid) => { fresh.refundPolicies[pid] = existing.refundPolicies?.[pid] ?? 0; });
   Object.keys(fresh.rooms).forEach((rid) => {
     Object.keys(fresh.rooms[rid]).forEach((oi) => {
-      Object.keys(fresh.rooms[rid][oi]).forEach((bi) => {
-        fresh.rooms[rid][oi][bi] = existing.rooms?.[rid]?.[oi]?.[bi] ?? 0;
+      Object.keys(fresh.rooms[rid][oi].children || {}).forEach((ci) => {
+        fresh.rooms[rid][oi].children[ci] = existing.rooms?.[rid]?.[oi]?.children?.[ci] ?? 0;
+      });
+      Object.keys(fresh.rooms[rid][oi].beds || {}).forEach((bi) => {
+        fresh.rooms[rid][oi].beds[bi] = existing.rooms?.[rid]?.[oi]?.beds?.[bi] ?? 0;
       });
     });
   });
@@ -103,6 +112,7 @@ export default function GuestGroupsPage() {
   const [groups, setGroups] = useLocalStorage("travky_guest_groups", INITIAL_GROUPS);
   const [enabled, setEnabled] = useLocalStorage("travky_guest_groups_enabled", true);
   const [supplements] = useLocalStorage("travky_supplements", []);
+  const [refundPolicies] = useLocalStorage("travky_refund_policies", []);
   const [roomTypes] = useLocalStorage("travky_room_types", []);
   const [defaultCurrency, setDefaultCurrency] = useLocalStorage("travky_default_currency", null);
 
@@ -116,11 +126,16 @@ export default function GuestGroupsPage() {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [currencyModal, setCurrencyModal] = useState(false);
 
+  const [natPopup, setNatPopup] = useState(null); // group.id whose nationalities popup is open
+
   const filtered = groups.filter((g) => g.name.toLowerCase().includes(search.toLowerCase()));
   const filteredNats = NATIONALITIES.filter(
     (n) => n.toLowerCase().includes(natSearch.toLowerCase()) || (COUNTRY_CODES[n] || "").toLowerCase().includes(natSearch.toLowerCase()),
   );
-  const roomsWithPaidBeds = roomTypes.filter((r) => (r.bedOptions || []).some((b) => b.type !== "Free" && b.name));
+  const roomsWithPrices = roomTypes.filter((r) =>
+    (r.bedOptionSets || []).some((s) => (s.otherBeds || []).length > 0) ||
+    (r.capacityOptions || []).some((c) => (c.childConfigs || []).some((cc) => cc.priceType === "Fixed Amount"))
+  );
 
   const currencyOptions = useMemo(() => {
     const map = {};
@@ -129,13 +144,13 @@ export default function GuestGroupsPage() {
   }, [groups]);
 
   function openAdd() {
-    setForm({ name: "", currency: "EGP", nationalities: [], prices: buildEmptyPrices(supplements, roomTypes) });
+    setForm({ name: "", currency: "EGP", nationalities: [], prices: buildEmptyPrices(supplements, refundPolicies, roomTypes) });
     setStep(1); setErrors({}); setNatSearch(""); setNatOpen(true);
     setModal("add");
   }
 
   function openEdit(group) {
-    const prices = mergePrices(group.prices, supplements, roomTypes);
+    const prices = mergePrices(group.prices, supplements, refundPolicies, roomTypes);
     setForm({ name: group.name, currency: group.currency, nationalities: [...(group.nationalities || [])], prices });
     setStep(1); setErrors({}); setNatSearch(""); setNatOpen(false);
     setModal({ mode: "edit", data: group });
@@ -175,7 +190,29 @@ export default function GuestGroupsPage() {
           ...(p.prices?.rooms || {}),
           [roomId]: {
             ...(p.prices?.rooms?.[roomId] || {}),
-            [optIdx]: { ...(p.prices?.rooms?.[roomId]?.[optIdx] || {}), [bedIdx]: Number(val) },
+            [optIdx]: {
+              ...(p.prices?.rooms?.[roomId]?.[optIdx] || {}),
+              beds: { ...(p.prices?.rooms?.[roomId]?.[optIdx]?.beds || {}), [bedIdx]: Number(val) },
+            },
+          },
+        },
+      },
+    }));
+  }
+
+  function setRoomChildPrice(roomId, optIdx, childIdx, val) {
+    setForm((p) => ({
+      ...p,
+      prices: {
+        ...p.prices,
+        rooms: {
+          ...(p.prices?.rooms || {}),
+          [roomId]: {
+            ...(p.prices?.rooms?.[roomId] || {}),
+            [optIdx]: {
+              ...(p.prices?.rooms?.[roomId]?.[optIdx] || {}),
+              children: { ...(p.prices?.rooms?.[roomId]?.[optIdx]?.children || {}), [childIdx]: Number(val) },
+            },
           },
         },
       },
@@ -263,9 +300,7 @@ export default function GuestGroupsPage() {
             <p className="text-sm" style={{ color: "var(--text-secondary)" }}>إدارة أنواع مجموعات الضيوف</p>
           </div>
         </div>
-        <button onClick={openAdd} className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold text-white" style={{ backgroundColor: "var(--sidebar-active-text)" }}>
-          <Plus size={15} /><span>إضافة</span>
-        </button>
+        <AddButton onClick={openAdd}>إضافة</AddButton>
       </div>
 
       {/* Toggle row */}
@@ -304,14 +339,54 @@ export default function GuestGroupsPage() {
               ) : filtered.map((group, idx) => (
                 <tr key={group.id} style={{ borderBottom: "1px solid var(--border)" }}>
                   <td className="py-4 font-medium" style={{ color: "var(--text-secondary)" }}>{idx + 1}</td>
-                  <td className="py-4 font-semibold" style={{ color: "var(--text-primary)" }}>{group.name}</td>
-                  <td className="py-4" style={{ color: "var(--text-secondary)" }}>{group.currency} $</td>
+                  <td className="py-4 font-semibold uppercase" style={{ color: "var(--text-primary)" }}>{group.name}</td>
                   <td className="py-4">
-                    <div className="flex flex-wrap gap-1">
-                      {(group.nationalities || []).map((nat) => (
-                        <span key={nat} className="chip text-xs">{COUNTRY_CODES[nat] ? `${COUNTRY_CODES[nat]} ` : ""}{nat}</span>
-                      ))}
-                    </div>
+                    <span
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold"
+                      style={{ backgroundColor: "var(--bg-raised)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}
+                    >
+                      <span style={{ color: "var(--sidebar-active-text)" }}>$</span>{group.currency}
+                    </span>
+                  </td>
+                  <td className="py-4">
+                    <button
+                      onClick={() => setNatPopup(natPopup === group.id ? null : group.id)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors hover:opacity-80"
+                      style={{ backgroundColor: "var(--bg-raised)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}
+                    >
+                      <Eye size={13} style={{ color: "var(--sidebar-active-text)" }} />
+                      {(group.nationalities || []).length} Nationalities
+                    </button>
+                    {natPopup === group.id && (
+                      <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: "rgba(0,0,0,0.35)" }} onClick={() => setNatPopup(null)}>
+                        <div
+                          className="w-full max-w-sm rounded-2xl shadow-xl p-5"
+                          style={{ backgroundColor: "var(--bg-surface)", border: "1px solid var(--border)" }}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <div className="flex items-center justify-between mb-4">
+                            <p className="text-sm font-bold uppercase" style={{ color: "var(--text-primary)" }}>{group.name.toUpperCase()} — Nationalities</p>
+                            <button onClick={() => setNatPopup(null)} className="h-7 w-7 grid place-items-center rounded-lg" style={{ backgroundColor: "var(--bg-raised)", color: "var(--text-muted)" }}><X size={14} /></button>
+                          </div>
+                          <div className="flex flex-wrap gap-1.5">
+                            {(group.nationalities || []).length === 0 ? (
+                              <p className="text-xs" style={{ color: "var(--text-muted)" }}>None</p>
+                            ) : (group.nationalities || []).map((nat) => (
+                              <span
+                                key={nat}
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium"
+                                style={{ backgroundColor: "var(--bg-raised)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
+                              >
+                                {nat}
+                                {COUNTRY_CODES[nat] && (
+                                  <span className="font-bold text-xs" style={{ color: "var(--sidebar-active-text)" }}>{COUNTRY_CODES[nat]}</span>
+                                )}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </td>
                   <td className="py-4">
                     <ActionRow onDelete={() => setDeleteTarget(group.id)} onEdit={() => openEdit(group)} onView={() => openView(group)} />
@@ -458,29 +533,38 @@ export default function GuestGroupsPage() {
                     </div>
                   )}
 
-                  <div>
-                    {CANCELLATION_POLICIES.map((pol) => (
-                      <div key={pol.key} className="flex items-center justify-between py-3" style={{ borderBottom: "1px solid var(--border)" }}>
-                        <div>
-                          <p className="text-sm font-bold" style={{ color: "var(--text-primary)" }}>{pol.label}</p>
-                          <p className="text-xs" style={{ color: "var(--text-muted)" }}>{pol.sub}</p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <input type="number" min={0} value={form.prices?.cancellation?.[pol.key] ?? 0} onChange={(e) => setPriceField("cancellation", pol.key, e.target.value)} className="input text-right" style={{ width: "5rem" }} />
-                          <span className="text-sm w-10" style={{ color: "var(--text-secondary)" }}>{form.currency}</span>
-                        </div>
+                  {refundPolicies.length > 0 && (
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <ShieldCheck size={16} style={{ color: "#10b981" }} />
+                        <p className="text-sm font-bold" style={{ color: "var(--text-primary)" }}>Refund Policies</p>
+                        <span className="w-5 h-5 rounded-full grid place-items-center font-bold text-white" style={{ backgroundColor: "#10b981", fontSize: 10 }}>{refundPolicies.length}</span>
                       </div>
-                    ))}
-                  </div>
+                      {refundPolicies.map((pol) => (
+                        <div key={pol.id} className="flex items-center justify-between py-3" style={{ borderBottom: "1px solid var(--border)" }}>
+                          <div>
+                            <p className="text-sm font-bold" style={{ color: "var(--text-primary)" }}>{pol.name.toUpperCase()}</p>
+                            <p className="text-xs" style={{ color: "var(--text-muted)" }}>{(pol.type || "").replace(/_/g, "-")}</p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <input type="number" min={0} value={form.prices?.refundPolicies?.[pol.id] ?? 0} onChange={(e) => setPriceField("refundPolicies", pol.id, e.target.value)} className="input text-right" style={{ width: "5rem" }} />
+                            <span className="text-sm w-10" style={{ color: "var(--text-secondary)" }}>{form.currency}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
 
-                  {roomsWithPaidBeds.length > 0 && (
+                  {roomsWithPrices.length > 0 && (
                     <div>
                       <div className="flex items-center gap-2 mb-3">
                         <Building2 size={16} style={{ color: "var(--sidebar-active-text)" }} />
                         <p className="text-sm font-bold" style={{ color: "var(--text-primary)" }}>Room Prices (Paid Children &amp; Beds)</p>
                       </div>
-                      {roomsWithPaidBeds.map((room) => {
-                        const paidBeds = (room.bedOptions || []).filter((b) => b.type !== "Free" && b.name);
+                      {roomsWithPrices.map((room) => {
+                        const sets = room.bedOptionSets || [];
+                        const caps = room.capacityOptions || [];
+                        const maxOpts = Math.max(sets.length, caps.length, 1);
                         return (
                           <div key={room.id} className="mb-4">
                             <div className="flex items-center gap-2 mb-2 py-1.5" style={{ borderBottom: "1px solid var(--border)" }}>
@@ -488,26 +572,57 @@ export default function GuestGroupsPage() {
                               <p className="text-xs font-bold uppercase" style={{ color: "var(--text-primary)" }}>{room.nameEn}</p>
                               <span className="chip text-xs">{room.roomType}</span>
                             </div>
-                            {(room.capacityOptions || []).map((_, oi) => (
-                              <div key={oi} className="ml-3 mb-3">
-                                <span className="chip text-xs mb-2 inline-block">Option {oi + 1}</span>
-                                <div className="ml-2">
-                                  <div className="flex items-center gap-1.5 mb-1.5">
-                                    <BedDouble size={12} style={{ color: "var(--sidebar-active-text)" }} />
-                                    <p className="text-xs font-semibold" style={{ color: "var(--sidebar-active-text)" }}>Paid Beds</p>
-                                  </div>
-                                  {paidBeds.map((bed, bi) => (
-                                    <div key={bi} className="flex items-center justify-between py-2" style={{ borderBottom: "1px solid var(--border)" }}>
-                                      <span className="text-xs font-bold uppercase" style={{ color: "var(--text-primary)" }}>{bed.name}</span>
-                                      <div className="flex items-center gap-2">
-                                        <input type="number" min={0} value={form.prices?.rooms?.[room.id]?.[oi]?.[bi] ?? 0} onChange={(e) => setRoomBedPrice(room.id, oi, bi, e.target.value)} className="input text-right" style={{ width: "5rem" }} />
-                                        <span className="text-sm w-10" style={{ color: "var(--text-secondary)" }}>{form.currency}</span>
+                            {Array.from({ length: maxOpts }, (_, k) => {
+                              const cap = caps[k];
+                              const set = sets[k];
+                              const hasPaidChildren = cap && (cap.childConfigs || []).some((cc) => cc.priceType === "Fixed Amount");
+                              const otherBeds = set ? (set.otherBeds || []) : [];
+                              if (!hasPaidChildren && otherBeds.length === 0) return null;
+                              return (
+                                <div key={k} className="ml-3 mb-3">
+                                  <span className="chip text-xs mb-2 inline-block">Option {k + 1}</span>
+                                  <div className="ml-2 space-y-2">
+                                    {hasPaidChildren && (
+                                      <div>
+                                        <div className="flex items-center gap-1.5 mb-1.5">
+                                          <Users size={12} style={{ color: "#ec4899" }} />
+                                          <p className="text-xs font-semibold" style={{ color: "#ec4899" }}>Paid Children</p>
+                                        </div>
+                                        {(cap.childConfigs || []).map((cc, ci) => {
+                                          if (cc.priceType !== "Fixed Amount") return null;
+                                          return (
+                                            <div key={ci} className="flex items-center justify-between py-2" style={{ borderBottom: "1px solid var(--border)" }}>
+                                              <span className="text-xs font-bold uppercase" style={{ color: "var(--text-primary)" }}>{cc.type}</span>
+                                              <div className="flex items-center gap-2">
+                                                <input type="number" min={0} value={form.prices?.rooms?.[room.id]?.[k]?.children?.[ci] ?? 0} onChange={(e) => setRoomChildPrice(room.id, k, ci, e.target.value)} className="input text-right" style={{ width: "5rem" }} />
+                                                <span className="text-sm w-10" style={{ color: "var(--text-secondary)" }}>{form.currency}</span>
+                                              </div>
+                                            </div>
+                                          );
+                                        })}
                                       </div>
-                                    </div>
-                                  ))}
+                                    )}
+                                    {otherBeds.length > 0 && (
+                                      <div>
+                                        <div className="flex items-center gap-1.5 mb-1.5">
+                                          <BedDouble size={12} style={{ color: "var(--sidebar-active-text)" }} />
+                                          <p className="text-xs font-semibold" style={{ color: "var(--sidebar-active-text)" }}>Paid Beds</p>
+                                        </div>
+                                        {otherBeds.map((bed, bi) => (
+                                          <div key={bi} className="flex items-center justify-between py-2" style={{ borderBottom: "1px solid var(--border)" }}>
+                                            <span className="text-xs font-bold uppercase" style={{ color: "var(--text-primary)" }}>{bed.name}</span>
+                                            <div className="flex items-center gap-2">
+                                              <input type="number" min={0} value={form.prices?.rooms?.[room.id]?.[k]?.beds?.[bi] ?? 0} onChange={(e) => setRoomBedPrice(room.id, k, bi, e.target.value)} className="input text-right" style={{ width: "5rem" }} />
+                                              <span className="text-sm w-10" style={{ color: "var(--text-secondary)" }}>{form.currency}</span>
+                                            </div>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </div>
                                 </div>
-                              </div>
-                            ))}
+                              );
+                            })}
                           </div>
                         );
                       })}
