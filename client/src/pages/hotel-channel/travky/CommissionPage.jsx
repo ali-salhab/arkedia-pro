@@ -527,7 +527,7 @@ export default function CommissionPage() {
                   onClick={() => openView(c)}
                   className="p-2 rounded-lg transition-colors hover:bg-blue-50"
                   style={{ color: "#3b82f6" }}
-                  title="عرض"
+                  title={t("view")}
                 >
                   <Pencil size={14} />
                 </button>
@@ -535,7 +535,7 @@ export default function CommissionPage() {
                   onClick={() => setDeleteTarget(c.id)}
                   className="p-2 rounded-lg transition-colors hover:bg-red-50"
                   style={{ color: "#ef4444" }}
-                  title="حذف"
+                  title={t("delete")}
                 >
                   <Trash2 size={14} />
                 </button>
