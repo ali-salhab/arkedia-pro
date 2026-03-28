@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { useLocalStorage } from "../../../hooks/useLocalStorage";
 import DeleteConfirmModal from "../../../components/DeleteConfirmModal";
+import { useLanguage } from "../../../context/LanguageContext";
 
 const COMMISSION_TYPES = ["Percentage", "Fixed Amount"];
 const APPLIES_TO = ["All Rooms", "Selected Rooms", "Selected Periods"];
@@ -45,14 +46,15 @@ const EMPTY_FORM = {
   active: true,
 };
 
-function validate(form) {
-  if (!form.name.trim()) return "اسم العمولة مطلوب";
+function validate(form, t) {
+  if (!form.name.trim()) return t("comm_nameRequired");
   if (!form.value || isNaN(Number(form.value)) || Number(form.value) <= 0)
-    return "قيمة العمولة يجب أن تكون رقماً موجباً";
+    return t("comm_valueRequired");
   return null;
 }
 
 export default function CommissionPage() {
+  const { t, dir } = useLanguage();
   const [commissions, setCommissions] = useLocalStorage(
     "travky_commissions",
     INITIAL_COMMISSIONS,
@@ -94,7 +96,7 @@ export default function CommissionPage() {
   };
 
   const handleSave = () => {
-    const err = validate(form);
+    const err = validate(form, t);
     if (err) return setError(err);
     if (modal === "add") {
       setCommissions((prev) => [
@@ -123,7 +125,7 @@ export default function CommissionPage() {
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
 
   return (
-    <div className="page-shell" dir="rtl">
+    <div className="page-shell" dir={dir}>
       {/* Delete confirm */}
       <DeleteConfirmModal
         open={!!deleteTarget}
@@ -154,10 +156,10 @@ export default function CommissionPage() {
                 style={{ color: "var(--text-primary)" }}
               >
                 {modal === "view"
-                  ? "تفاصيل العمولة"
+                  ? t("comm_viewTitle")
                   : modal === "edit"
-                    ? "تعديل العمولة"
-                    : "إضافة عمولة"}
+                    ? t("comm_editTitle")
+                    : t("comm_addTitle")}
               </h2>
               <button
                 onClick={closeModal}
@@ -176,7 +178,7 @@ export default function CommissionPage() {
                   className="block text-sm font-medium mb-1.5"
                   style={{ color: "var(--text-secondary)" }}
                 >
-                  اسم العمولة
+                  {t("comm_fieldName")}
                 </label>
                 {modal === "view" ? (
                   <p
@@ -193,7 +195,7 @@ export default function CommissionPage() {
                       border: "1px solid var(--border)",
                       color: "var(--text-primary)",
                     }}
-                    placeholder="مثال: عمولة وكلاء السفر"
+                    placeholder={t("comm_namePlaceholder")}
                     value={form.name}
                     onChange={set("name")}
                   />
@@ -207,7 +209,7 @@ export default function CommissionPage() {
                     className="block text-sm font-medium mb-1.5"
                     style={{ color: "var(--text-secondary)" }}
                   >
-                    نوع العمولة
+                    {t("comm_fieldType")}
                   </label>
                   {modal === "view" ? (
                     <p
@@ -247,7 +249,7 @@ export default function CommissionPage() {
                     className="block text-sm font-medium mb-1.5"
                     style={{ color: "var(--text-secondary)" }}
                   >
-                    القيمة {form.type === "Percentage" ? "(%)" : "(مبلغ ثابت)"}
+                    {form.type === "Percentage" ? t("comm_fieldValuePercent") : t("comm_fieldValueFixed")}
                   </label>
                   {modal === "view" ? (
                     <p
@@ -281,7 +283,7 @@ export default function CommissionPage() {
                   className="block text-sm font-medium mb-1.5"
                   style={{ color: "var(--text-secondary)" }}
                 >
-                  تطبق على
+                  {t("comm_fieldAppliesTo")}
                 </label>
                 {modal === "view" ? (
                   <p
@@ -323,7 +325,7 @@ export default function CommissionPage() {
                   className="block text-sm font-medium mb-1.5"
                   style={{ color: "var(--text-secondary)" }}
                 >
-                  ملاحظات
+                  {t("comm_fieldNotes")}
                 </label>
                 {modal === "view" ? (
                   <p className="text-sm" style={{ color: "var(--text-muted)" }}>
@@ -338,7 +340,7 @@ export default function CommissionPage() {
                       border: "1px solid var(--border)",
                       color: "var(--text-primary)",
                     }}
-                    placeholder="ملاحظات إضافية..."
+                    placeholder={t("comm_notesPlaceholder")}
                     value={form.notes}
                     onChange={set("notes")}
                   />
@@ -358,7 +360,7 @@ export default function CommissionPage() {
                   className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white transition-colors"
                   style={{ backgroundColor: "var(--sidebar-active-text)" }}
                 >
-                  {modal === "edit" ? "حفظ التعديلات" : "إضافة"}
+                  {modal === "edit" ? t("comm_saveChanges") : t("add")}
                 </button>
                 <button
                   onClick={closeModal}
@@ -369,7 +371,7 @@ export default function CommissionPage() {
                     border: "1px solid var(--border)",
                   }}
                 >
-                  إلغاء
+                  {t("cancel")}
                 </button>
               </div>
             )}
@@ -380,7 +382,7 @@ export default function CommissionPage() {
                   className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-colors"
                   style={{ backgroundColor: "var(--sidebar-active-text)" }}
                 >
-                  تعديل
+                  {t("edit")}
                 </button>
               </div>
             )}
@@ -405,10 +407,10 @@ export default function CommissionPage() {
               className="text-xl font-bold"
               style={{ color: "var(--text-primary)" }}
             >
-              العمولة
+              {t("commission")}
             </h1>
             <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-              {commissions.length} عمولة مضافة
+              {t("comm_subtitle", { count: commissions.length })}
             </p>
           </div>
         </div>
@@ -424,7 +426,7 @@ export default function CommissionPage() {
             <input
               className="bg-transparent outline-none text-sm w-44"
               style={{ color: "var(--text-primary)" }}
-              placeholder="بحث..."
+              placeholder={t("search") + "..."}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -435,7 +437,7 @@ export default function CommissionPage() {
             style={{ backgroundColor: "var(--sidebar-active-text)" }}
           >
             <Plus size={16} />
-            إضافة عمولة
+            {t("comm_addBtn")}
           </button>
         </div>
       </div>
@@ -455,7 +457,7 @@ export default function CommissionPage() {
             style={{ color: "var(--text-muted)" }}
           />
           <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-            لا توجد عمولات مضافة
+            {t("comm_noData")}
           </p>
         </div>
       ) : (
@@ -495,7 +497,7 @@ export default function CommissionPage() {
                         color: c.active ? "#16a34a" : "#94a3b8",
                       }}
                     >
-                      {c.active ? "نشط" : "غير نشط"}
+                      {c.active ? t("comm_active") : t("comm_inactive")}
                     </span>
                   </div>
                   <p
@@ -503,7 +505,7 @@ export default function CommissionPage() {
                     style={{ color: "var(--text-muted)" }}
                   >
                     {c.value}
-                    {c.type === "Percentage" ? "%" : " (ثابت)"} · {c.appliesTo}
+                    {c.type === "Percentage" ? "%" : ` (${t("comm_fixed")})`} · {c.appliesTo}
                   </p>
                 </div>
               </div>
@@ -517,7 +519,7 @@ export default function CommissionPage() {
                     backgroundColor: c.active ? "#fef9c3" : "#f1f5f9",
                     color: c.active ? "#a16207" : "#94a3b8",
                   }}
-                  title={c.active ? "إيقاف تشغيل" : "تشغيل"}
+                  title={c.active ? t("comm_deactivate") : t("comm_activate")}
                 >
                   <Check size={14} />
                 </button>

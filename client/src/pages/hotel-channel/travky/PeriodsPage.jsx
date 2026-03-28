@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { useLocalStorage } from "../../../hooks/useLocalStorage";
 import DeleteConfirmModal from "../../../components/DeleteConfirmModal";
+import { useLanguage } from "../../../context/LanguageContext";
 
 const INITIAL_PERIODS = [
   { id: "1", name: "Low Season", from: "2024-01-01", to: "2024-03-31" },
@@ -18,14 +19,14 @@ const INITIAL_PERIODS = [
   { id: "4", name: "Peak Season", from: "2024-12-15", to: "2024-12-31" },
 ];
 
-function ActionRow({ onDelete, onEdit, onView }) {
+function ActionRow({ onDelete, onEdit, onView, t }) {
   return (
     <div className="flex items-center gap-1 justify-end">
       <button
         onClick={onDelete}
         className="p-1.5 rounded-lg transition-colors hover:bg-red-50 dark:hover:bg-red-900/20"
         style={{ color: "#ef4444" }}
-        title="حذف"
+        title={t("delete")}
       >
         <Trash2 size={15} />
       </button>
@@ -33,7 +34,7 @@ function ActionRow({ onDelete, onEdit, onView }) {
         onClick={onEdit}
         className="p-1.5 rounded-lg transition-colors hover:bg-amber-50 dark:hover:bg-amber-900/20"
         style={{ color: "#f59e0b" }}
-        title="تعديل"
+        title={t("edit")}
       >
         <Pencil size={15} />
       </button>
@@ -41,7 +42,7 @@ function ActionRow({ onDelete, onEdit, onView }) {
         onClick={onView}
         className="p-1.5 rounded-lg transition-colors hover:bg-blue-50 dark:hover:bg-blue-900/20"
         style={{ color: "#3b82f6" }}
-        title="عرض"
+        title={t("view")}
       >
         <Eye size={15} />
       </button>
@@ -50,6 +51,7 @@ function ActionRow({ onDelete, onEdit, onView }) {
 }
 
 export default function PeriodsPage() {
+  const { t } = useLanguage();
   const [periods, setPeriods] = useLocalStorage(
     "travky_periods",
     INITIAL_PERIODS,
@@ -86,11 +88,11 @@ export default function PeriodsPage() {
 
   function handleSave() {
     const errs = {};
-    if (!form.name.trim()) errs.name = "الاسم مطلوب";
-    if (!form.from) errs.from = "تاريخ البداية مطلوب";
-    if (!form.to) errs.to = "تاريخ النهاية مطلوب";
+    if (!form.name.trim()) errs.name = t("per_nameRequired");
+    if (!form.from) errs.from = t("per_fromRequired");
+    if (!form.to) errs.to = t("per_toRequired");
     if (form.from && form.to && form.from >= form.to)
-      errs.to = "يجب أن يكون تاريخ النهاية بعد البداية";
+      errs.to = t("per_toAfterFrom");
     if (Object.keys(errs).length) {
       setErrors(errs);
       return;
@@ -155,10 +157,10 @@ export default function PeriodsPage() {
               className="text-2xl font-bold"
               style={{ color: "var(--text-primary)" }}
             >
-              الفترات الزمنية
+              {t("per_title")}
             </h1>
             <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
-              تحديد فترات المواسم والأسعار
+              {t("per_subtitle")}
             </p>
           </div>
         </div>
@@ -168,7 +170,7 @@ export default function PeriodsPage() {
           style={{ backgroundColor: "var(--sidebar-active-text)" }}
         >
           <Plus size={15} />
-          <span>إضافة</span>
+          <span>{t("add")}</span>
         </button>
       </div>
 
@@ -184,7 +186,7 @@ export default function PeriodsPage() {
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="بحث..."
+              placeholder={t("search") + "..."}
               className="input"
               style={{ paddingInlineEnd: "2.5rem", width: "16rem" }}
             />
@@ -205,25 +207,25 @@ export default function PeriodsPage() {
                   className="pb-3 text-start font-semibold"
                   style={{ color: "var(--text-secondary)" }}
                 >
-                  الاسم
+                  {t("per_fieldName")}
                 </th>
                 <th
                   className="pb-3 text-start font-semibold"
                   style={{ color: "var(--text-secondary)" }}
                 >
-                  من
+                  {t("per_fieldFrom")}
                 </th>
                 <th
                   className="pb-3 text-start font-semibold"
                   style={{ color: "var(--text-secondary)" }}
                 >
-                  إلى
+                  {t("per_fieldTo")}
                 </th>
                 <th
                   className="pb-3 text-end font-semibold"
                   style={{ color: "var(--text-secondary)" }}
                 >
-                  إجراءات
+                  {t("actions")}
                 </th>
               </tr>
             </thead>
@@ -235,7 +237,7 @@ export default function PeriodsPage() {
                     className="py-10 text-center"
                     style={{ color: "var(--text-muted)" }}
                   >
-                    لا توجد فترات زمنية بعد
+                    {t("per_noData")}
                   </td>
                 </tr>
               ) : (
@@ -267,6 +269,7 @@ export default function PeriodsPage() {
                         onDelete={() => handleDelete(period.id)}
                         onEdit={() => openEdit(period)}
                         onView={() => openView(period)}
+                        t={t}
                       />
                     </td>
                   </tr>
@@ -305,7 +308,7 @@ export default function PeriodsPage() {
                 className="text-lg font-bold"
                 style={{ color: "var(--text-primary)" }}
               >
-                {isView ? "عرض الفترة" : isEdit ? "تعديل الفترة" : "إضافة فترة"}
+                {isView ? t("per_viewTitle") : isEdit ? t("per_editTitle") : t("per_addTitle")}
               </h2>
             </div>
 
@@ -316,7 +319,7 @@ export default function PeriodsPage() {
                     className="text-xs font-medium mb-1"
                     style={{ color: "var(--text-secondary)" }}
                   >
-                    الاسم
+                    {t("per_fieldName")}
                   </p>
                   <p
                     className="font-semibold"
@@ -331,7 +334,7 @@ export default function PeriodsPage() {
                       className="text-xs font-medium mb-1"
                       style={{ color: "var(--text-secondary)" }}
                     >
-                      من
+                      {t("per_fieldFrom")}
                     </p>
                     <DateBadge date={modal.data.from} />
                   </div>
@@ -340,7 +343,7 @@ export default function PeriodsPage() {
                       className="text-xs font-medium mb-1"
                       style={{ color: "var(--text-secondary)" }}
                     >
-                      إلى
+                      {t("per_fieldTo")}
                     </p>
                     <DateBadge date={modal.data.to} />
                   </div>
@@ -349,7 +352,7 @@ export default function PeriodsPage() {
                   onClick={closeModal}
                   className="btn btn-secondary w-full mt-2"
                 >
-                  إغلاق
+                  {t("close")}
                 </button>
               </div>
             ) : (
@@ -359,7 +362,7 @@ export default function PeriodsPage() {
                     className="block text-sm font-medium mb-1.5"
                     style={{ color: "var(--text-primary)" }}
                   >
-                    الاسم
+                    {t("per_fieldName")}
                   </label>
                   <input
                     value={form.name}
@@ -379,7 +382,7 @@ export default function PeriodsPage() {
                       className="block text-sm font-medium mb-1.5"
                       style={{ color: "var(--text-primary)" }}
                     >
-                      من
+                      {t("per_fieldFrom")}
                     </label>
                     <input
                       type="date"
@@ -398,7 +401,7 @@ export default function PeriodsPage() {
                       className="block text-sm font-medium mb-1.5"
                       style={{ color: "var(--text-primary)" }}
                     >
-                      إلى
+                      {t("per_fieldTo")}
                     </label>
                     <input
                       type="date"
@@ -415,14 +418,14 @@ export default function PeriodsPage() {
                 </div>
                 <div className="flex gap-2.5 pt-2 justify-end">
                   <button onClick={closeModal} className="btn btn-secondary">
-                    إلغاء
+                    {t("cancel")}
                   </button>
                   <button
                     onClick={handleSave}
                     className="btn text-white"
                     style={{ backgroundColor: "var(--sidebar-active-text)" }}
                   >
-                    حفظ
+                    {t("save")}
                   </button>
                 </div>
               </div>
