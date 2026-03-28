@@ -97,6 +97,8 @@ const EMPTY_FORM = {
   type: "free_cancellation",
   daysBeforeArrival: 1,
   feesPercent: 0,
+  feeMethod: "percentage",
+  fixedFees: {},
   extraPrices: {},
 };
 
@@ -118,10 +120,12 @@ export default function RefundPoliciesPage() {
 
   function resetForm() {
     const extraPrices = {};
+    const fixedFees = {};
     groups.forEach((g) => {
       extraPrices[g.id] = 0;
+      fixedFees[g.id] = 0;
     });
-    return { ...EMPTY_FORM, extraPrices };
+    return { ...EMPTY_FORM, extraPrices, fixedFees };
   }
 
   function openAdd() {
@@ -132,14 +136,18 @@ export default function RefundPoliciesPage() {
 
   function openEdit(policy) {
     const extraPrices = {};
+    const fixedFees = {};
     groups.forEach((g) => {
       extraPrices[g.id] = policy.extraPrices[g.id] ?? 0;
+      fixedFees[g.id] = policy.fixedFees?.[g.id] ?? 0;
     });
     setForm({
       name: policy.name,
       type: policy.type,
       daysBeforeArrival: policy.daysBeforeArrival ?? 1,
       feesPercent: policy.feesPercent,
+      feeMethod: policy.feeMethod ?? "percentage",
+      fixedFees,
       extraPrices,
     });
     setErrors({});
@@ -153,6 +161,13 @@ export default function RefundPoliciesPage() {
   function closeModal() {
     setModal(null);
     setErrors({});
+  }
+
+  function setFixedFee(groupId, val) {
+    setForm((p) => ({
+      ...p,
+      fixedFees: { ...p.fixedFees, [groupId]: Number(val) },
+    }));
   }
 
   function setExtraPrice(groupId, val) {
@@ -176,7 +191,9 @@ export default function RefundPoliciesPage() {
       type: form.type,
       daysBeforeArrival:
         form.type === "non_refundable" ? null : form.daysBeforeArrival,
-      feesPercent: form.type === "non_refundable" ? 100 : form.feesPercent,
+      feesPercent: form.type === "non_refundable" ? 100 : form.type === "partial" && form.feeMethod === "fixed" ? 0 : form.feesPercent,
+      feeMethod: form.type === "partial" ? form.feeMethod : null,
+      fixedFees: form.type === "partial" && form.feeMethod === "fixed" ? form.fixedFees : {},
       extraPrices: form.extraPrices,
     };
 
@@ -627,24 +644,92 @@ export default function RefundPoliciesPage() {
                 {showFees && (
                   <div>
                     <label
-                      className="block text-sm font-medium mb-1.5"
+                      className="block text-sm font-medium mb-2"
                       style={{ color: "var(--text-primary)" }}
                     >
-                      {t("rp_fieldFeesPercent")}
+                      {t("rp_feeCalcMethod")}
                     </label>
-                    <input
-                      type="number"
-                      min="0"
-                      max="100"
-                      value={form.feesPercent}
-                      onChange={(e) =>
-                        setForm((p) => ({
-                          ...p,
-                          feesPercent: Number(e.target.value),
-                        }))
-                      }
-                      className="input"
-                    />
+                    {/* Toggle */}
+                    <div className="flex gap-1.5 mb-4">
+                      {[
+                        { value: "fixed", labelKey: "rp_fixedAmount" },
+                        { value: "percentage", labelKey: "rp_percentage" },
+                      ].map((opt) => (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          onClick={() => setForm((p) => ({ ...p, feeMethod: opt.value }))}
+                          className="flex-1 py-2 px-3 rounded-xl text-xs font-semibold transition-all border-2"
+                          style={
+                            form.feeMethod === opt.value
+                              ? { backgroundColor: "var(--sidebar-active-text)", color: "white", borderColor: "var(--sidebar-active-text)" }
+                              : { backgroundColor: "var(--bg-raised)", color: "var(--text-secondary)", borderColor: "var(--border)" }
+                          }
+                        >
+                          {t(opt.labelKey)}
+                        </button>
+                      ))}
+                    </div>
+
+                    {form.feeMethod === "percentage" ? (
+                      /* % Percentage — slider */
+                      <div>
+                        <label
+                          className="block text-sm font-medium mb-2"
+                          style={{ color: "var(--text-primary)" }}
+                        >
+                          {t("rp_percentage")}
+                          <span
+                            className="ms-2 font-bold"
+                            style={{ color: "var(--sidebar-active-text)" }}
+                          >
+                            {form.feesPercent}%
+                          </span>
+                        </label>
+                        <div className="flex items-center gap-3">
+                          <span className="text-xs" style={{ color: "var(--text-muted)" }}>0%</span>
+                          <input
+                            type="range"
+                            min="0"
+                            max="100"
+                            value={form.feesPercent}
+                            onChange={(e) =>
+                              setForm((p) => ({ ...p, feesPercent: Number(e.target.value) }))
+                            }
+                            className="flex-1"
+                            dir="ltr"
+                          />
+                          <span className="text-xs" style={{ color: "var(--text-muted)" }}>100%</span>
+                        </div>
+                      </div>
+                    ) : (
+                      /* Fixed Amount — per-group inputs */
+                      <div>
+                        <p
+                          className="text-sm font-semibold mb-2 text-end"
+                          style={{ color: "var(--text-primary)" }}
+                        >
+                          {t("rp_fixedPerGroup")}
+                        </p>
+                        <div className="space-y-2">
+                          {groups.map((g) => (
+                            <div key={g.id} className="flex items-center gap-3">
+                              <input
+                                type="number"
+                                min="0"
+                                value={form.fixedFees[g.id] ?? 0}
+                                onChange={(e) => setFixedFee(g.id, e.target.value)}
+                                className="input"
+                                style={{ width: "6rem" }}
+                              />
+                              <span className="text-sm" style={{ color: "var(--text-secondary)" }}>
+                                {g.name} ({g.currency})
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 

@@ -49,10 +49,12 @@ function ActionRow({ onDelete, onEdit, onView }) {
 
 export default function SupplementsPage() {
   const [groups] = useLocalStorage("travky_guest_groups", INITIAL_GROUPS);
+  const [enabled] = useLocalStorage("travky_guest_groups_enabled", true);
+  const [defaultCurrency] = useLocalStorage("travky_default_currency", null);
   const [supplements, setSupplements] = useLocalStorage("travky_supplements", INITIAL_SUPPLEMENTS);
   const [search, setSearch] = useState("");
   const [modal, setModal] = useState(null);
-  const [form, setForm] = useState({ namePreset: "Sea View", customName: "", prices: {} });
+  const [form, setForm] = useState({ namePreset: "Sea View", customName: "", prices: {}, basePrice: 0 });
   const [errors, setErrors] = useState({});
   const [deleteTarget, setDeleteTarget] = useState(null);
 
@@ -67,7 +69,7 @@ export default function SupplementsPage() {
   }
 
   function openAdd() {
-    setForm({ namePreset: "Sea View", customName: "", prices: buildEmptyPrices() });
+    setForm({ namePreset: "Sea View", customName: "", prices: buildEmptyPrices(), basePrice: 0 });
     setErrors({});
     setModal("add");
   }
@@ -80,6 +82,7 @@ export default function SupplementsPage() {
       namePreset: isPreset ? supplement.name : "Other",
       customName: isPreset ? "" : supplement.name,
       prices,
+      basePrice: supplement.basePrice ?? 0,
     });
     setErrors({});
     setModal({ mode: "edit", data: supplement });
@@ -104,7 +107,7 @@ export default function SupplementsPage() {
     if (!finalName) errs.name = "Name is required";
     if (Object.keys(errs).length) { setErrors(errs); return; }
 
-    const saveData = { name: finalName, prices: form.prices };
+    const saveData = { name: finalName, prices: form.prices, basePrice: form.basePrice };
     if (modal === "add") {
       setSupplements((prev) => [...prev, { id: Date.now().toString(), ...saveData }]);
     } else if (modal?.mode === "edit") {
@@ -181,21 +184,30 @@ export default function SupplementsPage() {
               <tr style={{ borderBottom: "2px solid var(--border)" }}>
                 <th className="pb-3 text-left font-semibold" style={{ color: "var(--text-secondary)", width: 48 }}>#</th>
                 <th className="pb-3 text-left font-semibold" style={{ color: "var(--text-secondary)" }}>Name</th>
-                {groups.map((g) => (
+                {enabled ? groups.map((g) => (
                   <th key={g.id} className="pb-3 text-right font-semibold" style={{ color: "var(--text-secondary)" }}>
                     {g.name}
                     <span className="ml-1 text-xs font-normal" style={{ color: "var(--text-muted)" }}>
                       ({g.currency})
                     </span>
                   </th>
-                ))}
+                )) : (
+                  <th className="pb-3 text-right font-semibold" style={{ color: "var(--text-secondary)" }}>
+                    Price
+                    {defaultCurrency && (
+                      <span className="ml-1 text-xs font-normal" style={{ color: "var(--text-muted)" }}>
+                        ({defaultCurrency})
+                      </span>
+                    )}
+                  </th>
+                )}
                 <th className="pb-3 text-right font-semibold" style={{ color: "var(--text-secondary)" }}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={3 + groups.length} className="py-10 text-center" style={{ color: "var(--text-muted)" }}>
+                  <td colSpan={enabled ? 3 + groups.length : 3} className="py-10 text-center" style={{ color: "var(--text-muted)" }}>
                     No supplements yet
                   </td>
                 </tr>
@@ -204,11 +216,15 @@ export default function SupplementsPage() {
                   <tr key={supplement.id} style={{ borderBottom: "1px solid var(--border)" }}>
                     <td className="py-4 font-medium" style={{ color: "var(--text-secondary)" }}>{idx + 1}</td>
                     <td className="py-4 font-semibold" style={{ color: "var(--text-primary)" }}>{supplement.name}</td>
-                    {groups.map((g) => (
+                    {enabled ? groups.map((g) => (
                       <td key={g.id} className="py-4 text-right" style={{ color: "var(--text-primary)" }}>
                         {supplement.prices?.[g.id] ?? 0}
                       </td>
-                    ))}
+                    )) : (
+                      <td className="py-4 text-right" style={{ color: "var(--text-primary)" }}>
+                        {supplement.basePrice ?? 0}
+                      </td>
+                    )}
                     <td className="py-4">
                       <ActionRow
                         onDelete={() => setDeleteTarget(supplement.id)}
@@ -254,25 +270,42 @@ export default function SupplementsPage() {
                 <p className="font-semibold text-lg" style={{ color: "var(--text-primary)" }}>
                   {modal.data.name}
                 </p>
-                <div className="space-y-2">
-                  {groups.map((g) => (
-                    <div
-                      key={g.id}
-                      className="flex items-center justify-between py-2 px-3 rounded-lg"
-                      style={{ backgroundColor: "var(--bg-raised)" }}
-                    >
-                      <span className="font-semibold" style={{ color: "var(--text-primary)" }}>
-                        {modal.data.prices?.[g.id] ?? 0}
-                        <span className="ml-1 text-xs font-normal" style={{ color: "var(--sidebar-active-text)" }}>
-                          {g.currency}
+                {enabled ? (
+                  <div className="space-y-2">
+                    {groups.map((g) => (
+                      <div
+                        key={g.id}
+                        className="flex items-center justify-between py-2 px-3 rounded-lg"
+                        style={{ backgroundColor: "var(--bg-raised)" }}
+                      >
+                        <span className="font-semibold" style={{ color: "var(--text-primary)" }}>
+                          {modal.data.prices?.[g.id] ?? 0}
+                          <span className="ml-1 text-xs font-normal" style={{ color: "var(--sidebar-active-text)" }}>
+                            {g.currency}
+                          </span>
                         </span>
-                      </span>
-                      <span className="text-sm" style={{ color: "var(--text-secondary)" }}>
-                        {g.name.toUpperCase()}
-                      </span>
-                    </div>
-                  ))}
-                </div>
+                        <span className="text-sm" style={{ color: "var(--text-secondary)" }}>
+                          {g.name.toUpperCase()}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div
+                    className="flex items-center justify-between py-2 px-3 rounded-lg"
+                    style={{ backgroundColor: "var(--bg-raised)" }}
+                  >
+                    <span className="font-semibold" style={{ color: "var(--text-primary)" }}>
+                      {modal.data.basePrice ?? 0}
+                      {defaultCurrency && (
+                        <span className="ml-1 text-xs font-normal" style={{ color: "var(--sidebar-active-text)" }}>
+                          {defaultCurrency}
+                        </span>
+                      )}
+                    </span>
+                    <span className="text-sm" style={{ color: "var(--text-secondary)" }}>Price</span>
+                  </div>
+                )}
                 <button onClick={closeModal} className="btn btn-secondary w-full mt-2">Close</button>
               </div>
             ) : (
@@ -319,34 +352,49 @@ export default function SupplementsPage() {
                   </div>
                 )}
 
-                {/* Prices per guest group */}
-                <div>
-                  <p className="text-sm font-semibold mb-3 text-right" style={{ color: "var(--text-primary)" }}>
-                    Prices per Guest Group
-                  </p>
-                  <div className="space-y-2.5">
-                    {groups.map((g) => (
-                      <div key={g.id} className="flex items-center gap-3">
-                        <input
-                          type="number"
-                          min={0}
-                          value={form.prices[g.id] ?? 0}
-                          onChange={(e) => setPrice(g.id, e.target.value)}
-                          className="input"
-                          style={{ width: "6rem", flexShrink: 0 }}
-                        />
-                        <span style={{ color: "var(--text-secondary)" }}>
-                          <span className="font-semibold" style={{ color: "var(--text-primary)" }}>
-                            {g.name.toUpperCase()}
+                {/* Prices per guest group / single price */}
+                {enabled ? (
+                  <div>
+                    <p className="text-sm font-semibold mb-3 text-right" style={{ color: "var(--text-primary)" }}>
+                      Prices per Guest Group
+                    </p>
+                    <div className="space-y-2.5">
+                      {groups.map((g) => (
+                        <div key={g.id} className="flex items-center gap-3">
+                          <input
+                            type="number"
+                            min={0}
+                            value={form.prices[g.id] ?? 0}
+                            onChange={(e) => setPrice(g.id, e.target.value)}
+                            className="input"
+                            style={{ width: "6rem", flexShrink: 0 }}
+                          />
+                          <span style={{ color: "var(--text-secondary)" }}>
+                            <span className="font-semibold" style={{ color: "var(--text-primary)" }}>
+                              {g.name.toUpperCase()}
+                            </span>
+                            <span className="ml-1.5" style={{ color: "var(--sidebar-active-text)" }}>
+                              ({g.currency})
+                            </span>
                           </span>
-                          <span className="ml-1.5" style={{ color: "var(--sidebar-active-text)" }}>
-                            ({g.currency})
-                          </span>
-                        </span>
-                      </div>
-                    ))}
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div>
+                    <label className="block text-sm font-medium mb-1.5" style={{ color: "var(--text-primary)" }}>
+                      Price{defaultCurrency ? ` (${defaultCurrency})` : ""}
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      value={form.basePrice}
+                      onChange={(e) => setForm((p) => ({ ...p, basePrice: Number(e.target.value) }))}
+                      className="input w-full"
+                    />
+                  </div>
+                )}
 
                 <div className="flex gap-2.5 pt-2 justify-end">
                   <button onClick={closeModal} className="btn btn-secondary">Cancel</button>

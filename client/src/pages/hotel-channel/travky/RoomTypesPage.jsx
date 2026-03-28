@@ -5,6 +5,7 @@ import {
   Search,
   Pencil,
   Eye,
+  EyeOff,
   X,
   Check,
   CheckCircle2,
@@ -18,6 +19,19 @@ import {
   BedDouble,
   Layers,
   Smile,
+  AirVent,
+  Wine,
+  Lock,
+  Sun,
+  Tv2,
+  Wind,
+  Shirt,
+  Coffee,
+  Waves,
+  ShowerHead,
+  Wifi,
+  Utensils,
+  ChefHat,
 } from "lucide-react";
 import { useLocalStorage } from "../../../hooks/useLocalStorage";
 import { useLanguage } from "../../../context/LanguageContext";
@@ -45,29 +59,28 @@ const ROOM_TYPES_OPTIONS = [
   "Studio",
 ];
 
-const PRICE_FORMULA_OPTIONS = [
-  "Person In DBL ×3",
-  "Person In DBL ×2",
-  "Person In DBL ×1",
-  "Room Rate",
-  "Per Person",
+const PRICE_FORMULA_DIRECTIONS = [
+  { value: "add", labelKey: "formulaAdd" },
+  { value: "less", labelKey: "formulaLess" },
 ];
 
 const AMENITIES = [
-  "تكييف هواء",
-  "مني بار",
-  "خزنة",
-  "شرفة",
-  "تلفاز",
-  "مجفف شعر",
-  "مكواة",
-  "ماكينة قهوة",
-  "حوض استحمام",
-  "دش",
-  "إنترنت واي فاي",
-  "إفطار مجاني",
-  "مطبخ صغير",
+  { label: "تكييف هواء", Icon: AirVent },
+  { label: "مني بار", Icon: Wine },
+  { label: "خزنة", Icon: Lock },
+  { label: "شرفة", Icon: Sun },
+  { label: "تلفاز", Icon: Tv2 },
+  { label: "مجفف شعر", Icon: Wind },
+  { label: "مكواة", Icon: Shirt },
+  { label: "ماكينة قهوة", Icon: Coffee },
+  { label: "حوض استحمام", Icon: Waves },
+  { label: "دش", Icon: ShowerHead },
+  { label: "إنترنت واي فاي", Icon: Wifi },
+  { label: "إفطار مجاني", Icon: Utensils },
+  { label: "مطبخ صغير", Icon: ChefHat },
 ];
+
+const AMENITY_ICON_MAP = Object.fromEntries(AMENITIES.map(({ label, Icon }) => [label, Icon]));
 
 const INITIAL_ROOM_TYPES = [
   {
@@ -211,7 +224,16 @@ const TXT = {
     back: "Back",
     save: "Save",
     priceFormulaLabel: "Price Formula",
+    formulaAdd: "Add to DBL Price",
+    formulaLess: "Less than DBL Price",
+    priceMethodFixed: "Fixed Amount",
+    priceMethodPct: "% Percentage",
+    pctAdd: "% Add",
+    pctSubtract: "% Subtract",
     roomTypeFormLabel: "Room Type",
+    capOptionsTitle: "Capacity Options",
+    free: "Free",
+    paid: "Paid",
   },
   ar: {
     pageTitle: "أنواع الغرف",
@@ -263,7 +285,16 @@ const TXT = {
     back: "رجوع",
     save: "حفظ",
     priceFormulaLabel: "معادلة حساب السعر",
+    formulaAdd: "Add to DBL Price",
+    formulaLess: "Less than DBL Price",
+    priceMethodFixed: "Fixed Amount",
+    priceMethodPct: "% Percentage",
+    pctAdd: "% Add",
+    pctSubtract: "% Subtract",
     roomTypeFormLabel: "نوع الغرفة",
+    capOptionsTitle: "خيارات السعة",
+    free: "مجاني",
+    paid: "مدفوع",
   },
 };
 
@@ -276,7 +307,9 @@ const EMPTY_FORM = {
   descEn: "",
   descAr: "",
   roomType: "DBL Room",
-  priceFormula: "Person In DBL ×3",
+  priceFormula: "add",
+  priceMethod: "percentage",
+  pricePercent: 0,
   amenities: [],
   capacityOptions: [{ adults: 2, children: 0, childConfigs: [] }],
   bedOptionSets: [{ singleBed: 0, extraDoubleBed: 0, extraLargeBed: 0, otherBeds: [] }],
@@ -368,7 +401,9 @@ export default function RoomTypesPage() {
       descEn: room.descEn,
       descAr: room.descAr,
       roomType: room.roomType,
-      priceFormula: room.priceFormula || "Person In DBL ×3",
+      priceFormula: room.priceFormula || "add",
+      priceMethod: room.priceMethod || "percentage",
+      pricePercent: room.pricePercent ?? 0,
       amenities: [...room.amenities],
       capacityOptions: room.capacityOptions.map((c) => ({
         ...c,
@@ -565,7 +600,8 @@ export default function RoomTypesPage() {
   }
 
   function handleSave() {
-    const data = { ...form, id: Date.now().toString() };
+    const isFirstBase = modal === "add" && !roomTypes.some((r) => r.isBase);
+    const data = { ...form, id: Date.now().toString(), isBase: isFirstBase || false };
     if (modal === "add") {
       setRoomTypes((prev) => [...prev, data]);
     } else if (modal?.mode === "edit") {
@@ -748,8 +784,11 @@ export default function RoomTypesPage() {
               key={room.id}
               room={room}
               supplement={null}
+              lang={lang}
+              t={t}
               onEdit={() => openEdit(room)}
               onView={() => setViewItem(room)}
+              onToggleHide={() => setRoomTypes((prev) => prev.map((r) => r.id === room.id ? { ...r, isHidden: !r.isHidden } : r))}
               onDelete={() =>
                 room.isBase
                   ? setDeleteBaseTarget(room.id)
@@ -761,8 +800,11 @@ export default function RoomTypesPage() {
                 key={`${room.id}-${supp.id}`}
                 room={room}
                 supplement={supp}
+                lang={lang}
+                t={t}
                 onEdit={() => openEdit(room)}
                 onView={() => setViewItem(room)}
+                onToggleHide={() => setRoomTypes((prev) => prev.map((r) => r.id === room.id ? { ...r, isHidden: !r.isHidden } : r))}
                 onDelete={() =>
                   room.isBase
                     ? setDeleteBaseTarget(room.id)
@@ -867,11 +909,15 @@ export default function RoomTypesPage() {
                   {t.amenitiesLabel}
                 </p>
                 <div className="flex flex-wrap gap-1">
-                  {viewItem.amenities.map((a) => (
-                    <span key={a} className="chip text-xs">
-                      {a}
-                    </span>
-                  ))}
+                  {viewItem.amenities.map((a) => {
+                    const AmenityIcon = AMENITY_ICON_MAP[a];
+                    return (
+                      <span key={a} className="chip text-xs inline-flex items-center gap-1">
+                        {AmenityIcon && <AmenityIcon size={12} />}
+                        {a}
+                      </span>
+                    );
+                  })}
                 </div>
               </div>
               <div>
@@ -1079,32 +1125,85 @@ export default function RoomTypesPage() {
 
                   {/* Price Formula — only shown for non-base rooms (when a base DBL already exists) */}
                   {roomTypes.some((r) => r.isBase) && (
-                    <div>
-                      <label
-                        className="block text-sm font-semibold mb-2"
-                        style={{ color: "var(--text-primary)" }}
-                      >
-                        {t.priceFormulaLabel}
-                      </label>
-                      <select
-                        value={form.priceFormula}
-                        onChange={(e) =>
-                          setForm((p) => ({ ...p, priceFormula: e.target.value }))
-                        }
-                        className="input w-full"
-                        style={{
-                          textAlign: "right",
-                          direction: "rtl",
-                          color: "var(--sidebar-active-text)",
-                          fontWeight: 600,
-                        }}
-                      >
-                        {PRICE_FORMULA_OPTIONS.map((t) => (
-                          <option key={t} value={t}>
-                            {t}
-                          </option>
-                        ))}
-                      </select>
+                    <div className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--border)" }}>
+                      {/* Direction picker */}
+                      <div className="relative">
+                        <select
+                          value={form.priceFormula}
+                          onChange={(e) => setForm((p) => ({ ...p, priceFormula: e.target.value }))}
+                          className="w-full bg-transparent outline-none py-3 px-4 text-sm font-semibold appearance-none cursor-pointer"
+                          style={{
+                            direction: "rtl",
+                            paddingInlineEnd: "2.5rem",
+                            paddingInlineStart: "1rem",
+                            color: form.priceFormula === "less" ? "var(--danger)" : "var(--sidebar-active-text)",
+                            border: `1.5px solid ${form.priceFormula === "less" ? "var(--danger)" : "var(--sidebar-active-text)"}`,
+                            borderRadius: "0.75rem",
+                          }}
+                        >
+                          {PRICE_FORMULA_DIRECTIONS.map((d) => (
+                            <option key={d.value} value={d.value}>{t[d.labelKey]}</option>
+                          ))}
+                        </select>
+                        <ChevronDown
+                          size={14}
+                          className="absolute top-1/2 -translate-y-1/2 pointer-events-none"
+                          style={{ insetInlineStart: "0.85rem", color: form.priceFormula === "less" ? "var(--danger)" : "var(--sidebar-active-text)" }}
+                        />
+                      </div>
+
+                      {/* Method toggle + value */}
+                      <div className="px-3 pt-3 pb-3 space-y-3" style={{ backgroundColor: "var(--bg-raised)" }}>
+                        {/* Toggle */}
+                        <div className="flex gap-1.5">
+                          {[
+                            { value: "fixed", labelKey: "priceMethodFixed" },
+                            { value: "percentage", labelKey: "priceMethodPct" },
+                          ].map((opt) => (
+                            <button
+                              key={opt.value}
+                              type="button"
+                              onClick={() => setForm((p) => ({ ...p, priceMethod: opt.value }))}
+                              className="flex-1 py-2 px-3 rounded-xl text-xs font-semibold transition-all"
+                              style={
+                                form.priceMethod === opt.value
+                                  ? { backgroundColor: "var(--sidebar-active-text)", color: "white" }
+                                  : { backgroundColor: "var(--bg-surface)", color: "var(--text-secondary)", border: "1px solid var(--border)" }
+                              }
+                            >
+                              {t[opt.labelKey]}
+                            </button>
+                          ))}
+                        </div>
+
+                        {/* Percentage slider */}
+                        {form.priceMethod === "percentage" && (
+                          <div dir="ltr">
+                            <div className="flex items-center justify-between mb-1">
+                              <span
+                                className="text-xs font-bold px-2 py-0.5 rounded-md"
+                                style={{ backgroundColor: "var(--bg-surface)", color: "var(--text-secondary)", border: "1px solid var(--border)" }}
+                              >
+                                {form.pricePercent}%
+                              </span>
+                              <span
+                                className="text-xs font-semibold"
+                                style={{ color: form.priceFormula === "less" ? "var(--danger)" : "var(--sidebar-active-text)" }}
+                              >
+                                {form.priceFormula === "less" ? t.pctSubtract : t.pctAdd}
+                              </span>
+                            </div>
+                            <input
+                              type="range"
+                              min="0"
+                              max="100"
+                              value={form.pricePercent}
+                              onChange={(e) => setForm((p) => ({ ...p, pricePercent: Number(e.target.value) }))}
+                              className="w-full"
+                            />
+                          </div>
+                        )}
+                      </div>
                     </div>
                   )}
 
@@ -1117,13 +1216,13 @@ export default function RoomTypesPage() {
                       {t.roomAmenities}
                     </label>
                     <div className="grid grid-cols-2 gap-2">
-                      {AMENITIES.map((a) => {
-                        const selected = form.amenities.includes(a);
+                      {AMENITIES.map(({ label, Icon: AmenityIcon }) => {
+                        const selected = form.amenities.includes(label);
                         return (
                           <button
-                            key={a}
+                            key={label}
                             type="button"
-                            onClick={() => toggleAmenity(a)}
+                            onClick={() => toggleAmenity(label)}
                             className="flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium transition-all"
                             style={{
                               backgroundColor: "var(--bg-surface)",
@@ -1142,7 +1241,16 @@ export default function RoomTypesPage() {
                                 flexShrink: 0,
                               }}
                             />
-                            <span>{a}</span>
+                            <span>{label}</span>
+                            <AmenityIcon
+                              size={17}
+                              style={{
+                                color: selected
+                                  ? "var(--sidebar-active-text)"
+                                  : "var(--text-muted)",
+                                flexShrink: 0,
+                              }}
+                            />
                           </button>
                         );
                       })}
@@ -1732,37 +1840,163 @@ export default function RoomTypesPage() {
   );
 }
 
-function RoomCard({ room, supplement, onEdit, onView, onDelete }) {
-  const totalAdults = room.capacityOptions.reduce((s, o) => s + (o.adults || 0), 0);
-  const totalChildren = room.capacityOptions.reduce((s, o) => s + (o.children || 0), 0);
-  const capCount = room.capacityOptions.length;
-  const singleBedCount = room.beds?.singleBed || 0;
-  const amenityCount = room.amenities.length;
-  const cardTitle = supplement ? `${room.nameEn} — ${supplement.name}` : room.nameEn;
+function BedPopup({ bedSets, t, onClose }) {
+  return (
+    <>
+      <div className="fixed inset-0 z-40" onClick={onClose} />
+      <div
+        className="absolute z-50 bottom-[calc(100%+6px)] right-0 rounded-2xl shadow-xl py-3 px-4"
+        style={{
+          backgroundColor: "var(--bg-surface)",
+          border: "1px solid var(--border)",
+          minWidth: 220,
+        }}
+      >
+        <p className="text-sm font-bold mb-3 text-end" style={{ color: "var(--text-primary)" }}>
+          {t.bedOptions}
+        </p>
+        <div className="space-y-3">
+          {bedSets.map((set, idx) => (
+            <div key={idx} className="space-y-1.5">
+              <div className="flex justify-end">
+                <span
+                  className="px-2.5 py-0.5 rounded-full text-xs font-semibold text-white"
+                  style={{ backgroundColor: "var(--sidebar-active-text)" }}
+                >
+                  {t.optionLabel} {idx + 1}
+                </span>
+              </div>
+              {(set.otherBeds || []).length === 0 && (
+                <p className="text-xs text-end" style={{ color: "var(--text-muted)" }}>—</p>
+              )}
+              {(set.otherBeds || []).map((bed, bIdx) => (
+                <div key={bIdx} className="flex items-center justify-between gap-2">
+                  <span
+                    className="text-xs font-semibold"
+                    style={{ color: bed.priceType === "Free" ? "#22c55e" : "#f59e0b" }}
+                  >
+                    {bed.priceType === "Free" ? t.free : t.paid}
+                  </span>
+                  <div className="flex items-center gap-1 text-xs" style={{ color: "var(--text-secondary)" }}>
+                    <span>{bed.name}</span>
+                    <BedDouble size={12} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+    </>
+  );
+}
+
+function CapPopup({ capOpts, t, onClose }) {
+  return (
+    <>
+      <div className="fixed inset-0 z-40" onClick={onClose} />
+      <div
+        className="absolute z-50 bottom-[calc(100%+6px)] right-0 rounded-2xl shadow-xl py-3 px-4"
+        style={{
+          backgroundColor: "var(--bg-surface)",
+          border: "1px solid var(--border)",
+          minWidth: 240,
+        }}
+      >
+        <p className="text-sm font-bold mb-3 text-end" style={{ color: "var(--text-primary)" }}>
+          {t.capOptionsTitle}
+        </p>
+        <div className="space-y-3">
+          {capOpts.map((opt, idx) => (
+            <div
+              key={idx}
+              className="space-y-1.5 pb-2"
+              style={{ borderBottom: idx < capOpts.length - 1 ? "1px solid var(--border)" : "none" }}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1 text-xs" style={{ color: "var(--text-secondary)" }}>
+                  <Smile size={12} />
+                  <span>{opt.adults ?? 0}</span>
+                  <span>+</span>
+                  <span>{opt.children ?? 0}</span>
+                  <Users size={11} />
+                </div>
+                <span
+                  className="px-2.5 py-0.5 rounded-full text-xs font-semibold text-white"
+                  style={{ backgroundColor: "var(--sidebar-active-text)" }}
+                >
+                  {t.optionLabel} {idx + 1}
+                </span>
+              </div>
+              {(opt.childConfigs || []).map((cfg, cIdx) => (
+                <div key={cIdx} className="flex items-center justify-between gap-2">
+                  <span
+                    className="text-xs font-semibold"
+                    style={{ color: cfg.priceType === "Free" ? "#22c55e" : "#f59e0b" }}
+                  >
+                    {cfg.priceType === "Free" ? t.free : t.paid}
+                  </span>
+                  <span className="text-xs" style={{ color: "var(--text-secondary)" }}>
+                    {cfg.type}
+                  </span>
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+    </>
+  );
+}
+
+function RoomCard({ room, supplement, onEdit, onView, onDelete, onToggleHide, lang, t }) {
+  const [activePop, setActivePop] = useState(null); // "bed" | "cap" | null
+
+  const cardTitle = supplement
+    ? `${lang === "ar" ? room.nameAr : room.nameEn} — ${supplement.name}`
+    : lang === "ar" ? room.nameAr : room.nameEn;
+
+  const bedSets = room.bedOptionSets || [];
+  const firstSet = bedSets[0] || {};
+  const firstOtherBed = (firstSet.otherBeds || [])[0];
+
+  const capOpts = room.capacityOptions || [];
+  const firstCap = capOpts[0] || {};
+
+  const amenities = room.amenities || [];
+  const MAX_SHOWN = 6;
+  const shownAmenities = amenities.slice(0, MAX_SHOWN);
+  const overflowCount = amenities.length - MAX_SHOWN;
 
   return (
     <div
-      className="rounded-2xl overflow-hidden"
+      className="rounded-2xl"
       style={{
         backgroundColor: "var(--bg-surface)",
         border: "1px solid var(--border)",
         boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
       }}
     >
-      {/* Image area */}
-      <div
-        className="relative"
-        style={{ backgroundColor: "var(--bg-raised)", height: 168 }}
-      >
+      {/* Image */}
+      <div className="relative rounded-t-2xl overflow-hidden" style={{ height: 168 }}>
         {room.mainImage ? (
-          <img
-            src={room.mainImage}
-            alt={room.nameEn}
-            className="w-full h-full object-cover"
-          />
+          <img src={room.mainImage} alt={cardTitle} className="w-full h-full object-cover" />
         ) : (
-          <div className="w-full h-full flex items-center justify-center">
+          <div
+            className="w-full h-full flex items-center justify-center"
+            style={{ backgroundColor: "var(--bg-raised)" }}
+          >
             <DoorOpen size={44} style={{ color: "var(--border)", opacity: 0.5 }} />
+          </div>
+        )}
+
+        {/* Hidden overlay */}
+        {room.isHidden && (
+          <div
+            className="absolute inset-0 flex items-center justify-center"
+            style={{ backgroundColor: "rgba(0,0,0,0.4)" }}
+          >
+            <EyeOff size={32} color="white" />
           </div>
         )}
 
@@ -1770,21 +2004,28 @@ function RoomCard({ room, supplement, onEdit, onView, onDelete }) {
         <div className="absolute top-3 left-3 flex gap-1.5">
           <button
             onClick={onDelete}
-            className="w-8 h-8 rounded-full grid place-items-center bg-white shadow-sm"
+            className="w-8 h-8 rounded-full grid place-items-center bg-white shadow"
             style={{ color: "#ef4444" }}
           >
             <Trash2 size={14} />
           </button>
           <button
+            onClick={onToggleHide}
+            className="w-8 h-8 rounded-full grid place-items-center bg-white shadow"
+            style={{ color: room.isHidden ? "#6366f1" : "#94a3b8" }}
+          >
+            <EyeOff size={14} />
+          </button>
+          <button
             onClick={onEdit}
-            className="w-8 h-8 rounded-full grid place-items-center bg-white shadow-sm"
+            className="w-8 h-8 rounded-full grid place-items-center bg-white shadow"
             style={{ color: "#f59e0b" }}
           >
             <Pencil size={14} />
           </button>
           <button
             onClick={onView}
-            className="w-8 h-8 rounded-full grid place-items-center bg-white shadow-sm"
+            className="w-8 h-8 rounded-full grid place-items-center bg-white shadow"
             style={{ color: "#3b82f6" }}
           >
             <Eye size={14} />
@@ -1793,18 +2034,14 @@ function RoomCard({ room, supplement, onEdit, onView, onDelete }) {
 
         {/* Code + room type — top right */}
         <div className="absolute top-3 right-3 flex items-center gap-1.5">
-          {room.isBase ? (
-            <span
-              className="px-2.5 py-1 rounded-lg text-xs font-bold text-white"
-              style={{ backgroundColor: "var(--sidebar-active-text)" }}
-            >
-              {room.code}
-            </span>
-          ) : (
-            <span className="chip text-xs font-bold">{room.code}</span>
-          )}
           <span
-            className="text-xs font-semibold"
+            className="px-2.5 py-1 rounded-lg text-xs font-bold text-white"
+            style={{ backgroundColor: room.isBase ? "var(--sidebar-active-text)" : "#334155" }}
+          >
+            {room.code}
+          </span>
+          <span
+            className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-white"
             style={{ color: "var(--text-secondary)" }}
           >
             {room.roomType}
@@ -1813,64 +2050,102 @@ function RoomCard({ room, supplement, onEdit, onView, onDelete }) {
       </div>
 
       {/* Content */}
-      <div className="px-4 pt-4 pb-3 space-y-3">
+      <div className="px-4 pt-3 pb-3 space-y-3">
         {/* Room name */}
-        <h3
-          className="text-sm font-bold text-center tracking-wide"
-          style={{ color: "var(--text-primary)", textTransform: "uppercase" }}
-        >
+        <h3 className="text-sm font-bold text-end" style={{ color: "var(--text-primary)" }}>
           {cardTitle}
         </h3>
 
-        {/* Two pills row */}
-        <div className="flex items-center justify-between gap-2">
-          {/* Left: capacity options count + single bed count */}
-          <span
-            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium flex-1 justify-center"
-            style={{
-              backgroundColor: "var(--bg-raised)",
-              border: "1px solid var(--border)",
-              color: "var(--text-secondary)",
-            }}
-          >
-            <Layers size={11} />
-            <span className="font-semibold" style={{ color: "var(--text-primary)" }}>
-              {capCount}
-            </span>
-            <span className="mx-0.5">Single Bed {singleBedCount}</span>
-            <BedSingle size={13} />
-          </span>
+        {/* Pills row */}
+        <div className="flex items-center gap-2">
+          {/* Left pill — bed options */}
+          <div className="relative flex-1">
+            <button
+              onClick={() => setActivePop(activePop === "bed" ? null : "bed")}
+              className="w-full inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-medium"
+              style={{
+                backgroundColor: "var(--bg-raised)",
+                border: "1px solid var(--border)",
+                color: "var(--text-secondary)",
+              }}
+            >
+              <Layers size={11} />
+              <span className="font-semibold" style={{ color: "var(--text-primary)" }}>
+                {bedSets.length}
+              </span>
+              {firstOtherBed && (
+                <span className="truncate" style={{ maxWidth: "4rem" }}>{firstOtherBed.name}</span>
+              )}
+              <BedDouble size={13} />
+            </button>
+            {activePop === "bed" && (
+              <BedPopup bedSets={bedSets} t={t} onClose={() => setActivePop(null)} />
+            )}
+          </div>
 
-          {/* Right: capacity count + adults + children */}
-          <span
-            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium flex-1 justify-center"
-            style={{
-              backgroundColor: "var(--bg-raised)",
-              border: "1px solid var(--border)",
-              color: "var(--text-secondary)",
-            }}
-          >
-            <Layers size={11} />
-            <span className="font-semibold" style={{ color: "var(--text-primary)" }}>
-              {capCount}
-            </span>
-            <Smile size={12} />
-            <span>{totalAdults}</span>
-            <span>+</span>
-            <span>{totalChildren}</span>
-            <Users size={11} />
-          </span>
+          {/* Right pill — capacity options */}
+          <div className="relative flex-1">
+            <button
+              onClick={() => setActivePop(activePop === "cap" ? null : "cap")}
+              className="w-full inline-flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium"
+              style={{
+                backgroundColor: "var(--bg-raised)",
+                border: "1px solid var(--border)",
+                color: "var(--text-secondary)",
+              }}
+            >
+              <Layers size={11} />
+              <span className="font-semibold" style={{ color: "var(--text-primary)" }}>
+                {capOpts.length}
+              </span>
+              <Smile size={12} />
+              <span>{firstCap.adults ?? 0}</span>
+              <span>+</span>
+              <span>{firstCap.children ?? 0}</span>
+              <Users size={11} />
+            </button>
+            {activePop === "cap" && (
+              <CapPopup capOpts={capOpts} t={t} onClose={() => setActivePop(null)} />
+            )}
+          </div>
         </div>
 
-        {/* Amenity count bottom-right */}
-        {amenityCount > 0 && (
-          <div className="flex justify-end">
-            <span
-              className="text-xs font-medium"
-              style={{ color: "var(--text-muted)" }}
-            >
-              {amenityCount}+
-            </span>
+        {/* Amenities strip */}
+        {amenities.length > 0 && (
+          <div
+            className="flex items-center gap-1.5 overflow-x-auto pb-1"
+            dir="rtl"
+            style={{ scrollbarWidth: "none" }}
+          >
+            {shownAmenities.map((a) => {
+              const AmenityIcon = AMENITY_ICON_MAP[a];
+              return (
+                <span
+                  key={a}
+                  className="shrink-0 inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full"
+                  style={{
+                    backgroundColor: "var(--bg-raised)",
+                    border: "1px solid var(--border)",
+                    color: "var(--text-secondary)",
+                  }}
+                >
+                  {AmenityIcon && <AmenityIcon size={11} />}
+                  <span>{a}</span>
+                </span>
+              );
+            })}
+            {overflowCount > 0 && (
+              <span
+                className="shrink-0 text-xs font-semibold px-2 py-1 rounded-full"
+                style={{
+                  backgroundColor: "var(--bg-raised)",
+                  border: "1px solid var(--border)",
+                  color: "var(--text-muted)",
+                }}
+              >
+                +{overflowCount}
+              </span>
+            )}
           </div>
         )}
       </div>

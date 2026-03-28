@@ -1,7 +1,7 @@
 ﻿import { useState, useMemo } from "react";
 import {
-  Users, Search, Trash2, Pencil, Eye, X, DollarSign,
-  ChevronLeft, BedDouble, Building2, ChevronDown, ChevronUp, ShieldCheck,
+  Users, Search, Trash2, Pencil, Eye, X, DollarSign, AlertTriangle,
+  ChevronLeft, ChevronRight, BedDouble, Building2, ChevronDown, ChevronUp, ShieldCheck,
 } from "lucide-react";
 import { useLocalStorage } from "../../../hooks/useLocalStorage";
 import DeleteConfirmModal from "../../../components/DeleteConfirmModal";
@@ -127,6 +127,7 @@ export default function GuestGroupsPage() {
   const [currencyModal, setCurrencyModal] = useState(false);
 
   const [natPopup, setNatPopup] = useState(null); // group.id whose nationalities popup is open
+  const [sourceGroupModal, setSourceGroupModal] = useState(null); // { currency, groups }
 
   const filtered = groups.filter((g) => g.name.toLowerCase().includes(search.toLowerCase()));
   const filteredNats = NATIONALITIES.filter(
@@ -164,6 +165,8 @@ export default function GuestGroupsPage() {
     if (!form.name.trim()) errs.name = "Name is required";
     if (Object.keys(errs).length) { setErrors(errs); return; }
     setErrors({});
+    const hasData = supplements.length > 0 || refundPolicies.length > 0 || roomsWithPrices.length > 0;
+    if (!hasData) { handleSave(); return; }
     setStep(2);
   }
 
@@ -273,7 +276,16 @@ export default function GuestGroupsPage() {
               {currencyOptions.length === 0 ? (
                 <p className="text-sm text-center py-4" style={{ color: "var(--text-muted)" }}>لا توجد مجموعات بعملات محددة</p>
               ) : currencyOptions.map(({ currency, count }) => (
-                <button key={currency} onClick={() => { setDefaultCurrency(currency); setEnabled(false); setCurrencyModal(false); }}
+                <button key={currency} onClick={() => {
+                  if (count > 1) {
+                    setSourceGroupModal({ currency, groups: groups.filter((g) => g.currency === currency) });
+                    setCurrencyModal(false);
+                  } else {
+                    setDefaultCurrency(currency);
+                    setEnabled(false);
+                    setCurrencyModal(false);
+                  }
+                }}
                   className="w-full flex items-center justify-between px-4 py-3 rounded-xl transition-colors hover:opacity-90"
                   style={{ backgroundColor: "var(--bg-raised)", border: "1px solid var(--border)" }}>
                   <ChevronLeft size={16} style={{ color: "var(--text-muted)" }} />
@@ -282,6 +294,58 @@ export default function GuestGroupsPage() {
                     <p className="text-xs" style={{ color: "var(--text-muted)" }}>{count} مجموعة</p>
                   </div>
                   <div className="w-9 h-9 rounded-xl grid place-items-center" style={{ backgroundColor: "#1e3a5f" }}><DollarSign size={16} color="white" /></div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Source group modal */}
+      {sourceGroupModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: "rgba(0,0,0,0.45)" }}>
+          <div className="w-full max-w-sm rounded-2xl p-6 shadow-xl" style={{ backgroundColor: "var(--bg-surface)", border: "1px solid var(--border)" }} dir="ltr">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg grid place-items-center" style={{ backgroundColor: "#1e293b" }}>
+                  <Users size={16} color="white" />
+                </div>
+                <h2 className="text-base font-bold" style={{ color: "var(--text-primary)" }}>Select Source Group</h2>
+              </div>
+              <button onClick={() => setSourceGroupModal(null)} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700" style={{ color: "var(--text-muted)" }}>
+                <X size={16} />
+              </button>
+            </div>
+            {/* Warning banner */}
+            <div className="flex items-center gap-2 rounded-xl px-4 py-3 mb-3" style={{ backgroundColor: "#fffbeb", border: "1px solid #fcd34d" }}>
+              <AlertTriangle size={15} style={{ color: "#d97706", flexShrink: 0 }} />
+              <p className="text-sm font-medium" style={{ color: "#92400e" }}>
+                Multiple guest groups use &apos;{sourceGroupModal.currency}&apos; currency
+              </p>
+            </div>
+            {/* Description */}
+            <div className="rounded-xl px-4 py-3 text-sm leading-relaxed mb-4" style={{ backgroundColor: "var(--bg-raised)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}>
+              Choose the group whose prices will be used as the default. The selected group&apos;s prices will be applied to all data: meal plans, supplements, refund policies, room price calculator, price children &amp; more.
+            </div>
+            {/* Group options */}
+            <div className="space-y-2">
+              {sourceGroupModal.groups.map((g) => (
+                <button
+                  key={g.id}
+                  onClick={() => { setDefaultCurrency(g.currency); setEnabled(false); setSourceGroupModal(null); }}
+                  className="w-full flex items-center justify-between px-4 py-3 rounded-xl transition-colors hover:opacity-90"
+                  style={{ backgroundColor: "var(--bg-raised)", border: "1px solid var(--border)" }}
+                >
+                  <div className="w-9 h-9 rounded-xl grid place-items-center" style={{ backgroundColor: "#1e3a5f" }}>
+                    <Users size={15} color="white" />
+                  </div>
+                  <div className="text-left flex-1 mx-3">
+                    <p className="text-sm font-bold" style={{ color: "var(--text-primary)" }}>{g.name}</p>
+                    <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+                      nationalities: {g.nationalities?.length ?? 0} &bull; {g.currency} $
+                    </p>
+                  </div>
+                  <ChevronRight size={16} style={{ color: "var(--text-muted)" }} />
                 </button>
               ))}
             </div>

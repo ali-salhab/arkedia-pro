@@ -7,6 +7,8 @@ import {
   Pencil,
   Eye,
   X,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { useLocalStorage } from "../../../hooks/useLocalStorage";
 import DeleteConfirmModal from "../../../components/DeleteConfirmModal";
@@ -18,6 +20,152 @@ const INITIAL_PERIODS = [
   { id: "3", name: "High Season", from: "2024-07-01", to: "2024-09-30" },
   { id: "4", name: "Peak Season", from: "2024-12-15", to: "2024-12-31" },
 ];
+
+const MONTH_NAMES = [
+  "January","February","March","April","May","June",
+  "July","August","September","October","November","December",
+];
+const DAY_NAMES = ["SU","MO","TU","WE","TH","FR","SA"];
+
+function toDateStr(y, m, d) {
+  return `${y}-${String(m + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+}
+
+function addMonths(year, month, delta) {
+  let m = month + delta;
+  let y = year;
+  while (m > 11) { m -= 12; y++; }
+  while (m < 0)  { m += 12; y--; }
+  return { year: y, month: m };
+}
+
+function DateRangePicker({ from, to, onChange }) {
+  const today = new Date();
+  const todayStr = toDateStr(today.getFullYear(), today.getMonth(), today.getDate());
+  const initDate = from ? new Date(from + "T00:00:00") : today;
+  const [viewYear, setViewYear] = useState(initDate.getFullYear());
+  const [viewMonth, setViewMonth] = useState(initDate.getMonth());
+  const [hoverDate, setHoverDate] = useState(null);
+
+  const left  = { year: viewYear, month: viewMonth };
+  const right = addMonths(viewYear, viewMonth, 1);
+
+  function prevM() { const p = addMonths(viewYear, viewMonth, -1); setViewYear(p.year); setViewMonth(p.month); }
+  function nextM() { const p = addMonths(viewYear, viewMonth,  1); setViewYear(p.year); setViewMonth(p.month); }
+
+  function handleClick(ds) {
+    if (!from || (from && to)) {
+      onChange({ from: ds, to: "" });
+    } else if (ds === from) {
+      onChange({ from: "", to: "" });
+    } else if (ds < from) {
+      onChange({ from: ds, to: from });
+    } else {
+      onChange({ from, to: ds });
+    }
+  }
+
+  const effectiveTo = to || (from && !to && hoverDate && hoverDate > from ? hoverDate : "");
+
+  function renderMonth(year, month, showPrev, showNext) {
+    const firstDow = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const cells = [];
+    for (let i = 0; i < firstDow; i++) cells.push(null);
+    for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+    while (cells.length % 7 !== 0) cells.push(null);
+
+    return (
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center justify-between mb-2 px-1">
+          {showPrev
+            ? <button onClick={prevM} className="p-1 rounded hover:opacity-60 transition-opacity" style={{ color: "var(--text-muted)" }}><ChevronLeft size={16} /></button>
+            : <div className="w-6" />}
+          <span className="text-sm font-bold" style={{ color: "var(--text-primary)" }}>
+            {MONTH_NAMES[month]} {year}
+          </span>
+          {showNext
+            ? <button onClick={nextM} className="p-1 rounded hover:opacity-60 transition-opacity" style={{ color: "var(--text-muted)" }}><ChevronRight size={16} /></button>
+            : <div className="w-6" />}
+        </div>
+
+        <div className="grid grid-cols-7 mb-1">
+          {DAY_NAMES.map((d) => (
+            <div key={d} className="text-center text-xs font-semibold py-1" style={{ color: "var(--text-muted)" }}>{d}</div>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-7">
+          {cells.map((d, i) => {
+            if (!d) return <div key={i} className="h-8" />;
+            const ds = toDateStr(year, month, d);
+            const isStart   = ds === from;
+            const isEnd     = ds === to || (!to && hoverDate && ds === hoverDate && from && hoverDate > from);
+            const inRange   = !!effectiveTo && !!from && ds > from && ds < effectiveTo;
+            const isToday   = ds === todayStr;
+            return (
+              <div
+                key={i}
+                className="h-8 flex items-center justify-center"
+                style={{ backgroundColor: inRange ? "rgba(99,102,241,0.12)" : "transparent" }}
+              >
+                <button
+                  onClick={() => handleClick(ds)}
+                  onMouseEnter={() => from && !to && setHoverDate(ds)}
+                  onMouseLeave={() => setHoverDate(null)}
+                  className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium transition-colors hover:opacity-80"
+                  style={{
+                    backgroundColor: (isStart || isEnd) ? "var(--sidebar-active-text)" : "transparent",
+                    color: (isStart || isEnd) ? "#fff" : "var(--text-primary)",
+                    outline: isToday && !isStart && !isEnd ? "2px solid var(--sidebar-active-text)" : "none",
+                    outlineOffset: "-2px",
+                  }}
+                >
+                  {d}
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-xl p-3" style={{ border: "1px solid var(--border)", backgroundColor: "var(--bg-raised)" }} dir="ltr">
+      {/* Selected range display */}
+      <div className="flex items-center gap-2 mb-3 px-1 h-7">
+        <span className="text-xs font-semibold px-2.5 py-1 rounded-lg" style={{
+          backgroundColor: from ? "var(--sidebar-active-text)" : "var(--bg-surface)",
+          color: from ? "#fff" : "var(--text-muted)",
+          border: from ? "none" : "1px solid var(--border)",
+        }}>
+          {from || "Start date"}
+        </span>
+        <ChevronRight size={12} style={{ color: "var(--text-muted)" }} />
+        <span className="text-xs font-semibold px-2.5 py-1 rounded-lg" style={{
+          backgroundColor: to ? "var(--sidebar-active-text)" : "var(--bg-surface)",
+          color: to ? "#fff" : "var(--text-muted)",
+          border: to ? "none" : "1px solid var(--border)",
+        }}>
+          {to || "End date"}
+        </span>
+        {(from || to) && (
+          <button onClick={() => onChange({ from: "", to: "" })} className="ml-auto rounded hover:opacity-60 transition-opacity" style={{ color: "var(--text-muted)" }}>
+            <X size={13} />
+          </button>
+        )}
+      </div>
+
+      {/* Two-month calendars */}
+      <div className="flex gap-4">
+        {renderMonth(left.year, left.month, true, false)}
+        <div className="w-px shrink-0" style={{ backgroundColor: "var(--border)" }} />
+        {renderMonth(right.year, right.month, false, true)}
+      </div>
+    </div>
+  );
+}
 
 function ActionRow({ onDelete, onEdit, onView, t }) {
   return (
@@ -287,7 +435,7 @@ export default function PeriodsPage() {
           style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
         >
           <div
-            className="w-full max-w-sm max-h-[90vh] overflow-y-auto rounded-2xl p-6 shadow-xl"
+            className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl p-6 shadow-xl"
             style={{
               backgroundColor: "var(--bg-surface)",
               border: "1px solid var(--border)",
@@ -376,45 +524,21 @@ export default function PeriodsPage() {
                     <p className="input-error mt-1">{errors.name}</p>
                   )}
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label
-                      className="block text-sm font-medium mb-1.5"
-                      style={{ color: "var(--text-primary)" }}
-                    >
-                      {t("per_fieldFrom")}
-                    </label>
-                    <input
-                      type="date"
-                      value={form.from}
-                      onChange={(e) =>
-                        setForm((p) => ({ ...p, from: e.target.value }))
-                      }
-                      className="input"
-                    />
-                    {errors.from && (
-                      <p className="input-error mt-1">{errors.from}</p>
-                    )}
-                  </div>
-                  <div>
-                    <label
-                      className="block text-sm font-medium mb-1.5"
-                      style={{ color: "var(--text-primary)" }}
-                    >
-                      {t("per_fieldTo")}
-                    </label>
-                    <input
-                      type="date"
-                      value={form.to}
-                      onChange={(e) =>
-                        setForm((p) => ({ ...p, to: e.target.value }))
-                      }
-                      className="input"
-                    />
-                    {errors.to && (
-                      <p className="input-error mt-1">{errors.to}</p>
-                    )}
-                  </div>
+                <div>
+                  <label
+                    className="block text-sm font-medium mb-1.5"
+                    style={{ color: "var(--text-primary)" }}
+                  >
+                    {t("per_fieldFrom")} → {t("per_fieldTo")}
+                  </label>
+                  <DateRangePicker
+                    from={form.from}
+                    to={form.to}
+                    onChange={({ from, to }) => setForm((p) => ({ ...p, from, to }))}
+                  />
+                  {(errors.from || errors.to) && (
+                    <p className="input-error mt-1">{errors.from || errors.to}</p>
+                  )}
                 </div>
                 <div className="flex gap-2.5 pt-2 justify-end">
                   <button onClick={closeModal} className="btn btn-secondary">

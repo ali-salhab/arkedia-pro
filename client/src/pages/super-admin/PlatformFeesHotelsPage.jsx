@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Save, Landmark } from "lucide-react";
 import { useLanguage } from "../../context/LanguageContext";
+import { useLocalStorage } from "../../hooks/useLocalStorage";
 
 const SCOPES = [
   { key: "all", labelKey: "pfScope_allHotels" },
@@ -19,7 +20,7 @@ export default function PlatformFeesHotelsPage() {
   const dir = lang === "ar" ? "rtl" : "ltr";
 
   const [scope, setScope] = useState("all");
-  const [fees, setFees] = useState(INITIAL_FEES);
+  const [fees, setFees] = useLocalStorage("platform_fees", INITIAL_FEES);
   const [saved, setSaved] = useState(false);
 
   const setFee = (tier, field) => (e) => {
