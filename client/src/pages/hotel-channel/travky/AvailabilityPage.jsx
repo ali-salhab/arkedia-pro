@@ -126,6 +126,7 @@ export default function AvailabilityPage() {
     const s = supplements.find((x) => x.id === supplementId);
     return r ? buildRoomLabel(r, s || null) : roomKey;
   }
+  const filtered = availability.filter((a) => {
     const label = getRoomName(a.roomId);
     const period = periods.find((p) => p.id === a.periodId);
     const periodLabel = period ? period.name : "";
