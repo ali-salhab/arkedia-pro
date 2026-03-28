@@ -2,6 +2,7 @@ import { useState } from "react";
 import { RotateCcw, Plus, Search, Trash2, Pencil, Eye, X } from "lucide-react";
 import { useLocalStorage } from "../../../hooks/useLocalStorage";
 import DeleteConfirmModal from "../../../components/DeleteConfirmModal";
+import { useLanguage } from "../../../context/LanguageContext";
 
 const INITIAL_GROUPS = [
   { id: "1", name: "Egyptian Market", currency: "EGP" },
@@ -38,46 +39,36 @@ const INITIAL_POLICIES = [
 ];
 
 const POLICY_TYPES = [
-  {
-    value: "non_refundable",
-    label: "غير قابل للاسترداد",
-    color: "#ef4444",
-    bg: "#fef2f2",
-  },
-  {
-    value: "free_cancellation",
-    label: "إلغاء مجاني",
-    color: "#16a34a",
-    bg: "#f0fdf4",
-  },
-  { value: "partial", label: "جزئي", color: "#d97706", bg: "#fffbeb" },
+  { value: "non_refundable", labelKey: "rp_typeNonRefundable", color: "#ef4444", bg: "#fef2f2" },
+  { value: "free_cancellation", labelKey: "rp_typeFreeCancellation", color: "#16a34a", bg: "#f0fdf4" },
+  { value: "partial", labelKey: "rp_typePartial", color: "#d97706", bg: "#fffbeb" },
 ];
 
 function getPolicyType(value) {
-  return POLICY_TYPES.find((t) => t.value === value);
+  return POLICY_TYPES.find((pt) => pt.value === value);
 }
 
-function PolicyBadge({ type }) {
-  const t = getPolicyType(type);
-  if (!t) return null;
+function PolicyBadge({ type, t }) {
+  const pt = getPolicyType(type);
+  if (!pt) return null;
   return (
     <span
       className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold"
-      style={{ backgroundColor: t.bg, color: t.color }}
+      style={{ backgroundColor: pt.bg, color: pt.color }}
     >
-      {t.label}
+      {t(pt.labelKey)}
     </span>
   );
 }
 
-function ActionRow({ onDelete, onEdit, onView }) {
+function ActionRow({ onDelete, onEdit, onView, t }) {
   return (
     <div className="flex items-center gap-1 justify-end">
       <button
         onClick={onDelete}
         className="p-1.5 rounded-lg transition-colors hover:bg-red-50 dark:hover:bg-red-900/20"
         style={{ color: "#ef4444" }}
-        title="حذف"
+        title={t("delete")}
       >
         <Trash2 size={15} />
       </button>
@@ -85,7 +76,7 @@ function ActionRow({ onDelete, onEdit, onView }) {
         onClick={onEdit}
         className="p-1.5 rounded-lg transition-colors hover:bg-amber-50 dark:hover:bg-amber-900/20"
         style={{ color: "#f59e0b" }}
-        title="تعديل"
+        title={t("edit")}
       >
         <Pencil size={15} />
       </button>
@@ -93,7 +84,7 @@ function ActionRow({ onDelete, onEdit, onView }) {
         onClick={onView}
         className="p-1.5 rounded-lg transition-colors hover:bg-blue-50 dark:hover:bg-blue-900/20"
         style={{ color: "#3b82f6" }}
-        title="عرض"
+        title={t("view")}
       >
         <Eye size={15} />
       </button>
@@ -110,6 +101,7 @@ const EMPTY_FORM = {
 };
 
 export default function RefundPoliciesPage() {
+  const { t } = useLanguage();
   const [groups] = useLocalStorage("travky_guest_groups", INITIAL_GROUPS);
   const [policies, setPolicies] = useLocalStorage(
     "travky_refund_policies",
@@ -172,7 +164,7 @@ export default function RefundPoliciesPage() {
 
   function handleSave() {
     const errs = {};
-    if (!form.name.trim()) errs.name = "الاسم مطلوب";
+    if (!form.name.trim()) errs.name = t("rp_nameRequired");
     if (Object.keys(errs).length) {
       setErrors(errs);
       return;
@@ -234,10 +226,10 @@ export default function RefundPoliciesPage() {
               className="text-2xl font-bold"
               style={{ color: "var(--text-primary)" }}
             >
-              سياسات الاسترداد
+              {t("rp_title")}
             </h1>
             <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
-              تحديد قواعد الإلغاء والاسترداد
+              {t("rp_subtitle")}
             </p>
           </div>
         </div>
@@ -247,7 +239,7 @@ export default function RefundPoliciesPage() {
           style={{ backgroundColor: "var(--sidebar-active-text)" }}
         >
           <Plus size={15} />
-          <span>إضافة</span>
+          <span>{t("add")}</span>
         </button>
       </div>
 
@@ -263,7 +255,7 @@ export default function RefundPoliciesPage() {
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="بحث..."
+              placeholder={t("search") + "..."}
               className="input"
               style={{ paddingInlineEnd: "2.5rem", width: "16rem" }}
             />
@@ -284,37 +276,37 @@ export default function RefundPoliciesPage() {
                   className="pb-3 text-start font-semibold"
                   style={{ color: "var(--text-secondary)" }}
                 >
-                  الاسم
+                  {t("rp_fieldName")}
                 </th>
                 <th
                   className="pb-3 text-start font-semibold"
                   style={{ color: "var(--text-secondary)" }}
                 >
-                  نوع السياسة
+                  {t("rp_policyType")}
                 </th>
                 <th
                   className="pb-3 text-start font-semibold"
                   style={{ color: "var(--text-secondary)" }}
                 >
-                  أيام قبل الوصول
+                  {t("rp_daysBeforeArrival")}
                 </th>
                 <th
                   className="pb-3 text-start font-semibold"
                   style={{ color: "var(--text-secondary)" }}
                 >
-                  الرسوم
+                  {t("rp_fees")}
                 </th>
                 <th
                   className="pb-3 text-start font-semibold"
                   style={{ color: "var(--text-secondary)" }}
                 >
-                  سعر إضافي
+                  {t("rp_extraPrice")}
                 </th>
                 <th
                   className="pb-3 text-end font-semibold"
                   style={{ color: "var(--text-secondary)" }}
                 >
-                  إجراءات
+                  {t("actions")}
                 </th>
               </tr>
             </thead>
@@ -326,7 +318,7 @@ export default function RefundPoliciesPage() {
                     className="py-10 text-center"
                     style={{ color: "var(--text-muted)" }}
                   >
-                    لا توجد سياسات استرداد بعد
+                    {t("rp_noData")}
                   </td>
                 </tr>
               ) : (
@@ -348,7 +340,7 @@ export default function RefundPoliciesPage() {
                       {policy.name}
                     </td>
                     <td className="py-4">
-                      <PolicyBadge type={policy.type} />
+                      <PolicyBadge type={policy.type} t={t} />
                     </td>
                     <td
                       className="py-4 font-medium"
@@ -356,7 +348,7 @@ export default function RefundPoliciesPage() {
                     >
                       {policy.daysBeforeArrival != null ? (
                         <span className="chip">
-                          {policy.daysBeforeArrival} أيام
+                          {policy.daysBeforeArrival} {t("rp_days")}
                         </span>
                       ) : (
                         "—"
@@ -390,6 +382,7 @@ export default function RefundPoliciesPage() {
                         onDelete={() => handleDelete(policy.id)}
                         onEdit={() => openEdit(policy)}
                         onView={() => openView(policy)}
+                        t={t}
                       />
                     </td>
                   </tr>
@@ -429,10 +422,10 @@ export default function RefundPoliciesPage() {
                 style={{ color: "var(--text-primary)" }}
               >
                 {isView
-                  ? "عرض سياسة الاسترداد"
+                  ? t("rp_viewTitle")
                   : isEdit
-                    ? "تعديل السياسة"
-                    : "إضافة سياسة استرداد"}
+                    ? t("rp_editTitle")
+                    : t("rp_addTitle")}
               </h2>
             </div>
 
@@ -443,7 +436,7 @@ export default function RefundPoliciesPage() {
                     className="text-xs font-medium mb-1"
                     style={{ color: "var(--text-secondary)" }}
                   >
-                    الاسم
+                    {t("rp_fieldName")}
                   </p>
                   <p
                     className="font-semibold"
@@ -457,9 +450,9 @@ export default function RefundPoliciesPage() {
                     className="text-xs font-medium mb-1"
                     style={{ color: "var(--text-secondary)" }}
                   >
-                    نوع السياسة
+                    {t("rp_policyType")}
                   </p>
-                  <PolicyBadge type={modal.data.type} />
+                  <PolicyBadge type={modal.data.type} t={t} />
                 </div>
                 {modal.data.daysBeforeArrival != null && (
                   <div>
@@ -467,7 +460,7 @@ export default function RefundPoliciesPage() {
                       className="text-xs font-medium mb-1"
                       style={{ color: "var(--text-secondary)" }}
                     >
-                      أيام قبل الوصول
+                      {t("rp_daysBeforeArrival")}
                     </p>
                     <p
                       className="font-semibold"
@@ -482,7 +475,7 @@ export default function RefundPoliciesPage() {
                     className="text-xs font-medium mb-1"
                     style={{ color: "var(--text-secondary)" }}
                   >
-                    الرسوم
+                    {t("rp_fees")}
                   </p>
                   <p
                     className="font-semibold"
@@ -496,7 +489,7 @@ export default function RefundPoliciesPage() {
                     className="text-xs font-medium mb-2"
                     style={{ color: "var(--text-secondary)" }}
                   >
-                    سعر إضافي
+                    {t("rp_extraPrice")}
                   </p>
                   <div className="space-y-2">
                     {groups.map((g) => (
@@ -525,7 +518,7 @@ export default function RefundPoliciesPage() {
                   onClick={closeModal}
                   className="btn btn-secondary w-full mt-2"
                 >
-                  إغلاق
+                  {t("close")}
                 </button>
               </div>
             ) : (
@@ -535,7 +528,7 @@ export default function RefundPoliciesPage() {
                     className="block text-sm font-medium mb-1.5"
                     style={{ color: "var(--text-primary)" }}
                   >
-                    الاسم
+                    {t("rp_fieldName")}
                   </label>
                   <input
                     value={form.name}
@@ -555,23 +548,23 @@ export default function RefundPoliciesPage() {
                     className="block text-sm font-medium mb-2"
                     style={{ color: "var(--text-primary)" }}
                   >
-                    نوع السياسة
+                    {t("rp_policyType")}
                   </label>
                   <div className="flex gap-1.5">
-                    {POLICY_TYPES.map((t) => (
+                    {POLICY_TYPES.map((pt) => (
                       <button
-                        key={t.value}
+                        key={pt.value}
                         type="button"
                         onClick={() =>
-                          setForm((p) => ({ ...p, type: t.value }))
+                          setForm((p) => ({ ...p, type: pt.value }))
                         }
                         className="flex-1 py-2 px-2 rounded-xl text-xs font-semibold transition-all border-2"
                         style={
-                          form.type === t.value
+                          form.type === pt.value
                             ? {
-                                backgroundColor: t.bg,
-                                color: t.color,
-                                borderColor: t.color,
+                                backgroundColor: pt.bg,
+                                color: pt.color,
+                                borderColor: pt.color,
                               }
                             : {
                                 backgroundColor: "var(--bg-raised)",
@@ -580,7 +573,7 @@ export default function RefundPoliciesPage() {
                               }
                         }
                       >
-                        {t.label}
+                        {t(pt.labelKey)}
                       </button>
                     ))}
                   </div>
@@ -592,12 +585,12 @@ export default function RefundPoliciesPage() {
                       className="block text-sm font-medium mb-2"
                       style={{ color: "var(--text-primary)" }}
                     >
-                      أيام قبل الوصول
+                      {t("rp_daysBeforeArrival")}
                       <span
                         className="ms-2 font-bold"
                         style={{ color: "var(--sidebar-active-text)" }}
                       >
-                        {form.daysBeforeArrival} أيام
+                        {form.daysBeforeArrival} {t("rp_days")}
                       </span>
                     </label>
                     <div className="flex items-center gap-3">
@@ -605,7 +598,7 @@ export default function RefundPoliciesPage() {
                         className="text-xs"
                         style={{ color: "var(--text-muted)" }}
                       >
-                        30 يوم
+                        {t("rp_30day")}
                       </span>
                       <input
                         type="range"
@@ -625,7 +618,7 @@ export default function RefundPoliciesPage() {
                         className="text-xs"
                         style={{ color: "var(--text-muted)" }}
                       >
-                        1 يوم
+                        {t("rp_1day")}
                       </span>
                     </div>
                   </div>
@@ -637,7 +630,7 @@ export default function RefundPoliciesPage() {
                       className="block text-sm font-medium mb-1.5"
                       style={{ color: "var(--text-primary)" }}
                     >
-                      نسبة الرسوم (%)
+                      {t("rp_fieldFeesPercent")}
                     </label>
                     <input
                       type="number"
@@ -660,13 +653,13 @@ export default function RefundPoliciesPage() {
                     className="text-sm font-medium mb-2"
                     style={{ color: "var(--text-primary)" }}
                   >
-                    سعر إضافي
+                    {t("rp_extraPrice")}
                   </p>
                   <p
                     className="text-xs mb-3"
                     style={{ color: "var(--text-secondary)" }}
                   >
-                    سعر إضافي يُضاف فوق سعر الغرفة لهذه الخطة
+                    {t("rp_extraPriceHint")}
                   </p>
                   <div className="space-y-2">
                     {groups.map((g) => (
@@ -692,14 +685,14 @@ export default function RefundPoliciesPage() {
 
                 <div className="flex gap-2.5 pt-2 justify-end">
                   <button onClick={closeModal} className="btn btn-secondary">
-                    إلغاء
+                    {t("cancel")}
                   </button>
                   <button
                     onClick={handleSave}
                     className="btn text-white"
                     style={{ backgroundColor: "var(--sidebar-active-text)" }}
                   >
-                    حفظ
+                    {t("save")}
                   </button>
                 </div>
               </div>
