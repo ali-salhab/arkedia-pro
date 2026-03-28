@@ -15,6 +15,11 @@ const INITIAL_ROOM_TYPES = [
   { id: "dbl", code: "DBL", nameEn: "Double Room", nameAr: "غرفة مزدوجة", roomType: "DBL Room" },
 ];
 
+const INITIAL_SUPPLEMENTS = [
+  { id: "1", name: "Sea View",  prices: {} },
+  { id: "2", name: "Pool View", prices: {} },
+];
+
 const INITIAL_PERIODS = [
   { id: "1", name: "Low Season", from: "", to: "" },
   { id: "2", name: "High Season", from: "", to: "" },
@@ -71,13 +76,24 @@ function ActionRow({ onDelete, onEdit, onView }) {
   );
 }
 
-function getRoomLabel(room) {
-  return `${room.code} (${room.roomType || room.nameEn})`;
+// roomKey format: "<roomId>" for base, "<roomId>::<supplementId>" for supplement combos
+function makeRoomKey(roomId, supplementId) {
+  return supplementId ? `${roomId}::${supplementId}` : roomId;
+}
+function parseRoomKey(key) {
+  const [roomId, supplementId] = (key || "").split("::");
+  return { roomId: roomId || "", supplementId: supplementId || null };
+}
+function buildRoomLabel(room, supplement) {
+  const base = `${room.code} (${room.roomType || room.nameEn})`;
+  if (!supplement) return base;
+  return `${room.code} - ${supplement.name} (${room.roomType || room.nameEn})`;
 }
 
 export default function AvailabilityPage() {
-  const [roomTypes] = useLocalStorage("travky_room_types", INITIAL_ROOM_TYPES);
-  const [periods]   = useLocalStorage("travky_periods",    INITIAL_PERIODS);
+  const [roomTypes]    = useLocalStorage("travky_room_types",   INITIAL_ROOM_TYPES);
+  const [supplements]  = useLocalStorage("travky_supplements",  INITIAL_SUPPLEMENTS);
+  const [periods]      = useLocalStorage("travky_periods",       INITIAL_PERIODS);
   const [availability, setAvailability] = useLocalStorage(
     "travky_availability",
     SAMPLE_AVAILABILITY,
@@ -92,21 +108,32 @@ export default function AvailabilityPage() {
   });
   const [errors, setErrors] = useState({});
 
-  const filtered = availability.filter((a) => {
-    const room   = roomTypes.find((r) => r.id === a.roomId);
+  // Flat list of all room options (base + supplement combos per room)
+  const roomOptions = roomTypes.flatMap((r) => [
+    { key: makeRoomKey(r.id, null), label: buildRoomLabel(r, null) },
+    ...supplements.map((s) => ({
+      key: makeRoomKey(r.id, s.id),
+      label: buildRoomLabel(r, s),
+    })),
+  ]);
+
+  function getRoomName(roomKey) {
+    const opt = roomOptions.find((o) => o.key === roomKey);
+    if (opt) return opt.label;
+    // fallback: parse and build
+    const { roomId, supplementId } = parseRoomKey(roomKey);
+    const r = roomTypes.find((x) => x.id === roomId);
+    const s = supplements.find((x) => x.id === supplementId);
+    return r ? buildRoomLabel(r, s || null) : roomKey;
+  }
+    const label = getRoomName(a.roomId);
     const period = periods.find((p) => p.id === a.periodId);
-    const roomLabel   = room   ? getRoomLabel(room)   : "";
-    const periodLabel = period ? period.name           : "";
+    const periodLabel = period ? period.name : "";
     return (
-      roomLabel.toLowerCase().includes(search.toLowerCase()) ||
+      label.toLowerCase().includes(search.toLowerCase()) ||
       periodLabel.toLowerCase().includes(search.toLowerCase())
     );
   });
-
-  function getRoomName(roomId) {
-    const r = roomTypes.find((x) => x.id === roomId);
-    return r ? getRoomLabel(r) : roomId;
-  }
 
   function getPeriodName(periodId) {
     const p = periods.find((x) => x.id === periodId);
@@ -455,9 +482,9 @@ export default function AvailabilityPage() {
                     className="input"
                   >
                     <option value="">...Select room</option>
-                    {roomTypes.map((r) => (
-                      <option key={r.id} value={r.id}>
-                        {getRoomLabel(r)}
+                    {roomOptions.map((opt) => (
+                      <option key={opt.key} value={opt.key}>
+                        {opt.label}
                       </option>
                     ))}
                   </select>
