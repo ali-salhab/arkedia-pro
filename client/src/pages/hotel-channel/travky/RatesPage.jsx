@@ -72,6 +72,11 @@ const INIT_REFUNDS = [
   { id: "1", name: "Non-Refundable",    type: "non_refundable",    extraPrices: {} },
   { id: "2", name: "Free Cancellation", type: "free_cancellation", extraPrices: {} },
 ];
+const INIT_SUPPLEMENTS = [
+  { id: "1", name: "Sea View",  prices: {} },
+  { id: "2", name: "Pool View", prices: {} },
+];
+
 const INIT_PLATFORM_FEES = { b2c: { platformFee: "3", minCommission: "4" }, b2b: { platformFee: "2.5", minCommission: "10" } };
 const INIT_HOTEL_COMM   = { b2c: { minCommission: "0" }, b2b: { minCommission: "0" } };
 
@@ -99,6 +104,7 @@ export default function RatesPage() {
   const [periods]        = useLocalStorage("travky_periods",          INIT_PERIODS);
   const [roomTypes]      = useLocalStorage("travky_room_types",       INIT_ROOMS);
   const [mealPlans]      = useLocalStorage("travky_meal_plans",       INIT_MEALS);
+  const [supplements]    = useLocalStorage("travky_supplements",     INIT_SUPPLEMENTS);
   const [refundPolicies] = useLocalStorage("travky_refund_policies",  INIT_REFUNDS);
   const [dblPrices, setDblPrices] = useLocalStorage("travky_dbl_prices", {});
   const [platformFees]   = useLocalStorage("platform_fees",           INIT_PLATFORM_FEES);
@@ -107,8 +113,15 @@ export default function RatesPage() {
   // UI state
   const [selectedGroupId, setSelectedGroupId] = useState(null);
   const [expandedRooms,   setExpandedRooms]   = useState({});
-  const [activePeriod,    setActivePeriod]    = useState({});  // roomId → periodId
+  const [activePeriod,    setActivePeriod]    = useState({});  // rowKey → periodId
 
+  // Build rows: base room + one per supplement
+  const rows = roomTypes.flatMap((room) => [
+    { room, supplement: null },
+    ...supplements.map((supp) => ({ room, supplement: supp })),
+  ]);
+
+  const combosPerRow = periods.length * mealPlans.length * refundPolicies.length;
   const displayGroupId = selectedGroupId ?? groups[0]?.id ?? null;
   const displayGroup   = groups.find((g) => g.id === displayGroupId) ?? groups[0];
 
@@ -119,14 +132,14 @@ export default function RatesPage() {
     }));
   }
 
-  function toggleRoom(id) {
-    setExpandedRooms((p) => ({ ...p, [id]: !p[id] }));
-    if (!activePeriod[id]) {
-      setActivePeriod((p) => ({ ...p, [id]: periods[0]?.id }));
+  function toggleRoom(rowKey) {
+    setExpandedRooms((p) => ({ ...p, [rowKey]: !p[rowKey] }));
+    if (!activePeriod[rowKey]) {
+      setActivePeriod((p) => ({ ...p, [rowKey]: periods[0]?.id }));
     }
   }
 
-  function calcNetRate(room, mealPlan, refundPolicy, periodId, groupId) {
+  function calcNetRate(room, supplement, mealPlan, refundPolicy, periodId, groupId) {
     const base = toNum(dblPrices[periodId]?.[groupId]);
     let roomAdj = 0;
     if (!room.isBase) {
@@ -142,9 +155,10 @@ export default function RatesPage() {
           : -(base * toNum(room.pricePercent) / 100);
       }
     }
+    const suppPrice = toNum(supplement?.prices?.[groupId]);
     const mealAdj   = toNum(mealPlan?.prices?.[groupId]);
     const refundAdj = toNum(refundPolicy?.extraPrices?.[groupId]);
-    return Math.round(base + roomAdj + mealAdj + refundAdj);
+    return Math.round(base + roomAdj + suppPrice + mealAdj + refundAdj);
   }
 
   function withCommission(net, tier) {
@@ -329,9 +343,10 @@ export default function RatesPage() {
 
         {/* Room accordion rows */}
         <div className="space-y-3">
-          {roomTypes.map((room) => {
-            const isOpen       = !!expandedRooms[room.id];
-            const actPeriodId  = activePeriod[room.id] ?? periods[0]?.id;
+          {rows.map(({ room, supplement }) => {
+            const rowKey       = `${room.id}-${supplement?.id ?? "base"}`;
+            const isOpen       = !!expandedRooms[rowKey];
+            const actPeriodId  = activePeriod[rowKey] ?? periods[0]?.id;
             const bedSets      = room.bedOptionSets || [];
             const firstOtherBed = (bedSets[0]?.otherBeds || [])[0];
             const capOpts      = room.capacityOptions || [];
@@ -340,18 +355,19 @@ export default function RatesPage() {
             const MAX_AM       = 6;
             const shownAmens   = amenities.slice(0, MAX_AM);
             const overflowAm   = amenities.length - MAX_AM;
-            const roomName     = lang === "ar" ? (room.nameAr || room.nameEn) : room.nameEn;
+            const baseName     = lang === "ar" ? (room.nameAr || room.nameEn) : room.nameEn;
+            const rowName      = supplement ? `${room.code} - ${supplement.name}` : baseName;
 
             return (
               <div
-                key={room.id}
+                key={rowKey}
                 className="rounded-2xl overflow-hidden"
                 style={{ border: "1px solid var(--border)" }}
               >
                 {/* ── Collapsed header ──────────────────── */}
                 <button
                   type="button"
-                  onClick={() => toggleRoom(room.id)}
+                  onClick={() => toggleRoom(rowKey)}
                   className="w-full flex items-center justify-between px-4 py-3 gap-3"
                   style={{ backgroundColor: "var(--bg-surface)" }}
                 >
@@ -365,7 +381,7 @@ export default function RatesPage() {
                         color: "var(--text-primary)",
                       }}
                     >
-                      {combosPerRoom}
+                      {combosPerRow}
                     </span>
                     <ChevronDown
                       size={16}
@@ -381,19 +397,31 @@ export default function RatesPage() {
                   <div className="flex items-center gap-2.5 min-w-0">
                     <div className="min-w-0 text-end">
                       <p className="text-sm font-bold" style={{ color: "var(--text-primary)" }}>
-                        {roomName}
-                      </p>
-                      <div className="flex items-center gap-1.5 justify-end mt-0.5 flex-wrap">
-                        {room.roomType && (
-                          <span
-                            className="text-xs px-2 py-0.5 rounded-md"
-                            style={{
-                              backgroundColor: "var(--bg-raised)",
-                              border: "1px solid var(--border)",
-                              color: "var(--text-secondary)",
-                            }}
-                          >
-                            {room.roomType}
+                          {rowName}
+                        </p>
+                        <div className="flex items-center gap-1.5 justify-end mt-0.5 flex-wrap">
+                          {room.roomType && (
+                            <span
+                              className="text-xs px-2 py-0.5 rounded-md"
+                              style={{
+                                backgroundColor: "var(--bg-raised)",
+                                border: "1px solid var(--border)",
+                                color: "var(--text-secondary)",
+                              }}
+                            >
+                              {room.roomType}
+                            </span>
+                          )}
+                          {supplement && (
+                            <span
+                              className="text-xs px-2 py-0.5 rounded-md font-medium"
+                              style={{
+                                backgroundColor: "#eff6ff",
+                                border: "1px solid #bfdbfe",
+                                color: "#1d4ed8",
+                              }}
+                            >
+                              {supplement.name}
                           </span>
                         )}
                       </div>
@@ -541,7 +569,7 @@ export default function RatesPage() {
                             <button
                               key={p.id}
                               onClick={() =>
-                                setActivePeriod((prev) => ({ ...prev, [room.id]: p.id }))
+                                setActivePeriod((prev) => ({ ...prev, [rowKey]: p.id }))
                               }
                               className="px-4 py-2 rounded-xl text-xs font-semibold transition-all text-end"
                               style={{
@@ -571,11 +599,14 @@ export default function RatesPage() {
                       >
                         {mealPlans.flatMap((mp) =>
                           refundPolicies.map((rp) => {
-                            const netRate = calcNetRate(room, mp, rp, actPeriodId, displayGroupId);
+                            const netRate = calcNetRate(room, supplement, mp, rp, actPeriodId, displayGroupId);
                             const b2b     = withCommission(netRate, "b2b");
                             const b2c     = withCommission(netRate, "b2c");
                             const rpColor = POLICY_COLORS[rp.type] ?? "var(--text-secondary)";
                             const currency = displayGroup?.currency ?? "";
+                            const cardTitle = supplement
+                              ? `${room.code} — ${supplement.name} & ${mp.name} & ${rp.name}`
+                              : `${room.code} — ${mp.name} & ${rp.name}`;
 
                             return (
                               <div
@@ -592,7 +623,7 @@ export default function RatesPage() {
                                   className="text-sm font-bold mb-2 leading-tight text-end"
                                   style={{ color: "var(--text-primary)" }}
                                 >
-                                  {room.code} — {mp.name} & {rp.name}
+                                  {cardTitle}
                                 </p>
 
                                 {/* Bullets */}

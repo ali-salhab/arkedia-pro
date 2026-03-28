@@ -12,7 +12,12 @@ import { useLocalStorage } from "../../../hooks/useLocalStorage";
 import DeleteConfirmModal from "../../../components/DeleteConfirmModal";
 
 const INITIAL_ROOM_TYPES = [
-  { id: "dbl", code: "DBL", nameEn: "Double Room", nameAr: "غرفة مزدوجة" },
+  { id: "dbl", code: "DBL", nameEn: "Double Room", nameAr: "غرفة مزدوجة", roomType: "DBL Room" },
+];
+
+const INITIAL_PERIODS = [
+  { id: "1", name: "Low Season", from: "", to: "" },
+  { id: "2", name: "High Season", from: "", to: "" },
 ];
 
 const STATUS_OPTIONS = [
@@ -35,7 +40,7 @@ function StatusBadge({ status }) {
 }
 
 const SAMPLE_AVAILABILITY = [
-  { id: "1", roomId: "dbl", date: "2024-03-15", available: 15, status: "open" },
+  { id: "1", roomId: "dbl", periodId: "1", available: 15, status: "open" },
 ];
 
 function ActionRow({ onDelete, onEdit, onView }) {
@@ -66,8 +71,13 @@ function ActionRow({ onDelete, onEdit, onView }) {
   );
 }
 
+function getRoomLabel(room) {
+  return `${room.code} (${room.roomType || room.nameEn})`;
+}
+
 export default function AvailabilityPage() {
   const [roomTypes] = useLocalStorage("travky_room_types", INITIAL_ROOM_TYPES);
+  const [periods]   = useLocalStorage("travky_periods",    INITIAL_PERIODS);
   const [availability, setAvailability] = useLocalStorage(
     "travky_availability",
     SAMPLE_AVAILABILITY,
@@ -76,30 +86,39 @@ export default function AvailabilityPage() {
   const [modal, setModal] = useState(null);
   const [form, setForm] = useState({
     roomId: "",
-    date: "",
+    periodId: "",
     available: "",
     status: "open",
   });
   const [errors, setErrors] = useState({});
 
   const filtered = availability.filter((a) => {
-    const room = roomTypes.find((r) => r.id === a.roomId);
-    const roomName = room ? room.nameAr || room.nameEn : "";
+    const room   = roomTypes.find((r) => r.id === a.roomId);
+    const period = periods.find((p) => p.id === a.periodId);
+    const roomLabel   = room   ? getRoomLabel(room)   : "";
+    const periodLabel = period ? period.name           : "";
     return (
-      roomName.toLowerCase().includes(search.toLowerCase()) ||
-      a.date.includes(search)
+      roomLabel.toLowerCase().includes(search.toLowerCase()) ||
+      periodLabel.toLowerCase().includes(search.toLowerCase())
     );
   });
 
   function getRoomName(roomId) {
     const r = roomTypes.find((x) => x.id === roomId);
-    return r ? r.nameAr || r.nameEn : roomId;
+    return r ? getRoomLabel(r) : roomId;
+  }
+
+  function getPeriodName(periodId) {
+    const p = periods.find((x) => x.id === periodId);
+    if (!p) return periodId;
+    if (p.from && p.to) return `${p.name} (${p.from} — ${p.to})`;
+    return p.name;
   }
 
   function openAdd() {
     setForm({
-      roomId: roomTypes[0]?.id || "",
-      date: "",
+      roomId: "",
+      periodId: periods[0]?.id || "",
       available: "",
       status: "open",
     });
@@ -110,7 +129,7 @@ export default function AvailabilityPage() {
   function openEdit(item) {
     setForm({
       roomId: item.roomId,
-      date: item.date,
+      periodId: item.periodId,
       available: item.available,
       status: item.status,
     });
@@ -129,8 +148,8 @@ export default function AvailabilityPage() {
 
   function handleSave() {
     const errs = {};
-    if (!form.roomId) errs.roomId = "اختر الغرفة";
-    if (!form.date) errs.date = "التاريخ مطلوب";
+    if (!form.roomId)   errs.roomId   = "اختر الغرفة";
+    if (!form.periodId) errs.periodId = "اختر الفترة";
     if (form.available === "" || form.available < 0)
       errs.available = "الكمية مطلوبة";
     if (Object.keys(errs).length) {
@@ -242,7 +261,7 @@ export default function AvailabilityPage() {
                   className="pb-3 text-start font-semibold"
                   style={{ color: "var(--text-secondary)" }}
                 >
-                  التاريخ
+                  الفترة
                 </th>
                 <th
                   className="pb-3 text-start font-semibold"
@@ -297,7 +316,7 @@ export default function AvailabilityPage() {
                       className="py-4"
                       style={{ color: "var(--text-secondary)" }}
                     >
-                      {item.date}
+                      {getPeriodName(item.periodId)}
                     </td>
                     <td
                       className="py-4 font-semibold"
@@ -380,13 +399,13 @@ export default function AvailabilityPage() {
                     className="text-xs font-medium mb-1"
                     style={{ color: "var(--text-secondary)" }}
                   >
-                    التاريخ
+                    الفترة
                   </p>
                   <p
                     className="font-semibold"
                     style={{ color: "var(--text-primary)" }}
                   >
-                    {modal.data.date}
+                    {getPeriodName(modal.data.periodId)}
                   </p>
                 </div>
                 <div>
@@ -435,9 +454,10 @@ export default function AvailabilityPage() {
                     }
                     className="input"
                   >
+                    <option value="">...Select room</option>
                     {roomTypes.map((r) => (
                       <option key={r.id} value={r.id}>
-                        {r.nameAr || r.nameEn}
+                        {getRoomLabel(r)}
                       </option>
                     ))}
                   </select>
@@ -450,18 +470,26 @@ export default function AvailabilityPage() {
                     className="block text-sm font-medium mb-1.5"
                     style={{ color: "var(--text-primary)" }}
                   >
-                    التاريخ
+                    الفترة
                   </label>
-                  <input
-                    type="date"
-                    value={form.date}
+                  <select
+                    value={form.periodId}
                     onChange={(e) =>
-                      setForm((p) => ({ ...p, date: e.target.value }))
+                      setForm((p) => ({ ...p, periodId: e.target.value }))
                     }
                     className="input"
-                  />
-                  {errors.date && (
-                    <p className="input-error mt-1">{errors.date}</p>
+                  >
+                    <option value="">...Select period</option>
+                    {periods.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.from && p.to
+                          ? `${p.name} (${p.from} — ${p.to})`
+                          : p.name}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.periodId && (
+                    <p className="input-error mt-1">{errors.periodId}</p>
                   )}
                 </div>
                 <div>
@@ -469,7 +497,7 @@ export default function AvailabilityPage() {
                     className="block text-sm font-medium mb-1.5"
                     style={{ color: "var(--text-primary)" }}
                   >
-                    الكمية
+                    المتاح
                   </label>
                   <input
                     type="number"
