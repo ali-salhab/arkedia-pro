@@ -44,11 +44,137 @@ const INITIAL_GROUPS = [
 ];
 
 const INITIAL_PERIODS = [
-  { id: "1", name: "Low Season" },
-  { id: "2", name: "Mid Season" },
-  { id: "3", name: "High Season" },
-  { id: "4", name: "Peak Season" },
+  { id: "1", name: "Low Season",  from: "2025-01-01", to: "2025-03-31" },
+  { id: "2", name: "Mid Season",  from: "2025-04-01", to: "2025-06-30" },
+  { id: "3", name: "High Season", from: "2025-07-01", to: "2025-09-30" },
+  { id: "4", name: "Peak Season", from: "2025-12-15", to: "2025-12-31" },
 ];
+
+// ─── Date range picker helpers ───────────────────────────────────────────────
+const MONTH_NAMES = [
+  "January","February","March","April","May","June",
+  "July","August","September","October","November","December",
+];
+const DAY_NAMES = ["SU","MO","TU","WE","TH","FR","SA"];
+
+function toDateStr(y, m, d) {
+  return `${y}-${String(m + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+}
+
+function addMonths(year, month, delta) {
+  let mo = month + delta, yr = year;
+  while (mo > 11) { mo -= 12; yr++; }
+  while (mo < 0)  { mo += 12; yr--; }
+  return { year: yr, month: mo };
+}
+
+function DateRangePicker({ from, to, onChange }) {
+  const today = new Date();
+  const todayStr = toDateStr(today.getFullYear(), today.getMonth(), today.getDate());
+  const initDate = from ? new Date(from + "T00:00:00") : today;
+  const [viewYear, setViewYear] = useState(initDate.getFullYear());
+  const [viewMonth, setViewMonth] = useState(initDate.getMonth());
+  const [hoverDate, setHoverDate] = useState(null);
+
+  const left  = { year: viewYear, month: viewMonth };
+  const right = addMonths(viewYear, viewMonth, 1);
+
+  function prevM() { const p = addMonths(viewYear, viewMonth, -1); setViewYear(p.year); setViewMonth(p.month); }
+  function nextM() { const p = addMonths(viewYear, viewMonth,  1); setViewYear(p.year); setViewMonth(p.month); }
+
+  function handleClick(ds) {
+    if (!from || (from && to)) { onChange({ from: ds, to: "" }); }
+    else if (ds === from)      { onChange({ from: "", to: "" }); }
+    else if (ds < from)        { onChange({ from: ds, to: from }); }
+    else                       { onChange({ from, to: ds }); }
+  }
+
+  const effectiveTo = to || (from && !to && hoverDate && hoverDate > from ? hoverDate : "");
+
+  function renderMonth(year, month, showPrev, showNext) {
+    const firstDow = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const cells = [];
+    for (let i = 0; i < firstDow; i++) cells.push(null);
+    for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+    while (cells.length % 7 !== 0) cells.push(null);
+    return (
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center justify-between mb-2 px-1">
+          {showPrev
+            ? <button type="button" onClick={prevM} className="p-1 rounded hover:opacity-60" style={{ color: "var(--text-muted)" }}><ChevronLeft size={16} /></button>
+            : <div className="w-6" />}
+          <span className="text-sm font-bold" style={{ color: "var(--text-primary)" }}>{MONTH_NAMES[month]} {year}</span>
+          {showNext
+            ? <button type="button" onClick={nextM} className="p-1 rounded hover:opacity-60" style={{ color: "var(--text-muted)" }}><ChevronRight size={16} /></button>
+            : <div className="w-6" />}
+        </div>
+        <div className="grid grid-cols-7 mb-1">
+          {DAY_NAMES.map((d) => (
+            <div key={d} className="text-center text-xs font-semibold py-1" style={{ color: "var(--text-muted)" }}>{d}</div>
+          ))}
+        </div>
+        <div className="grid grid-cols-7">
+          {cells.map((d, i) => {
+            if (!d) return <div key={i} className="h-8" />;
+            const ds = toDateStr(year, month, d);
+            const isStart = ds === from;
+            const isEnd   = ds === to || (!to && hoverDate && ds === hoverDate && from && hoverDate > from);
+            const inRange = !!effectiveTo && !!from && ds > from && ds < effectiveTo;
+            const isToday = ds === todayStr;
+            return (
+              <div key={i} className="h-8 flex items-center justify-center"
+                style={{ backgroundColor: inRange ? "rgba(99,102,241,0.12)" : "transparent" }}>
+                <button
+                  type="button"
+                  onClick={() => handleClick(ds)}
+                  onMouseEnter={() => from && !to && setHoverDate(ds)}
+                  onMouseLeave={() => setHoverDate(null)}
+                  className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium transition-colors hover:opacity-80"
+                  style={{
+                    backgroundColor: (isStart || isEnd) ? "var(--sidebar-active-text)" : "transparent",
+                    color: (isStart || isEnd) ? "#fff" : "var(--text-primary)",
+                    outline: isToday && !isStart && !isEnd ? "2px solid var(--sidebar-active-text)" : "none",
+                    outlineOffset: "-2px",
+                  }}
+                >{d}</button>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-xl p-3" style={{ border: "1px solid var(--border)", backgroundColor: "var(--bg-raised)" }} dir="ltr">
+      <div className="flex items-center gap-2 mb-3 px-1 h-7">
+        <span className="text-xs font-semibold px-2.5 py-1 rounded-lg" style={{
+          backgroundColor: from ? "var(--sidebar-active-text)" : "var(--bg-surface)",
+          color: from ? "#fff" : "var(--text-muted)",
+          border: from ? "none" : "1px solid var(--border)",
+        }}>{from || "Start date"}</span>
+        <ChevronRight size={12} style={{ color: "var(--text-muted)" }} />
+        <span className="text-xs font-semibold px-2.5 py-1 rounded-lg" style={{
+          backgroundColor: to ? "var(--sidebar-active-text)" : "var(--bg-surface)",
+          color: to ? "#fff" : "var(--text-muted)",
+          border: to ? "none" : "1px solid var(--border)",
+        }}>{to || "End date"}</span>
+        {(from || to) && (
+          <button type="button" onClick={() => onChange({ from: "", to: "" })} className="ml-auto rounded hover:opacity-60" style={{ color: "var(--text-muted)" }}>
+            <X size={13} />
+          </button>
+        )}
+      </div>
+      <div className="flex gap-4">
+        {renderMonth(left.year, left.month, true, false)}
+        <div className="w-px shrink-0" style={{ backgroundColor: "var(--border)" }} />
+        {renderMonth(right.year, right.month, false, true)}
+      </div>
+    </div>
+  );
+}
+// ─────────────────────────────────────────────────────────────────────────────
 
 const ROOM_TYPES_OPTIONS = [
   "DBL Room",
@@ -60,6 +186,9 @@ const ROOM_TYPES_OPTIONS = [
 ];
 
 const PRICE_FORMULA_DIRECTIONS = [
+  { value: "personMultiplyDeduct", labelKey: "formulaPersonMultiplyDeduct" },
+  { value: "personMultiply", labelKey: "formulaPersonMultiply" },
+  { value: "personAddPct", labelKey: "formulaPersonAddPct" },
   { value: "add", labelKey: "formulaAdd" },
   { value: "less", labelKey: "formulaLess" },
 ];
@@ -230,6 +359,13 @@ const TXT = {
     priceMethodPct: "% Percentage",
     pctAdd: "% Add",
     pctSubtract: "% Subtract",
+    fixedAmountLabel: "Fixed Amount",
+    basePriceLabel: "Room Price",
+    basePriceNote: "Enter the base room price per season and guest group. Person price = Room price ÷ capacity.",
+    addPeriodBtn: "Add Period",
+    periodNameLabel: "Name",
+    periodRangeLabel: "From → To",
+    periodNamePlaceholder: "e.g. High Season",
     roomTypeFormLabel: "Room Type",
     capOptionsTitle: "Capacity Options",
     free: "Free",
@@ -285,12 +421,22 @@ const TXT = {
     back: "رجوع",
     save: "حفظ",
     priceFormulaLabel: "معادلة حساب السعر",
+    formulaPersonMultiplyDeduct: "N× (Person In DBL - D)",
+    formulaPersonMultiply: "Person In DBL ×N",
+    formulaPersonAddPct: "Person In DBL +%",
     formulaAdd: "Add to DBL Price",
     formulaLess: "Less than DBL Price",
     priceMethodFixed: "Fixed Amount",
     priceMethodPct: "% Percentage",
     pctAdd: "% Add",
     pctSubtract: "% Subtract",
+    fixedAmountLabel: "مبلغ ثابت",
+    basePriceLabel: "سعر الغرفة",
+    basePriceNote: "أدخل سعر الغرفة الأساسية لكل موسم ومجموعة ضيوف. سعر الشخص = سعر الغرفة ÷ عدد البالغين",
+    addPeriodBtn: "إضافة فترة",
+    periodNameLabel: "الاسم",
+    periodRangeLabel: "من → إلى",
+    periodNamePlaceholder: "مثال: موسم الذروة",
     roomTypeFormLabel: "نوع الغرفة",
     capOptionsTitle: "خيارات السعة",
     free: "مجاني",
@@ -307,9 +453,13 @@ const EMPTY_FORM = {
   descEn: "",
   descAr: "",
   roomType: "DBL Room",
-  priceFormula: "add",
+  priceFormula: "personMultiply",
   priceMethod: "percentage",
   pricePercent: 0,
+  pricePercentPerson: 50,
+  priceMultiplier: 3,
+  priceDeduction: 25,
+  priceFixed: 0,
   amenities: [],
   capacityOptions: [{ adults: 2, children: 0, childConfigs: [] }],
   bedOptionSets: [{ singleBed: 0, extraDoubleBed: 0, extraLargeBed: 0, otherBeds: [] }],
@@ -346,7 +496,7 @@ export default function RoomTypesPage() {
   const dir = lang === "en" ? "ltr" : "rtl";
 
   const [groups] = useLocalStorage("travky_guest_groups", INITIAL_GROUPS);
-  const [periods] = useLocalStorage("travky_periods", INITIAL_PERIODS);
+  const [periods, setPeriods] = useLocalStorage("travky_periods", INITIAL_PERIODS);
   const [supplements] = useLocalStorage("travky_supplements", []);
   const [roomTypes, setRoomTypes] = useLocalStorage(
     "travky_room_types",
@@ -361,6 +511,37 @@ export default function RoomTypesPage() {
   const [errors, setErrors] = useState({});
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleteBaseTarget, setDeleteBaseTarget] = useState(null);
+  const [periodModal, setPeriodModal] = useState(false);
+  const [periodForm, setPeriodForm] = useState({ name: "", from: "", to: "" });
+  const [periodErrors, setPeriodErrors] = useState({});
+
+  function openAddPeriod() {
+    setPeriodForm({ name: "", from: "", to: "" });
+    setPeriodErrors({});
+    setPeriodModal(true);
+  }
+  function closePeriodModal() {
+    setPeriodModal(false);
+    setPeriodErrors({});
+  }
+  function handlePeriodSave() {
+    const errs = {};
+    if (!periodForm.name.trim()) errs.name = "Name is required";
+    if (!periodForm.from) errs.from = "Start date is required";
+    if (!periodForm.to) errs.to = "End date is required";
+    if (Object.keys(errs).length) { setPeriodErrors(errs); return; }
+    const newPeriod = { id: Date.now().toString(), ...periodForm };
+    setPeriods((prev) => [...prev, newPeriod]);
+    // also initialise priceDiffs for this new period in the open room form
+    setForm((f) => ({
+      ...f,
+      priceDiffs: {
+        ...f.priceDiffs,
+        [newPeriod.id]: Object.fromEntries(groups.map((g) => [g.id, 0])),
+      },
+    }));
+    closePeriodModal();
+  }
 
   const mainImageRef = useRef(null);
   const galleryRef = useRef(null);
@@ -401,9 +582,13 @@ export default function RoomTypesPage() {
       descEn: room.descEn,
       descAr: room.descAr,
       roomType: room.roomType,
-      priceFormula: room.priceFormula || "add",
+      priceFormula: room.priceFormula || "personMultiply",
       priceMethod: room.priceMethod || "percentage",
       pricePercent: room.pricePercent ?? 0,
+      pricePercentPerson: room.pricePercentPerson ?? 50,
+      priceMultiplier: room.priceMultiplier ?? 3,
+      priceDeduction: room.priceDeduction ?? 25,
+      priceFixed: room.priceFixed ?? 0,
       amenities: [...room.amenities],
       capacityOptions: room.capacityOptions.map((c) => ({
         ...c,
@@ -957,6 +1142,79 @@ export default function RoomTypesPage() {
         </div>
       )}
 
+      {/* Add Period Modal */}
+      {periodModal && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center p-4"
+          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+        >
+          <div
+            className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl p-6 shadow-xl"
+            style={{ backgroundColor: "var(--bg-surface)", border: "1px solid var(--border)" }}
+            dir={dir}
+          >
+            <div className="flex items-center justify-between mb-5">
+              <button
+                onClick={closePeriodModal}
+                className="h-7 w-7 grid place-items-center rounded-lg"
+                style={{ color: "var(--text-muted)", backgroundColor: "var(--bg-raised)" }}
+              >
+                <X size={16} />
+              </button>
+              <h2 className="text-lg font-bold" style={{ color: "var(--text-primary)" }}>
+                {t.addPeriodBtn}
+              </h2>
+            </div>
+
+            <div className="space-y-4">
+              {/* Name */}
+              <div>
+                <label className="block text-sm font-medium mb-1.5" style={{ color: "var(--text-primary)" }}>
+                  {t.periodNameLabel}
+                </label>
+                <input
+                  value={periodForm.name}
+                  onChange={(e) => setPeriodForm((p) => ({ ...p, name: e.target.value }))}
+                  className="input w-full"
+                  placeholder={t.periodNamePlaceholder}
+                  style={{ textAlign: "right" }}
+                />
+                {periodErrors.name && <p className="input-error mt-1">{periodErrors.name}</p>}
+              </div>
+
+              {/* Date range */}
+              <div>
+                <label className="block text-sm font-medium mb-1.5" style={{ color: "var(--text-primary)" }}>
+                  {t.periodRangeLabel}
+                </label>
+                <DateRangePicker
+                  from={periodForm.from}
+                  to={periodForm.to}
+                  onChange={({ from, to }) => setPeriodForm((p) => ({ ...p, from, to }))}
+                />
+                {(periodErrors.from || periodErrors.to) && (
+                  <p className="input-error mt-1">{periodErrors.from || periodErrors.to}</p>
+                )}
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-2.5 pt-2 justify-end">
+                <button onClick={closePeriodModal} className="btn btn-secondary">
+                  {t.cancel}
+                </button>
+                <button
+                  onClick={handlePeriodSave}
+                  className="btn text-white"
+                  style={{ backgroundColor: "var(--sidebar-active-text)" }}
+                >
+                  {t.save}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Add/Edit Modal */}
       {modal && (
         <div
@@ -1123,10 +1381,10 @@ export default function RoomTypesPage() {
                     </select>
                   </div>
 
-                  {/* Price Formula — only shown for non-base rooms (when a base DBL already exists) */}
-                  {roomTypes.some((r) => r.isBase) && (
+                  {/* Price Formula — only for non-base rooms when a base DBL already exists */}
+                  {roomTypes.some((r) => r.isBase) && !(modal?.mode === "edit" && modal?.data?.isBase) && (
                     <div className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--border)" }}>
-                      {/* Direction picker */}
+                      {/* Formula dropdown */}
                       <div className="relative">
                         <select
                           value={form.priceFormula}
@@ -1141,9 +1399,11 @@ export default function RoomTypesPage() {
                             borderRadius: "0.75rem",
                           }}
                         >
-                          {PRICE_FORMULA_DIRECTIONS.map((d) => (
-                            <option key={d.value} value={d.value}>{t[d.labelKey]}</option>
-                          ))}
+                          <option value="personMultiplyDeduct">{form.priceMultiplier}× (Person In DBL -{form.priceDeduction})</option>
+                          <option value="personMultiply">Person In DBL ×{form.priceMultiplier}</option>
+                          <option value="personAddPct">Person In DBL +{form.pricePercentPerson}%</option>
+                          <option value="add">{t.formulaAdd}</option>
+                          <option value="less">{t.formulaLess}</option>
                         </select>
                         <ChevronDown
                           size={14}
@@ -1152,58 +1412,93 @@ export default function RoomTypesPage() {
                         />
                       </div>
 
-                      {/* Method toggle + value */}
-                      <div className="px-3 pt-3 pb-3 space-y-3" style={{ backgroundColor: "var(--bg-raised)" }}>
-                        {/* Toggle */}
-                        <div className="flex gap-1.5">
-                          {[
-                            { value: "fixed", labelKey: "priceMethodFixed" },
-                            { value: "percentage", labelKey: "priceMethodPct" },
-                          ].map((opt) => (
-                            <button
-                              key={opt.value}
-                              type="button"
-                              onClick={() => setForm((p) => ({ ...p, priceMethod: opt.value }))}
-                              className="flex-1 py-2 px-3 rounded-xl text-xs font-semibold transition-all"
-                              style={
-                                form.priceMethod === opt.value
-                                  ? { backgroundColor: "var(--sidebar-active-text)", color: "white" }
-                                  : { backgroundColor: "var(--bg-surface)", color: "var(--text-secondary)", border: "1px solid var(--border)" }
-                              }
-                            >
-                              {t[opt.labelKey]}
-                            </button>
-                          ))}
-                        </div>
-
-                        {/* Percentage slider */}
-                        {form.priceMethod === "percentage" && (
-                          <div dir="ltr">
-                            <div className="flex items-center justify-between mb-1">
-                              <span
-                                className="text-xs font-bold px-2 py-0.5 rounded-md"
-                                style={{ backgroundColor: "var(--bg-surface)", color: "var(--text-secondary)", border: "1px solid var(--border)" }}
+                      {/* Formula parameters — only for add/less */}
+                      {(form.priceFormula === "add" || form.priceFormula === "less") && (
+                        <div className="px-3 pt-3 pb-3 space-y-3" style={{ backgroundColor: "var(--bg-raised)" }}>
+                          {/* Fixed / % toggle */}
+                          <div className="flex gap-1.5">
+                            {[
+                              { value: "fixed", labelKey: "priceMethodFixed" },
+                              { value: "percentage", labelKey: "priceMethodPct" },
+                            ].map((opt) => (
+                              <button
+                                key={opt.value}
+                                type="button"
+                                onClick={() => setForm((p) => ({ ...p, priceMethod: opt.value }))}
+                                className="flex-1 py-2 px-3 rounded-xl text-xs font-semibold transition-all"
+                                style={
+                                  form.priceMethod === opt.value
+                                    ? { backgroundColor: "#1e3a5f", color: "white" }
+                                    : { backgroundColor: "var(--bg-surface)", color: "var(--text-secondary)", border: "1px solid var(--border)" }
+                                }
                               >
-                                {form.pricePercent}%
-                              </span>
-                              <span
-                                className="text-xs font-semibold"
-                                style={{ color: form.priceFormula === "less" ? "var(--danger)" : "var(--sidebar-active-text)" }}
-                              >
-                                {form.priceFormula === "less" ? t.pctSubtract : t.pctAdd}
-                              </span>
-                            </div>
-                            <input
-                              type="range"
-                              min="0"
-                              max="100"
-                              value={form.pricePercent}
-                              onChange={(e) => setForm((p) => ({ ...p, pricePercent: Number(e.target.value) }))}
-                              className="w-full"
-                            />
+                                {t[opt.labelKey]}
+                              </button>
+                            ))}
                           </div>
-                        )}
-                      </div>
+
+                          {/* Fixed Amount: per-group inputs */}
+                          {form.priceMethod === "fixed" && (
+                            <div className="space-y-2">
+                              <p className="text-xs font-bold text-right" style={{ color: form.priceFormula === "less" ? "var(--danger)" : "var(--sidebar-active-text)" }}>
+                                {t.priceDiffPerGroup}
+                              </p>
+                              {groups.map((g) => (
+                                <div key={g.id} className="flex items-center justify-between gap-2">
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    value={form.priceDiffs?.["fixed"]?.[g.id] ?? 0}
+                                    onChange={(e) =>
+                                      setForm((p) => ({
+                                        ...p,
+                                        priceDiffs: {
+                                          ...p.priceDiffs,
+                                          fixed: { ...(p.priceDiffs?.fixed || {}), [g.id]: Number(e.target.value) },
+                                        },
+                                      }))
+                                    }
+                                    className="input"
+                                    style={{ width: "6rem", flexShrink: 0, textAlign: "center" }}
+                                  />
+                                  <span className="text-xs font-bold text-right" style={{ color: "var(--text-secondary)" }}>
+                                    {g.name.toLowerCase()}{" "}
+                                    <span style={{ color: "var(--sidebar-active-text)" }}>({g.currency})</span>
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          {/* % Percentage: slider */}
+                          {form.priceMethod === "percentage" && (
+                            <div dir="ltr">
+                              <div className="flex items-center justify-between mb-1">
+                                <span
+                                  className="text-xs font-bold px-2 py-0.5 rounded-md"
+                                  style={{ backgroundColor: "var(--bg-surface)", color: "var(--text-secondary)", border: "1px solid var(--border)" }}
+                                >
+                                  {form.pricePercent}%
+                                </span>
+                                <span
+                                  className="text-xs font-semibold"
+                                  style={{ color: form.priceFormula === "less" ? "var(--danger)" : "var(--sidebar-active-text)" }}
+                                >
+                                  {form.priceFormula === "less" ? t.pctSubtract : t.pctAdd}
+                                </span>
+                              </div>
+                              <input
+                                type="range"
+                                min="0"
+                                max="200"
+                                value={form.pricePercent}
+                                onChange={(e) => setForm((p) => ({ ...p, pricePercent: Number(e.target.value) }))}
+                                className="w-full"
+                              />
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -1793,6 +2088,54 @@ export default function RoomTypesPage() {
                 >
                   {t.addBedOption}&nbsp;<span className="text-lg leading-none">+</span>
                 </button>
+
+                {/* Base room price table — only for the first DBL room */}
+                {(modal === "add" && !roomTypes.some((r) => r.isBase)) || (modal?.mode === "edit" && modal?.data?.isBase) ? (
+                  <div className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--border)" }}>
+                    <div className="px-4 py-3 flex items-center justify-between" style={{ backgroundColor: "#1e3a5f" }}>
+                      <button
+                        type="button"
+                        onClick={openAddPeriod}
+                        className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-white/80 hover:text-white transition-colors"
+                        style={{ backgroundColor: "rgba(255,255,255,0.1)" }}
+                      >
+                        <Plus size={12} />
+                        {t.addPeriodBtn}
+                      </button>
+                      <div className="text-right">
+                        <p className="text-sm font-bold text-white">{t.basePriceLabel}</p>
+                        <p className="text-xs text-white/60 mt-0.5">{t.basePriceNote}</p>
+                      </div>
+                    </div>
+                    <div className="p-3 space-y-3" style={{ backgroundColor: "var(--bg-raised)" }}>
+                      {periods.map((period) => (
+                        <div key={period.id}>
+                          <p className="text-xs font-bold mb-2 text-right" style={{ color: "var(--sidebar-active-text)" }}>
+                            {period.name}
+                          </p>
+                          <div className="space-y-2">
+                            {groups.map((g) => (
+                              <div key={g.id} className="flex items-center justify-between gap-2">
+                                <input
+                                  type="number"
+                                  min="0"
+                                  value={form.priceDiffs?.[period.id]?.[g.id] ?? 0}
+                                  onChange={(e) => setPriceDiff(period.id, g.id, e.target.value)}
+                                  className="input"
+                                  style={{ width: "6rem", flexShrink: 0, textAlign: "center" }}
+                                />
+                                <span className="text-xs font-bold text-right" style={{ color: "var(--text-secondary)" }}>
+                                  {g.name.toUpperCase()}{" "}
+                                  <span style={{ color: "var(--sidebar-active-text)" }}>({g.currency})</span>
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
               </div>
             )}
 
@@ -2052,7 +2395,7 @@ function RoomCard({ room, supplement, onEdit, onView, onDelete, onToggleHide, la
       {/* Content */}
       <div className="px-4 pt-3 pb-3 space-y-3">
         {/* Room name */}
-        <h3 className="text-sm font-bold text-end" style={{ color: "var(--text-primary)" }}>
+        <h3 className="text-sm font-bold text-start" style={{ color: "var(--text-primary)" }}>
           {cardTitle}
         </h3>
 
