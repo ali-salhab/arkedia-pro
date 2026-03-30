@@ -334,6 +334,24 @@ export const api = createApi({
     searchHotelsPublic: builder.query({
       query: (q) => `/public/hotels/search?q=${encodeURIComponent(q)}`,
     }),
+    getPublicHotelDetails: builder.query({
+      query: (id) => `/public/hotels/${id}`,
+    }),
+    getPublicHotelRooms: builder.query({
+      query: (id) => `/public/hotels/${id}/rooms`,
+    }),
+    getPublicHotelsByLocation: builder.query({
+      query: ({ country, city }) => {
+        const params = new URLSearchParams();
+        if (country) params.append("country", country);
+        if (city) params.append("city", city);
+        return `/public/hotels/by-location?${params}`;
+      },
+    }),
+    createPublicBooking: builder.mutation({
+      query: (body) => ({ url: "/public/bookings", method: "POST", body }),
+      invalidatesTags: ["Booking"],
+    }),
     // Admin entities (hotels/restaurants/activities belonging to admin)
     getAdminEntities: builder.query({
       query: () => "/admin/entities",
@@ -401,6 +419,10 @@ export const {
   useToggleApiEndpointMutation,
   // Public search
   useLazySearchHotelsPublicQuery,
+  useGetPublicHotelDetailsQuery,
+  useGetPublicHotelRoomsQuery,
+  useLazyGetPublicHotelsByLocationQuery,
+  useCreatePublicBookingMutation,
   // Admin entities
   useGetAdminEntitiesQuery,
   useImpersonateMutation,

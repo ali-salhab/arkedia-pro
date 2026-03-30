@@ -418,10 +418,7 @@ export default function PublicAuthModal({
             </p>
             <button
               type="button"
-              onClick={() => {
-                closeModal();
-                navigate("/login");
-              }}
+              onClick={() => { closeModal(); navigate("/login"); }}
               style={partnerButtonStyle}
             >
               تسجيل دخول كشريك

@@ -276,13 +276,7 @@ export default function PublicNavbar({
               </button>
             )}
 
-            <button
-              type="button"
-              onClick={() => { setMobileOpen(false); navigate("/login"); }}
-              style={{ ...mobileMenuBtnStyle, marginTop: "0.4rem", borderTop: "1px solid #eef2f7", paddingTop: "0.7rem" }}
-            >
-              <User size={16} /> تسجيل دخول كشريك
-            </button>
+      
           </div>
 
           <div style={{ padding: "0 1.2rem 1rem", display: "flex", gap: "0.5rem" }}>

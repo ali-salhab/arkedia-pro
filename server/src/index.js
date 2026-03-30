@@ -113,8 +113,20 @@ app.use("/api/developer", publicApiRoutes);
 app.use(notFound);
 app.use(errorHandler);
 
-connectDb().then(() => {
-  server.listen(port, () => {
-    console.log(`API listening on port ${port}`);
-  });
+process.on("unhandledRejection", (reason) => {
+  console.error("[unhandledRejection]", reason);
 });
+process.on("uncaughtException", (err) => {
+  console.error("[uncaughtException]", err);
+});
+
+connectDb()
+  .then(() => {
+    server.listen(port, () => {
+      console.log(`API listening on port ${port}`);
+    });
+  })
+  .catch((err) => {
+    console.error("Failed to connect to MongoDB:", err.message);
+    process.exit(1);
+  });

@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from "react";
-import { MapPin, Navigation, Star, X } from "lucide-react";
+import { useState, useEffect, useRef, useMemo } from "react";
+import { MapPin, Navigation, Star, X, Globe, Building2 } from "lucide-react";
 import { useLazySearchHotelsPublicQuery } from "../store/services/api";
 
 export default function SearchDestinationPanel({ open, onClose, onSelect }) {
@@ -19,6 +19,25 @@ export default function SearchDestinationPanel({ open, onClose, onSelect }) {
     }, 300);
     return () => clearTimeout(t);
   }, [query, triggerSearch]);
+
+  /* Extract unique cities and countries from results */
+  const { cities, countries } = useMemo(() => {
+    const citySet = new Map();
+    const countrySet = new Map();
+    const q = query.trim().toLowerCase();
+    results.forEach((h) => {
+      if (h.city && h.city.toLowerCase().includes(q) && !citySet.has(h.city)) {
+        citySet.set(h.city, h.country);
+      }
+      if (h.country && h.country.toLowerCase().includes(q) && !countrySet.has(h.country)) {
+        countrySet.set(h.country, true);
+      }
+    });
+    return {
+      cities: Array.from(citySet.entries()).map(([city, country]) => ({ city, country })),
+      countries: Array.from(countrySet.keys()),
+    };
+  }, [results, query]);
 
   if (!open) return null;
 
@@ -104,6 +123,54 @@ export default function SearchDestinationPanel({ open, onClose, onSelect }) {
           {isFetching && (
             <div style={{ textAlign: "center", padding: "1.5rem", color: "#9ca3af", fontSize: "0.85rem" }}>جارٍ البحث...</div>
           )}
+
+          {/* Country suggestions */}
+          {!isFetching && countries.map((c) => (
+            <button
+              key={`country-${c}`}
+              type="button"
+              onClick={() => onSelect({ type: "country", label: c, country: c })}
+              style={{
+                width: "100%", display: "flex", alignItems: "center", gap: "0.8rem",
+                padding: "0.75rem 1.2rem", border: "none", background: "rgba(23,63,120,0.02)",
+                cursor: "pointer", fontFamily: "inherit", textAlign: "right",
+                borderBottom: "1px solid #f3f4f6",
+              }}
+            >
+              <div style={{ width: "44px", height: "44px", borderRadius: "50%", background: "rgba(23,63,120,0.08)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <Globe size={18} style={{ color: "#173f78" }} />
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontWeight: 800, fontSize: "0.88rem", color: "#111827" }}>{c}</div>
+                <div style={{ fontSize: "0.73rem", color: "#9ca3af" }}>جميع فنادق الدولة</div>
+              </div>
+            </button>
+          ))}
+
+          {/* City suggestions */}
+          {!isFetching && cities.map(({ city, country }) => (
+            <button
+              key={`city-${city}`}
+              type="button"
+              onClick={() => onSelect({ type: "city", label: city, city, country })}
+              style={{
+                width: "100%", display: "flex", alignItems: "center", gap: "0.8rem",
+                padding: "0.75rem 1.2rem", border: "none", background: "rgba(23,63,120,0.02)",
+                cursor: "pointer", fontFamily: "inherit", textAlign: "right",
+                borderBottom: "1px solid #f3f4f6",
+              }}
+            >
+              <div style={{ width: "44px", height: "44px", borderRadius: "50%", background: "rgba(255,176,32,0.1)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <Building2 size={18} style={{ color: "#d97706" }} />
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontWeight: 800, fontSize: "0.88rem", color: "#111827" }}>{city}</div>
+                <div style={{ fontSize: "0.73rem", color: "#9ca3af" }}>{country} • فنادق المدينة</div>
+              </div>
+            </button>
+          ))}
+
+          {/* Hotel results */}
           {!isFetching && results.map((h) => (
             <button
               key={h._id}

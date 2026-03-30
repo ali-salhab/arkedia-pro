@@ -12,9 +12,11 @@ import {
   FileText,
   Tag,
   ShieldCheck,
+  Upload,
+  Check,
 } from "lucide-react";
 import { useLanguage } from "../../context/LanguageContext";
-import { useGetIconsQuery } from "../../store/services/api";
+import { useGetIconsQuery, useCreateHotelMutation, useUpdateHotelMutation } from "../../store/services/api";
 import DeleteConfirmModal from "../../components/DeleteConfirmModal";
 
 const STORAGE_KEYS = [
@@ -321,11 +323,48 @@ export default function HotelDetailsView() {
   const { data: allIcons = [] } = useGetIconsQuery();
   const { main, description, icons, policy, photos } = readSession();
 
+  const [createHotel] = useCreateHotelMutation();
+  const [updateHotel] = useUpdateHotelMutation();
+  const [publishing, setPublishing] = useState(false);
+  const [publishError, setPublishError] = useState("");
+  const [publishedId, setPublishedId] = useState(() => sessionStorage.getItem("hotel_saved_id") || null);
+
+  const handlePublish = async () => {
+    if (!main) return;
+    setPublishing(true);
+    setPublishError("");
+    try {
+      const body = {
+        name: main.nameEn || main.nameAr || "",
+        description: description?.descriptionEn || description?.descriptionAr || "",
+        location: main.location || "",
+        city: main.city || "",
+        country: main.country || "",
+        stars: main.stars || 3,
+        thumbnail: photos?.mainPhotoDataUrl || "",
+        selectedIcons: (icons?.selectedIcons || []),
+      };
+      let result;
+      if (publishedId) {
+        result = await updateHotel({ _id: publishedId, ...body }).unwrap();
+      } else {
+        result = await createHotel(body).unwrap();
+        sessionStorage.setItem("hotel_saved_id", result._id);
+        setPublishedId(result._id);
+      }
+    } catch (err) {
+      setPublishError(lang === "ar" ? "فشل الحفظ. تحقق من الاتصال." : "Publish failed. Check your connection.");
+    } finally {
+      setPublishing(false);
+    }
+  };
+
   const handleEdit = () => navigate("/hotel/details/main");
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const handleDelete = () => setShowDeleteModal(true);
   const confirmDelete = () => {
     STORAGE_KEYS.forEach((key) => sessionStorage.removeItem(key));
+    sessionStorage.removeItem("hotel_saved_id");
     navigate("/hotel/details/main");
   };
 
@@ -448,6 +487,25 @@ export default function HotelDetailsView() {
 
               <div className="flex flex-wrap items-center gap-2">
                 <button
+                  onClick={handlePublish}
+                  disabled={publishing}
+                  className="flex h-9 items-center gap-1.5 rounded-xl px-3 text-xs font-semibold"
+                  style={{
+                    backgroundColor: publishedId ? "#059669" : "#173f78",
+                    color: "#fff",
+                    opacity: publishing ? 0.7 : 1,
+                    cursor: publishing ? "not-allowed" : "pointer",
+                  }}
+                >
+                  {publishing ? (
+                    <span>...</span>
+                  ) : publishedId ? (
+                    <><Check size={13} /> {lang === "ar" ? "تحديث الفندق" : "Update Hotel"}</>
+                  ) : (
+                    <><Upload size={13} /> {lang === "ar" ? "نشر الفندق" : "Publish Hotel"}</>
+                  )}
+                </button>
+                <button
                   onClick={handleEdit}
                   className="flex h-9 items-center gap-1.5 rounded-xl px-3 text-xs font-semibold"
                   style={{
@@ -472,6 +530,10 @@ export default function HotelDetailsView() {
                 </button>
               </div>
             </div>
+
+            {publishError && (
+              <p style={{ color: "#ef4444", fontSize: "0.8rem", marginTop: "0.5rem" }}>{publishError}</p>
+            )}
 
             {stars > 0 && (
               <div className="mt-2 flex items-center gap-0.5">

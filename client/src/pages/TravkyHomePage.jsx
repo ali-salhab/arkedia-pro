@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useLocalStorage } from "../hooks/useLocalStorage";
 import { usePublicClientSession } from "../hooks/usePublicClientSession";
 import {
@@ -20,6 +20,7 @@ const TABS = [
 ];
 
 export default function TravkyHomePage() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab]     = useState("hotels");
   const [destination, setDestination] = useState("");
   const [clientSession, setClientSession] = usePublicClientSession();
@@ -247,8 +248,36 @@ export default function TravkyHomePage() {
 
             {/* Search button */}
             <button className="hero-search-btn" onClick={() => {
-              // Build search summary (placeholder — can navigate to a results page later)
-              console.log("Search:", { destination: selectedDest, checkIn, checkOut, guests, tab: activeTab });
+              const p = new URLSearchParams();
+              if (checkIn) p.set("checkIn", checkIn.toISOString());
+              if (checkOut) p.set("checkOut", checkOut.toISOString());
+              p.set("rooms", guests.rooms);
+              p.set("adults", guests.adults);
+              p.set("children", guests.children);
+
+              if (selectedDest) {
+                if (selectedDest.type === "hotel") {
+                  p.set("type", "hotel");
+                  p.set("hotelId", selectedDest.id);
+                  p.set("q", selectedDest.label);
+                } else if (selectedDest.type === "city") {
+                  p.set("type", "city");
+                  p.set("city", selectedDest.city || selectedDest.label);
+                  p.set("country", selectedDest.country || "");
+                  p.set("q", selectedDest.label);
+                } else if (selectedDest.type === "country") {
+                  p.set("type", "country");
+                  p.set("country", selectedDest.country || selectedDest.label);
+                  p.set("q", selectedDest.label);
+                } else {
+                  p.set("type", "query");
+                  p.set("q", selectedDest.label);
+                }
+              } else if (destination.trim()) {
+                p.set("type", "query");
+                p.set("q", destination.trim());
+              }
+              navigate(`/search?${p}`);
             }} style={{
               margin: "0rem",
               minWidth: "140px",
@@ -308,10 +337,10 @@ export default function TravkyHomePage() {
                   />
                   <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top,rgba(0,0,0,.72) 0%,transparent 50%)" }} />
                   <div style={{ position: "absolute", bottom: "0.9rem", right: "0.9rem", color: "white" }}>
-                    <p style={{ fontWeight: 800, fontSize: "1.05rem", lineHeight: 1.2 }}>{city.ar}</p>
+                    <p style={{ fontWeight: 800, fontSize: "1.05rem", lineHeight: 1.2,color:"white" }}>{city.ar}</p>
                     <div style={{ display: "flex", alignItems: "center", gap: "0.3rem", marginTop: "0.2rem" }}>
-                      <MapPin size={12} style={{ flexShrink: 0 }} />
-                      <p style={{ fontSize: "0.78rem", opacity: 0.88 }}>{city.country}</p>
+                     
+                      <p style={{ fontSize: "0.78rem", opacity: 0.88 ,color:"white"}}>{city.country}</p>
                     </div>
                   </div>
                 </div>
@@ -350,7 +379,15 @@ export default function TravkyHomePage() {
       <SearchDestinationPanel
         open={destPanelOpen}
         onClose={() => setDestPanelOpen(false)}
-        onSelect={(dest) => { setSelectedDest(dest); setDestPanelOpen(false); }}
+        onSelect={(dest) => {
+          if (dest.type === "hotel") {
+            setDestPanelOpen(false);
+            navigate(`/hotel/${dest.id}`);
+          } else {
+            setSelectedDest(dest);
+            setDestPanelOpen(false);
+          }
+        }}
       />
 
       <SearchDatePicker

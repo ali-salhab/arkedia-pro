@@ -224,10 +224,10 @@ export default function LoginPage() {
           {/* Divider */}
           <div style={{ borderTop: "1px solid #f3f4f6", margin: "1.25rem 0" }} />
 
-          {/* Partner login */}
+          {/* Client login */}
           <p style={{ textAlign: "center", fontSize: "0.875rem", color: "#6b7280" }}>
-            هل أنت شريك؟{" "}
-            <a href="#" style={{ color: "#1e3a5f", fontWeight: 700, textDecoration: "none" }}>تسجيل دخول كشريك</a>
+            هل أنت عميل؟{" "}
+            <Link to="/" style={{ color: "#1e3a5f", fontWeight: 700, textDecoration: "none" }}>تسجيل دخول كعميل</Link>
           </p>
         </div>
       </div>

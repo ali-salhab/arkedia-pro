@@ -68,6 +68,8 @@ import MainPagePhotosPage from "./pages/super-admin/MainPagePhotosPage";
 import CountriesPhotosPage from "./pages/super-admin/CountriesPhotosPage";
 import TravkyHomePage from "./pages/TravkyHomePage";
 import BecomePartnerPage from "./pages/BecomePartnerPage";
+import SearchResults from "./pages/public/SearchResults";
+import HotelDetailsPage from "./pages/public/HotelDetailsPage";
 
 const ALL_ROLES = [
   "super_admin",
@@ -562,6 +564,8 @@ export default function App() {
         {/* Public homepage */}
         <Route path="/" element={<TravkyHomePage />} />
         <Route path="/become-partner" element={<BecomePartnerPage />} />
+        <Route path="/search" element={<SearchResults />} />
+        <Route path="/hotel/:id" element={<HotelDetailsPage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       <GlobalErrorModal />
