@@ -104,4 +104,53 @@ const logout = asyncHandler(async (req, res) => {
   res.json({ message: "Logged out" });
 });
 
-module.exports = { login, refresh, logout };
+/**
+ * POST /api/auth/impersonate
+ * Allows admin/super_admin to switch into one of their subordinate manager accounts.
+ * Body: { userId: "<manager user _id>" }
+ */
+const impersonate = asyncHandler(async (req, res) => {
+  const { userId } = req.body;
+  if (!userId) return res.status(400).json({ message: "userId required" });
+
+  const caller = req.user;
+  const callerRole = caller.role;
+  const callerId = String(caller._id);
+
+  // Only admin, adminuser, super_admin, superadminuser may impersonate
+  const allowed = ["admin", "adminuser", "super_admin", "superadminuser"];
+  if (!allowed.includes(callerRole)) {
+    return res.status(403).json({ message: "Not authorized to impersonate" });
+  }
+
+  const target = await User.findById(userId);
+  if (!target) return res.status(404).json({ message: "User not found" });
+
+  // Admin can only impersonate their own subordinate managers
+  if (["admin", "adminuser"].includes(callerRole)) {
+    const adminId = callerRole === "admin" ? callerId : String(caller.adminId);
+    if (String(target.adminId) !== adminId) {
+      return res.status(403).json({ message: "Not your subordinate" });
+    }
+  }
+
+  // Target must be a manager role
+  const managerRoles = ["hotel", "restaurant", "activity"];
+  if (!managerRoles.includes(target.role)) {
+    return res.status(400).json({ message: "Can only impersonate entity managers" });
+  }
+
+  const roleDoc = await Role.findOne({ name: target.role });
+  const permissions = resolvePermissions(target.permissions, roleDoc?.permissions);
+  const payloadUser = buildUserPayload(target, permissions);
+
+  const accessToken = signAccessToken(payloadUser);
+  const { token: refreshToken, tokenId } = signRefreshToken(payloadUser);
+
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+  await RefreshToken.create({ user: target._id, token: refreshToken, tokenId, expiresAt });
+
+  res.json({ user: payloadUser, accessToken, refreshToken });
+});
+
+module.exports = { login, refresh, logout, impersonate };

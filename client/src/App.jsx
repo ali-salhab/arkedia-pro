@@ -64,6 +64,10 @@ import GuestGroupNationalitiesStep from "./pages/hotel-channel/travky/guest-grou
 import GuestGroupDetailsView from "./pages/hotel-channel/travky/guest-group/GuestGroupDetailsView";
 import PlatformFeesHotelsPage from "./pages/super-admin/PlatformFeesHotelsPage";
 import ManualBookingPage from "./pages/super-admin/ManualBookingPage";
+import MainPagePhotosPage from "./pages/super-admin/MainPagePhotosPage";
+import CountriesPhotosPage from "./pages/super-admin/CountriesPhotosPage";
+import TravkyHomePage from "./pages/TravkyHomePage";
+import BecomePartnerPage from "./pages/BecomePartnerPage";
 
 const ALL_ROLES = [
   "super_admin",
@@ -139,6 +143,14 @@ export default function App() {
           <Route
             path="/super-admin/customer-services/manual-booking"
             element={<DashboardRoute element={<ManualBookingPage />} />}
+          />
+          <Route
+            path="/super-admin/main-page/photos"
+            element={<DashboardRoute element={<MainPagePhotosPage />} />}
+          />
+          <Route
+            path="/super-admin/main-page/countries"
+            element={<DashboardRoute element={<CountriesPhotosPage />} />}
           />
         </Route>
 
@@ -547,8 +559,9 @@ export default function App() {
           />
         </Route>
 
-        {/* Root → smart redirect based on auth state */}
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        {/* Public homepage */}
+        <Route path="/" element={<TravkyHomePage />} />
+        <Route path="/become-partner" element={<BecomePartnerPage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       <GlobalErrorModal />

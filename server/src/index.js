@@ -26,6 +26,9 @@ const reportRoutes = require("./routes/reports");
 const iconRoutes = require("./routes/icons");
 const hotelApiRoutes = require("./routes/hotelApi");
 const publicApiRoutes = require("./routes/publicApi");
+const publicClientAuthRoutes = require("./routes/publicClientAuth");
+const publicSearchRoutes = require("./routes/publicSearch");
+const adminEntitiesRoutes = require("./routes/adminEntities");
 const { notFound, errorHandler } = require("./middleware/errorHandler");
 const socketStore = require("./utils/socketStore");
 
@@ -89,6 +92,9 @@ app.get("/health", (req, res) => {
 });
 
 app.use("/api/auth", authRoutes);
+app.use("/api/public-auth", publicClientAuthRoutes);
+app.use("/api/public", publicSearchRoutes);
+app.use("/api/admin", adminEntitiesRoutes);
 app.use("/api/roles", roleRoutes);
 app.use("/api/permissions", permissionRoutes);
 app.use("/api/sidebar", sidebarRoutes);

@@ -2,8 +2,12 @@ import { useMemo, useState } from "react";
 import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { useLanguage } from "../context/LanguageContext";
-import { logout } from "../store/slices/authSlice";
-import { api } from "../store/services/api";
+import { logout, setCredentials } from "../store/slices/authSlice";
+import {
+  api,
+  useGetAdminEntitiesQuery,
+  useImpersonateMutation,
+} from "../store/services/api";
 import {
   LayoutDashboard,
   Users,
@@ -34,6 +38,7 @@ import {
   MoreVertical,
   Landmark,
   BookOpen,
+  ExternalLink,
 } from "lucide-react";
 
 const ROLE_MENUS = {
@@ -54,6 +59,25 @@ const ROLE_MENUS = {
     { name: "Finance", route: "/finance", perm: "finance:view" },
     { name: "Reports", route: "/reports", perm: "reports:view" },
     { name: "Settings", route: "/settings", perm: "settings:view" },
+    {
+      name: "Main Page Photos",
+      perm: null,
+      matchPrefix: "/super-admin/main-page",
+      children: [
+        {
+          name: "Main Page Categories",
+          route: "/super-admin/main-page/photos",
+          perm: null,
+          Icon: Images,
+        },
+        {
+          name: "Countries Photos",
+          route: "/super-admin/main-page/countries",
+          perm: null,
+          Icon: Globe,
+        },
+      ],
+    },
     {
       name: "Platform Fees",
       perm: null,
@@ -827,6 +851,33 @@ export default function Sidebar({ mobileOpen = false, onClose }) {
     navigate("/login");
   };
 
+  const isAdminRole = ["admin", "adminuser", "super_admin", "superadminuser"].includes(currentUser?.role);
+  const { data: entities } = useGetAdminEntitiesQuery(undefined, { skip: !isAdminRole });
+  const [impersonate, { isLoading: impersonating }] = useImpersonateMutation();
+  const [entitiesOpen, setEntitiesOpen] = useState(true);
+
+  const handleImpersonate = async (userId, dashboardPath) => {
+    try {
+      localStorage.setItem("admin_origin", JSON.stringify({
+        user: currentUser,
+        accessToken: localStorage.getItem("auth") ? JSON.parse(localStorage.getItem("auth")).accessToken : null,
+        refreshToken: localStorage.getItem("auth") ? JSON.parse(localStorage.getItem("auth")).refreshToken : null,
+      }));
+      const result = await impersonate({ userId }).unwrap();
+      dispatch(setCredentials(result));
+      closeMobile();
+      navigate(dashboardPath);
+    } catch (err) {
+      console.error("Impersonate failed:", err);
+    }
+  };
+
+  const ENTITY_SECTIONS = [
+    { key: "hotels", icon: Building2, label: "hotels", dashPath: "/hotel", color: "text-blue-600 dark:text-blue-400" },
+    { key: "restaurants", icon: UtensilsCrossed, label: "restaurants", dashPath: "/restaurant", color: "text-orange-600 dark:text-orange-400" },
+    { key: "activities", icon: Zap, label: "activities", dashPath: "/activity", color: "text-emerald-600 dark:text-emerald-400" },
+  ];
+
   const closeMobile = () => {
     if (typeof onClose === "function") onClose();
   };
@@ -883,6 +934,73 @@ export default function Sidebar({ mobileOpen = false, onClose }) {
 
         <div className="flex-1 overflow-y-auto px-3 pb-4 no-scrollbar">
           <nav className="space-y-0.5">{renderMenuItems(menu)}</nav>
+
+          {/* Admin Entities Section */}
+          {isAdminRole && entities && !collapsed && (
+            <div className="mt-4 pt-3 border-t border-slate-200 dark:border-slate-700">
+              <button
+                onClick={() => setEntitiesOpen(!entitiesOpen)}
+                className="flex items-center justify-between w-full px-3 py-2 text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+              >
+                <span>{t("myEntities") || "My Entities"}</span>
+                <ChevronDown
+                  size={14}
+                  className={`transition-transform ${entitiesOpen ? "" : "-rotate-90 rtl:rotate-90"}`}
+                />
+              </button>
+
+              {entitiesOpen && ENTITY_SECTIONS.map(({ key, icon: Icon, label, dashPath, color }) => {
+                const list = entities[key] || [];
+                if (list.length === 0) return null;
+                return (
+                  <div key={key} className="mb-2">
+                    <div className={`flex items-center gap-2 px-3 py-1.5 text-xs font-semibold ${color}`}>
+                      <Icon size={14} />
+                      <span>{t(label) || label}</span>
+                      <span className="ml-auto rtl:ml-0 rtl:mr-auto text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 px-1.5 py-0.5 rounded-full">
+                        {list.length}
+                      </span>
+                    </div>
+                    {list.map((entity) => (
+                      <button
+                        key={entity._id}
+                        disabled={impersonating || !entity.manager}
+                        onClick={() => entity.manager && handleImpersonate(entity.manager._id, dashPath)}
+                        className="flex items-center w-full px-3 py-2 rounded-xl text-sm transition-all hover:bg-blue-50/80 dark:hover:bg-blue-900/20 text-slate-600 dark:text-slate-400 hover:text-blue-700 dark:hover:text-blue-400 disabled:opacity-40 disabled:cursor-not-allowed group"
+                      >
+                        <span className="truncate flex-1 text-start">{entity.name}</span>
+                        <ExternalLink
+                          size={13}
+                          className={`shrink-0 ${isRtl ? "mr-2" : "ml-2"} opacity-0 group-hover:opacity-100 transition-opacity`}
+                        />
+                      </button>
+                    ))}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Collapsed: entities icon only */}
+          {isAdminRole && entities && collapsed && (
+            <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-700 flex flex-col items-center gap-1">
+              {ENTITY_SECTIONS.map(({ key, icon: Icon, color, dashPath }) => {
+                const list = entities[key] || [];
+                if (list.length === 0) return null;
+                return list.map((entity) => (
+                  <button
+                    key={entity._id}
+                    disabled={impersonating || !entity.manager}
+                    onClick={() => entity.manager && handleImpersonate(entity.manager._id, dashPath)}
+                    title={entity.name}
+                    className={`p-2 rounded-xl transition-all hover:bg-blue-50/80 dark:hover:bg-blue-900/20 ${color} disabled:opacity-40 disabled:cursor-not-allowed`}
+                  >
+                    <Icon size={18} />
+                  </button>
+                ));
+              })}
+            </div>
+          )}
         </div>
 
         <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30">

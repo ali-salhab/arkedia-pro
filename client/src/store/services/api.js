@@ -35,6 +35,8 @@ function shouldSuppressGlobalError(path, status) {
   return (
     path.includes("/auth/login") ||
     path.includes("/auth/refresh") ||
+    path.includes("/public-auth/login") ||
+    path.includes("/public-auth/signup") ||
     status === 401
   );
 }
@@ -106,6 +108,12 @@ export const api = createApi({
   endpoints: (builder) => ({
     login: builder.mutation({
       query: (body) => ({ url: "/auth/login", method: "POST", body }),
+    }),
+    publicClientLogin: builder.mutation({
+      query: (body) => ({ url: "/public-auth/login", method: "POST", body }),
+    }),
+    publicClientSignup: builder.mutation({
+      query: (body) => ({ url: "/public-auth/signup", method: "POST", body }),
     }),
     refresh: builder.mutation({
       query: (body) => ({ url: "/auth/refresh", method: "POST", body }),
@@ -322,11 +330,26 @@ export const api = createApi({
       }),
       invalidatesTags: ["HotelApiConfig"],
     }),
+    // Public search
+    searchHotelsPublic: builder.query({
+      query: (q) => `/public/hotels/search?q=${encodeURIComponent(q)}`,
+    }),
+    // Admin entities (hotels/restaurants/activities belonging to admin)
+    getAdminEntities: builder.query({
+      query: () => "/admin/entities",
+      providesTags: ["AdminEntities"],
+    }),
+    // Impersonate (switch to an entity manager account)
+    impersonate: builder.mutation({
+      query: (body) => ({ url: "/auth/impersonate", method: "POST", body }),
+    }),
   }),
 });
 
 export const {
   useLoginMutation,
+  usePublicClientLoginMutation,
+  usePublicClientSignupMutation,
   useRefreshMutation,
   useGetSidebarQuery,
   // Users
@@ -376,4 +399,9 @@ export const {
   useRevokeDevTokenMutation,
   useDeleteDevTokenMutation,
   useToggleApiEndpointMutation,
+  // Public search
+  useLazySearchHotelsPublicQuery,
+  // Admin entities
+  useGetAdminEntitiesQuery,
+  useImpersonateMutation,
 } = api;

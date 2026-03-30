@@ -180,7 +180,7 @@ const list = asyncHandler(async (req, res) => {
     filter = requesterAdminId ? { adminId: requesterAdminId } : { _id: null };
   }
   if (req.query.role) filter.role = req.query.role;
-  const users = await User.find(filter).select("-password");
+  const users = await User.find(filter).select("-password").populate("adminId", "name email logo role");
   res.json(users);
 });
 

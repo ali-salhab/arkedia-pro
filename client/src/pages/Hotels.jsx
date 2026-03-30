@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import LoadingScreen from "../components/LoadingScreen";
 import Modal from "../components/Modal";
 import DeleteConfirmModal from "../components/DeleteConfirmModal";
 import DataModal from "../components/DataModal";
 import { useLanguage } from "../context/LanguageContext";
-import { useGetUsersQuery, useDeleteUserMutation } from "../store/services/api";
+import { setCredentials } from "../store/slices/authSlice";
+import { useGetUsersQuery, useDeleteUserMutation, useImpersonateMutation } from "../store/services/api";
 import {
   Pencil,
   Trash2,
@@ -16,6 +17,7 @@ import {
   ShieldCheck,
   CalendarDays,
   UserCheck,
+  ExternalLink,
 } from "lucide-react";
 
 const AVATAR_COLORS = [
@@ -34,6 +36,7 @@ function avatarColor(name) {
 
 export default function HotelsPage() {
   const currentUser = useSelector((s) => s.auth.user);
+  const dispatch = useDispatch();
   const { t, lang, dir } = useLanguage();
   const isRtl = dir === "rtl";
   const navigate = useNavigate();
@@ -44,6 +47,7 @@ export default function HotelsPage() {
 
   const { data: users = [], isLoading, error } = useGetUsersQuery();
   const [deleteUser] = useDeleteUserMutation();
+  const [impersonate, { isLoading: impersonating }] = useImpersonateMutation();
 
   const usersArray = Array.isArray(users) ? users : [];
   const hotels = usersArray.filter((u) => u.role === "hotel");
@@ -51,9 +55,8 @@ export default function HotelsPage() {
 
   const resolveLinkedAdmin = (hotel) => {
     if (!hotel.adminId) return null;
-    const id =
-      typeof hotel.adminId === "object" ? hotel.adminId._id : hotel.adminId;
-    return adminsList.find((a) => a._id === id) || null;
+    if (typeof hotel.adminId === "object" && hotel.adminId._id) return hotel.adminId;
+    return adminsList.find((a) => a._id === hotel.adminId) || null;
   };
 
   useEffect(() => {
@@ -84,6 +87,15 @@ export default function HotelsPage() {
       },
     });
   const handleDelete = (id) => setDeleteTarget(id);
+  const handleOpenDashboard = async (userId) => {
+    try {
+      const auth = JSON.parse(localStorage.getItem("auth") || "{}");
+      localStorage.setItem("admin_origin", JSON.stringify({ user: currentUser, accessToken: auth.accessToken, refreshToken: auth.refreshToken }));
+      const result = await impersonate({ userId }).unwrap();
+      dispatch(setCredentials(result));
+      navigate("/hotel");
+    } catch (err) { console.error("Impersonate failed:", err); }
+  };
   const confirmDelete = async () => {
     if (deleteTarget) await deleteUser(deleteTarget);
     setDeleteTarget(null);
@@ -273,6 +285,14 @@ export default function HotelsPage() {
                       </td>
                       <td className="px-4 py-4 text-center">
                         <div className="flex items-center justify-center gap-2">
+                          <button
+                            onClick={() => handleOpenDashboard(hotel._id)}
+                            disabled={impersonating}
+                            className="h-8 w-8 flex items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 transition-colors disabled:opacity-40"
+                            title={t("openDashboard") || "Open Dashboard"}
+                          >
+                            <ExternalLink size={14} strokeWidth={2.5} />
+                          </button>
                           <button
                             onClick={() => handleEdit(hotel)}
                             className="h-8 w-8 flex items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100 transition-colors"
