@@ -23,7 +23,8 @@ import {
   Utensils,
   ChefHat,
 } from "lucide-react";
-import { useLocalStorage } from "../../../hooks/useLocalStorage";
+import { useChannelSection } from "../../../hooks/useChannelSection";
+import { useAppSetting } from "../../../hooks/useAppSetting";
 import { useLanguage } from "../../../context/LanguageContext";
 
 // ── Amenity icon map (mirrors RoomTypesPage) ─────────────
@@ -100,15 +101,15 @@ export default function RatesPage() {
   const { lang } = useLanguage();
   const dir = lang === "ar" ? "rtl" : "ltr";
 
-  const [groups]         = useLocalStorage("travky_guest_groups",    INIT_GROUPS);
-  const [periods]        = useLocalStorage("travky_periods",          INIT_PERIODS);
-  const [roomTypes]      = useLocalStorage("travky_room_types",       INIT_ROOMS);
-  const [mealPlans]      = useLocalStorage("travky_meal_plans",       INIT_MEALS);
-  const [supplements]    = useLocalStorage("travky_supplements",     INIT_SUPPLEMENTS);
-  const [refundPolicies] = useLocalStorage("travky_refund_policies",  INIT_REFUNDS);
-  const [dblPrices, setDblPrices] = useLocalStorage("travky_dbl_prices", {});
-  const [platformFees]   = useLocalStorage("platform_fees",           INIT_PLATFORM_FEES);
-  const [hotelComm]      = useLocalStorage("travky_hotel_commission", INIT_HOTEL_COMM);
+  const [groups]         = useChannelSection("guestGroups",    INIT_GROUPS);
+  const [periods]        = useChannelSection("periods",          INIT_PERIODS);
+  const [roomTypes]      = useChannelSection("roomTypes",       INIT_ROOMS);
+  const [mealPlans]      = useChannelSection("mealPlans",       INIT_MEALS);
+  const [supplements]    = useChannelSection("supplements",     INIT_SUPPLEMENTS);
+  const [refundPolicies] = useChannelSection("refundPolicies",  INIT_REFUNDS);
+  const [dblPrices, setDblPrices] = useChannelSection("dblPrices", {});
+  const [platformFees]   = useAppSetting("platform_fees",           INIT_PLATFORM_FEES);
+  const [hotelComm]      = useChannelSection("commission", INIT_HOTEL_COMM);
 
   // UI state
   const [selectedGroupId, setSelectedGroupId] = useState(null);

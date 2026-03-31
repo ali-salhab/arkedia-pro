@@ -33,7 +33,7 @@ import {
   Utensils,
   ChefHat,
 } from "lucide-react";
-import { useLocalStorage } from "../../../hooks/useLocalStorage";
+import { useChannelSection } from "../../../hooks/useChannelSection";
 import { useLanguage } from "../../../context/LanguageContext";
 import DeleteConfirmModal from "../../../components/DeleteConfirmModal";
 
@@ -495,11 +495,11 @@ export default function RoomTypesPage() {
   const t = TXT[lang] || TXT.ar;
   const dir = lang === "en" ? "ltr" : "rtl";
 
-  const [groups] = useLocalStorage("travky_guest_groups", INITIAL_GROUPS);
-  const [periods, setPeriods] = useLocalStorage("travky_periods", INITIAL_PERIODS);
-  const [supplements] = useLocalStorage("travky_supplements", []);
-  const [roomTypes, setRoomTypes] = useLocalStorage(
-    "travky_room_types",
+  const [groups] = useChannelSection("guestGroups", INITIAL_GROUPS);
+  const [periods] = useChannelSection("periods", INITIAL_PERIODS);
+  const [supplements] = useChannelSection("supplements", []);
+  const [roomTypes, setRoomTypes] = useChannelSection(
+    "roomTypes",
     INITIAL_ROOM_TYPES,
   );
   const [search, setSearch] = useState("");

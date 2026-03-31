@@ -2,8 +2,9 @@ import { useState, useRef } from "react";
 import { Database, Download, Upload, FileSpreadsheet, X, CheckCircle, AlertTriangle, Loader } from "lucide-react";
 import { useSelector } from "react-redux";
 import { useLanguage } from "../context/LanguageContext";
+import { API_BASE_URL } from "../utils/apiBase";
 
-const API = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
+const API = API_BASE_URL;
 
 /**
  * DataModal – reusable Excel export / import / template modal.

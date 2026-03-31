@@ -22,12 +22,9 @@ import {
   useDeleteDevTokenMutation,
   useToggleApiEndpointMutation,
 } from "../../../store/services/api";
+import { API_BASE_URL } from "../../../utils/apiBase";
 
-const BASE_URL =
-  (import.meta.env.VITE_API_URL || "http://localhost:5001/api").replace(
-    /\/api$/,
-    "",
-  ) + "/api/developer";
+const BASE_URL = `${API_BASE_URL}/developer`;
 
 const ENDPOINT_CATALOG = [
   {

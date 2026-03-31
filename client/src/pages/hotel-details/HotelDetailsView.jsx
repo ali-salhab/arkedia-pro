@@ -16,7 +16,13 @@ import {
   Check,
 } from "lucide-react";
 import { useLanguage } from "../../context/LanguageContext";
-import { useGetIconsQuery, useCreateHotelMutation, useUpdateHotelMutation } from "../../store/services/api";
+import {
+  useGetIconsQuery,
+  useCreateHotelMutation,
+  useUpdateHotelMutation,
+  useDeleteHotelMutation,
+  useUploadImageMutation,
+} from "../../store/services/api";
 import DeleteConfirmModal from "../../components/DeleteConfirmModal";
 
 const STORAGE_KEYS = [
@@ -325,6 +331,8 @@ export default function HotelDetailsView() {
 
   const [createHotel] = useCreateHotelMutation();
   const [updateHotel] = useUpdateHotelMutation();
+  const [deleteHotel] = useDeleteHotelMutation();
+  const [uploadImage] = useUploadImageMutation();
   const [publishing, setPublishing] = useState(false);
   const [publishError, setPublishError] = useState("");
   const [publishedId, setPublishedId] = useState(() => sessionStorage.getItem("hotel_saved_id") || null);
@@ -334,16 +342,50 @@ export default function HotelDetailsView() {
     setPublishing(true);
     setPublishError("");
     try {
+      // Upload images to Cloudinary (falls back to base64 if Cloudinary not configured)
+      let thumbnailUrl = photos?.mainPhotoDataUrl || "";
+      if (thumbnailUrl?.startsWith("data:")) {
+        const r = await uploadImage({ data: thumbnailUrl, folder: "hotels" }).unwrap();
+        thumbnailUrl = r.url;
+      }
+      let logoUrl = main.logoDataUrl || "";
+      if (logoUrl?.startsWith("data:")) {
+        const r = await uploadImage({ data: logoUrl, folder: "hotels/logos" }).unwrap();
+        logoUrl = r.url;
+      }
+      // Upload gallery images
+      const rawGallery = photos?.galleryDataUrls || [];
+      const gallery = await Promise.all(
+        rawGallery.map(async (src) => {
+          if (src?.startsWith("data:")) {
+            const r = await uploadImage({ data: src, folder: "hotels/gallery" }).unwrap();
+            return r.url;
+          }
+          return src;
+        }),
+      );
+
       const body = {
         name: main.nameEn || main.nameAr || "",
-        description: description?.descriptionEn || description?.descriptionAr || "",
+        nameAr: main.nameAr || "",
+        description: description?.descriptionEn || "",
+        descriptionAr: description?.descriptionAr || "",
         location: main.location || "",
         city: main.city || "",
         country: main.country || "",
+        postCode: main.postCode || "",
+        lat: main.lat || undefined,
+        lng: main.lng || undefined,
         stars: main.stars || 3,
-        thumbnail: photos?.mainPhotoDataUrl || "",
-        selectedIcons: (icons?.selectedIcons || []),
+        category: main.category || "",
+        thumbnail: thumbnailUrl,
+        logo: logoUrl,
+        gallery,
+        policy: policy?.policyEn || "",
+        policyAr: policy?.policyAr || "",
+        selectedIcons: icons?.selectedIcons || [],
       };
+
       let result;
       if (publishedId) {
         result = await updateHotel({ _id: publishedId, ...body }).unwrap();
@@ -363,6 +405,7 @@ export default function HotelDetailsView() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const handleDelete = () => setShowDeleteModal(true);
   const confirmDelete = () => {
+    if (publishedId) deleteHotel(publishedId).catch(() => {});
     STORAGE_KEYS.forEach((key) => sessionStorage.removeItem(key));
     sessionStorage.removeItem("hotel_saved_id");
     navigate("/hotel/details/main");

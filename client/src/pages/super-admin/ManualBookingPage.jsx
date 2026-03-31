@@ -12,6 +12,7 @@ import {
   Star,
 } from "lucide-react";
 import { useLanguage } from "../../context/LanguageContext";
+import { useGetHotelsQuery } from "../../store/services/api";
 
 /* ─── Hero image (beach resort aerial) ───────────────────────────── */
 const HERO_IMG =
@@ -240,12 +241,28 @@ export default function ManualBookingPage() {
   const [searched, setSearched] = useState(false);
   const [activeType, setActiveType] = useState("all");
 
-  const ArrowIcon = dir === "rtl" ? ArrowLeft : ArrowRight;
+  // Fetch real hotels from DB
+  const { data: hotelsData = [], isLoading: hotelsLoading } = useGetHotelsQuery(undefined, { skip: !searched });
 
-  const filteredHotels =
-    activeType === "all"
-      ? MOCK_HOTELS
-      : MOCK_HOTELS.filter((h) => h.type === activeType);
+  // Map DB hotels to card shape; filter by country + type
+  const dbHotels = hotelsData.map((h) => ({
+    id: h._id,
+    name: h.name,
+    type: h.category?.toLowerCase() || "hotel",
+    typeLabel: h.category || "Hotel",
+    stars: h.stars || 3,
+    price: null,
+    currency: "$",
+    location: [h.city, h.country].filter(Boolean).join(", "),
+    images: [h.thumbnail].filter(Boolean),
+  }));
+  const filteredHotels = dbHotels
+    .filter((h) => !country || h.location.toLowerCase().includes(
+      country === "EG" ? "egypt" : country === "AE" ? "uae" : country === "SA" ? "saudi" : country.toLowerCase()
+    ))
+    .filter((h) => activeType === "all" || h.type === activeType);
+
+  const ArrowIcon = dir === "rtl" ? ArrowLeft : ArrowRight;
 
   return (
     <div className="page-shell" dir={dir}>
@@ -575,10 +592,15 @@ export default function ManualBookingPage() {
 
           {/* Hotel cards */}
           <div className="space-y-4">
-            {filteredHotels.map((hotel) => (
-              <HotelCard key={hotel.id} hotel={hotel} t={t} />
-            ))}
-            {filteredHotels.length === 0 && (
+            {hotelsLoading ? (
+              <p className="text-center py-10 text-sm" style={{ color: "var(--text-muted)" }}>
+                {t("loading") || "Loading..."}
+              </p>
+            ) : filteredHotels.length > 0 ? (
+              filteredHotels.map((hotel) => (
+                <HotelCard key={hotel.id} hotel={hotel} t={t} />
+              ))
+            ) : (
               <p
                 className="text-center py-10 text-sm"
                 style={{ color: "var(--text-muted)" }}

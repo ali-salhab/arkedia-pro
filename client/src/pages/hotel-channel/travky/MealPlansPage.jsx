@@ -12,7 +12,7 @@ import {
   Lock,
   Unlock,
 } from "lucide-react";
-import { useLocalStorage } from "../../../hooks/useLocalStorage";
+import { useChannelSection } from "../../../hooks/useChannelSection";
 import { useLanguage } from "../../../context/LanguageContext";
 
 /* ── Translations ───────────────────────────────────────── */
@@ -144,9 +144,9 @@ export default function MealPlansPage() {
   const t = TXT[lang] || TXT.en;
   const dir = lang === "ar" ? "rtl" : "ltr";
 
-  const [groups] = useLocalStorage("travky_guest_groups", INITIAL_GROUPS);
-  const [plans, setPlans] = useLocalStorage("travky_meal_plans", INITIAL_PLANS);
-  const [included, setIncluded] = useLocalStorage("travky_meal_plans_included", false);
+  const [groups] = useChannelSection("guestGroups", INITIAL_GROUPS);
+  const [plans, setPlans] = useChannelSection("mealPlans", INITIAL_PLANS);
+  const [included, setIncluded] = useChannelSection("mealPlansIncluded", false);
   const [search, setSearch] = useState("");
   const [modal, setModal] = useState(null);
   // form: { namePreset, customName, code, prices }

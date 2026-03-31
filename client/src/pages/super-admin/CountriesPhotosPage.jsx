@@ -1,6 +1,6 @@
 ﻿import { useRef, useState } from "react";
 import { Globe, ChevronDown, Search, Upload, Plus, X, Check, Trash2 } from "lucide-react";
-import { useLocalStorage } from "../../hooks/useLocalStorage";
+import { useAppSetting } from "../../hooks/useAppSetting";
 import { useLanguage } from "../../context/LanguageContext";
 
 const SEED_COUNTRIES = [
@@ -86,8 +86,8 @@ export default function CountriesPhotosPage() {
   const t   = TXT[lang] || TXT.ar;
   const dir = lang === "en" ? "ltr" : "rtl";
 
-  const [countries, setCountries] = useLocalStorage("travky_countries_list", SEED_COUNTRIES);
-  const [photos, setPhotos]       = useLocalStorage("travky_countries_photos", {});
+  const [countries, setCountries] = useAppSetting("countries_list", SEED_COUNTRIES);
+  const [photos, setPhotos]       = useAppSetting("countries_photos", {});
 
   const [search,   setSearch]   = useState("");
   const [expanded, setExpanded] = useState({});

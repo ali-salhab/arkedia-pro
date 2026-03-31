@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { RotateCcw, Plus, Search, Trash2, Pencil, Eye, X } from "lucide-react";
-import { useLocalStorage } from "../../../hooks/useLocalStorage";
+import { useChannelSection } from "../../../hooks/useChannelSection";
 import DeleteConfirmModal from "../../../components/DeleteConfirmModal";
 import { useLanguage } from "../../../context/LanguageContext";
 
@@ -104,9 +104,9 @@ const EMPTY_FORM = {
 
 export default function RefundPoliciesPage() {
   const { t } = useLanguage();
-  const [groups] = useLocalStorage("travky_guest_groups", INITIAL_GROUPS);
-  const [policies, setPolicies] = useLocalStorage(
-    "travky_refund_policies",
+  const [groups] = useChannelSection("guestGroups", INITIAL_GROUPS);
+  const [policies, setPolicies] = useChannelSection(
+    "refundPolicies",
     INITIAL_POLICIES,
   );
   const [search, setSearch] = useState("");

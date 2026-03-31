@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { BedDouble, Plus, Search, Trash2, Pencil, Eye, X, ChevronDown } from "lucide-react";
-import { useLocalStorage } from "../../../hooks/useLocalStorage";
+import { useChannelSection } from "../../../hooks/useChannelSection";
 import DeleteConfirmModal from "../../../components/DeleteConfirmModal";
 
 const INITIAL_GROUPS = [
@@ -48,10 +48,10 @@ function ActionRow({ onDelete, onEdit, onView }) {
 }
 
 export default function SupplementsPage() {
-  const [groups] = useLocalStorage("travky_guest_groups", INITIAL_GROUPS);
-  const [enabled] = useLocalStorage("travky_guest_groups_enabled", true);
-  const [defaultCurrency] = useLocalStorage("travky_default_currency", null);
-  const [supplements, setSupplements] = useLocalStorage("travky_supplements", INITIAL_SUPPLEMENTS);
+  const [groups] = useChannelSection("guestGroups", INITIAL_GROUPS);
+  const [enabled] = useChannelSection("guestGroupsEnabled", true);
+  const [defaultCurrency] = useChannelSection("defaultCurrency", null);
+  const [supplements, setSupplements] = useChannelSection("supplements", INITIAL_SUPPLEMENTS);
   const [search, setSearch] = useState("");
   const [modal, setModal] = useState(null);
   const [form, setForm] = useState({ namePreset: "Sea View", customName: "", prices: {}, basePrice: 0 });

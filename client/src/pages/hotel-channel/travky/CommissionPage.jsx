@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Percent, ChevronLeft, ChevronRight } from "lucide-react";
-import { useLocalStorage } from "../../../hooks/useLocalStorage";
+import { useChannelSection } from "../../../hooks/useChannelSection";
+import { useAppSetting } from "../../../hooks/useAppSetting";
 import { useLanguage } from "../../../context/LanguageContext";
 
 const DEFAULT_PLATFORM_FEES = {
@@ -23,11 +24,11 @@ export default function CommissionPage() {
   const dir = lang === "ar" ? "rtl" : "ltr";
 
   // Read-only platform fees set by super-admin
-  const [platformFees] = useLocalStorage("platform_fees", DEFAULT_PLATFORM_FEES);
+  const [platformFees] = useAppSetting("platform_fees", DEFAULT_PLATFORM_FEES);
 
   // Hotel's own minimum commission
-  const [hotelComm, setHotelComm] = useLocalStorage(
-    "travky_hotel_commission",
+  const [hotelComm, setHotelComm] = useChannelSection(
+    "commission",
     DEFAULT_HOTEL_COMMISSION,
   );
 

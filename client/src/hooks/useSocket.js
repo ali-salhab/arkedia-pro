@@ -1,9 +1,6 @@
 import { useEffect, useRef } from "react";
 import { io } from "socket.io-client";
-
-const SOCKET_URL = (
-  import.meta.env.VITE_API_URL || "http://localhost:5001/api"
-).replace("/api", "");
+import { SERVER_ORIGIN } from "../utils/apiBase";
 
 let _socket = null;
 
@@ -13,7 +10,10 @@ let _socket = null;
  */
 export function getSocket() {
   if (!_socket) {
-    _socket = io(SOCKET_URL, { autoConnect: false, transports: ["websocket"] });
+    _socket = io(SERVER_ORIGIN, {
+      autoConnect: false,
+      transports: ["websocket"],
+    });
   }
   return _socket;
 }

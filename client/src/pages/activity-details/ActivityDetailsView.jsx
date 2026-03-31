@@ -12,9 +12,11 @@ import {
   FileText,
   Tag,
   ShieldCheck,
+  Upload,
+  Check,
 } from "lucide-react";
 import { useLanguage } from "../../context/LanguageContext";
-import { useGetIconsQuery } from "../../store/services/api";
+import { useGetIconsQuery, useCreateActivityMutation, useUpdateActivityMutation, useDeleteActivityMutation, useUploadImageMutation } from "../../store/services/api";
 import DeleteConfirmModal from "../../components/DeleteConfirmModal";
 
 const STORAGE_KEYS = [
@@ -240,11 +242,82 @@ export default function ActivityDetailsView() {
   const { data: allIcons = [] } = useGetIconsQuery();
   const { main, description, icons, policy, photos } = readSession();
 
+  const [createActivity] = useCreateActivityMutation();
+  const [updateActivity] = useUpdateActivityMutation();
+  const [deleteActivity] = useDeleteActivityMutation();
+  const [uploadImage] = useUploadImageMutation();
+
+  const [publishing, setPublishing] = useState(false);
+  const [publishError, setPublishError] = useState("");
+  const [publishedId, setPublishedId] = useState(
+    () => sessionStorage.getItem("activity_saved_id") || null,
+  );
+
+  const handlePublish = async () => {
+    setPublishing(true);
+    setPublishError("");
+    try {
+      let thumbnailUrl = photos?.mainPhotoDataUrl || "";
+      if (thumbnailUrl?.startsWith("data:")) {
+        const r = await uploadImage({ data: thumbnailUrl, folder: "activities" }).unwrap();
+        thumbnailUrl = r.url;
+      }
+      let logoUrl = main.logoDataUrl || "";
+      if (logoUrl?.startsWith("data:")) {
+        const r = await uploadImage({ data: logoUrl, folder: "activities/logos" }).unwrap();
+        logoUrl = r.url;
+      }
+      // Upload gallery images
+      const rawGallery = photos?.galleryDataUrls || [];
+      const gallery = await Promise.all(
+        rawGallery.map(async (src) => {
+          if (src?.startsWith("data:")) {
+            const r = await uploadImage({ data: src, folder: "activities/gallery" }).unwrap();
+            return r.url;
+          }
+          return src;
+        }),
+      );
+      const body = {
+        name: main.nameEn || main.nameAr || "",
+        nameAr: main.nameAr || "",
+        description: description?.descriptionEn || "",
+        descriptionAr: description?.descriptionAr || "",
+        location: main.location || "",
+        city: main.city || "",
+        country: main.country || "",
+        category: main.category || "",
+        thumbnail: thumbnailUrl,
+        logo: logoUrl,
+        gallery,
+        selectedIcons: icons?.selectedIcons || [],
+        policy: policy?.policyEn || "",
+        policyAr: policy?.policyAr || "",
+      };
+      let result;
+      if (publishedId) {
+        result = await updateActivity({ _id: publishedId, ...body }).unwrap();
+      } else {
+        result = await createActivity(body).unwrap();
+        sessionStorage.setItem("activity_saved_id", result._id);
+        setPublishedId(result._id);
+      }
+    } catch {
+      setPublishError(lang === "ar" ? "فشل الحفظ. حاول مجدداً." : "Publish failed. Please try again.");
+    } finally {
+      setPublishing(false);
+    }
+  };
+
   const handleEdit = () => navigate("/activity/details/main");
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const handleDelete = () => setShowDeleteModal(true);
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
+    if (publishedId) {
+      try { await deleteActivity(publishedId).unwrap(); } catch {}
+    }
     STORAGE_KEYS.forEach((key) => sessionStorage.removeItem(key));
+    sessionStorage.removeItem("activity_saved_id");
     navigate("/activity/details/main");
   };
 
@@ -358,11 +431,34 @@ export default function ActivityDetailsView() {
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <button
+                  onClick={handlePublish}
+                  disabled={publishing}
+                  className="flex h-9 items-center gap-1.5 rounded-xl px-3 text-xs font-semibold disabled:opacity-60"
+                  style={{
+                    backgroundColor: publishedId ? "#16a34a" : "var(--sidebar-active-text)",
+                    color: "#fff",
+                  }}
+                >
+                  {publishing ? (
+                    <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                  ) : publishedId ? (
+                    <Check size={13} />
+                  ) : (
+                    <Upload size={13} />
+                  )}
+                  {publishing
+                    ? (lang === "ar" ? "جارٍ النشر..." : "Publishing...")
+                    : publishedId
+                    ? (lang === "ar" ? "تحديث النشاط" : "Update Activity")
+                    : (lang === "ar" ? "نشر النشاط" : "Publish Activity")}
+                </button>
+                <button
                   onClick={handleEdit}
                   className="flex h-9 items-center gap-1.5 rounded-xl px-3 text-xs font-semibold"
                   style={{
-                    backgroundColor: "var(--sidebar-active-text)",
-                    color: "#fff",
+                    backgroundColor: "var(--bg-raised)",
+                    color: "var(--text-primary)",
+                    border: "1px solid var(--border)",
                   }}
                 >
                   <Edit3 size={13} /> {copy.edit}
@@ -379,6 +475,9 @@ export default function ActivityDetailsView() {
                   <Trash2 size={13} /> {copy.delete}
                 </button>
               </div>
+              {publishError && (
+                <p className="mt-1 text-xs text-red-500">{publishError}</p>
+              )}
             </div>
             <div className="mt-2.5 flex flex-wrap items-center gap-2">
               {main.category && (

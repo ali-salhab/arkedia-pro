@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Save, Landmark } from "lucide-react";
 import { useLanguage } from "../../context/LanguageContext";
-import { useLocalStorage } from "../../hooks/useLocalStorage";
+import { useAppSetting } from "../../hooks/useAppSetting";
 
 const SCOPES = [
   { key: "all", labelKey: "pfScope_allHotels" },
@@ -19,8 +19,8 @@ export default function PlatformFeesHotelsPage() {
   const { t, lang } = useLanguage();
   const dir = lang === "ar" ? "rtl" : "ltr";
 
+  const [fees, setFees, , isSaving] = useAppSetting("platform_fees", INITIAL_FEES);
   const [scope, setScope] = useState("all");
-  const [fees, setFees] = useLocalStorage("platform_fees", INITIAL_FEES);
   const [saved, setSaved] = useState(false);
 
   const setFee = (tier, field) => (e) => {
@@ -34,6 +34,7 @@ export default function PlatformFeesHotelsPage() {
   };
 
   const handleSave = () => {
+    // setFees already persists on each change; just show confirmation
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
   };

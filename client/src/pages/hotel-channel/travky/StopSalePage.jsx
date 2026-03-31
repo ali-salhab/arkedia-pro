@@ -9,7 +9,7 @@ import {
   Calendar,
   ChevronDown,
 } from "lucide-react";
-import { useLocalStorage } from "../../../hooks/useLocalStorage";
+import { useChannelSection } from "../../../hooks/useChannelSection";
 import DeleteConfirmModal from "../../../components/DeleteConfirmModal";
 
 const STOP_SALE_REASONS = [
@@ -77,8 +77,8 @@ function StatusBadge({ from, to }) {
 }
 
 export default function StopSalePage() {
-  const [stopSales, setStopSales] = useLocalStorage(
-    "travky_stop_sales",
+  const [stopSales, setStopSales] = useChannelSection(
+    "stopSales",
     INITIAL_STOP_SALES,
   );
   const [search, setSearch] = useState("");

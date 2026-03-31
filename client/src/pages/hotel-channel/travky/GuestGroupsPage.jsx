@@ -3,7 +3,7 @@ import {
   Users, Search, Trash2, Pencil, Eye, X, DollarSign, AlertTriangle,
   ChevronLeft, ChevronRight, BedDouble, Building2, ChevronDown, ChevronUp, ShieldCheck,
 } from "lucide-react";
-import { useLocalStorage } from "../../../hooks/useLocalStorage";
+import { useChannelSection } from "../../../hooks/useChannelSection";
 import DeleteConfirmModal from "../../../components/DeleteConfirmModal";
 import AddButton from "../../../components/AddButton";
 
@@ -109,12 +109,12 @@ function ActionRow({ onDelete, onEdit, onView }) {
 
 /* ─────────────── Main Page ─────────────── */
 export default function GuestGroupsPage() {
-  const [groups, setGroups] = useLocalStorage("travky_guest_groups", INITIAL_GROUPS);
-  const [enabled, setEnabled] = useLocalStorage("travky_guest_groups_enabled", true);
-  const [supplements] = useLocalStorage("travky_supplements", []);
-  const [refundPolicies] = useLocalStorage("travky_refund_policies", []);
-  const [roomTypes] = useLocalStorage("travky_room_types", []);
-  const [defaultCurrency, setDefaultCurrency] = useLocalStorage("travky_default_currency", null);
+  const [groups, setGroups] = useChannelSection("guestGroups", INITIAL_GROUPS);
+  const [enabled, setEnabled] = useChannelSection("guestGroupsEnabled", true);
+  const [supplements] = useChannelSection("supplements", []);
+  const [refundPolicies] = useChannelSection("refundPolicies", []);
+  const [roomTypes] = useChannelSection("roomTypes", []);
+  const [defaultCurrency, setDefaultCurrency] = useChannelSection("defaultCurrency", null);
 
   const [search, setSearch] = useState("");
   const [modal, setModal] = useState(null);

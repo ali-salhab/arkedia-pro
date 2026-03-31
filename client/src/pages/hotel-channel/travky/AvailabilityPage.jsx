@@ -8,7 +8,7 @@ import {
   Eye,
   X,
 } from "lucide-react";
-import { useLocalStorage } from "../../../hooks/useLocalStorage";
+import { useChannelSection } from "../../../hooks/useChannelSection";
 import DeleteConfirmModal from "../../../components/DeleteConfirmModal";
 
 const INITIAL_ROOM_TYPES = [
@@ -91,11 +91,11 @@ function buildRoomLabel(room, supplement) {
 }
 
 export default function AvailabilityPage() {
-  const [roomTypes]    = useLocalStorage("travky_room_types",   INITIAL_ROOM_TYPES);
-  const [supplements]  = useLocalStorage("travky_supplements",  INITIAL_SUPPLEMENTS);
-  const [periods]      = useLocalStorage("travky_periods",       INITIAL_PERIODS);
-  const [availability, setAvailability] = useLocalStorage(
-    "travky_availability",
+  const [roomTypes]    = useChannelSection("roomTypes",   INITIAL_ROOM_TYPES);
+  const [supplements]  = useChannelSection("supplements",  INITIAL_SUPPLEMENTS);
+  const [periods]      = useChannelSection("periods",       INITIAL_PERIODS);
+  const [availability, setAvailability] = useChannelSection(
+    "availability",
     SAMPLE_AVAILABILITY,
   );
   const [search, setSearch] = useState("");

@@ -10,9 +10,17 @@ import {
   ChevronRight,
   FileText,
   ShieldCheck,
+  Upload,
+  Check,
 } from "lucide-react";
 import { useLanguage } from "../../context/LanguageContext";
 import DeleteConfirmModal from "../../components/DeleteConfirmModal";
+import {
+  useCreateRestaurantMutation,
+  useUpdateRestaurantMutation,
+  useDeleteRestaurantMutation,
+  useUploadImageMutation,
+} from "../../store/services/api";
 
 const STORAGE_KEYS = [
   "restaurant_details_main",
@@ -199,11 +207,83 @@ export default function RestaurantDetailsView() {
   const copy = COPY[lang] || COPY.en;
   const { main, description, policy, photos } = readSession();
 
+  const [createRestaurant] = useCreateRestaurantMutation();
+  const [updateRestaurant] = useUpdateRestaurantMutation();
+  const [deleteRestaurant] = useDeleteRestaurantMutation();
+  const [uploadImage] = useUploadImageMutation();
+
+  const [publishing, setPublishing] = useState(false);
+  const [publishError, setPublishError] = useState("");
+  const [publishedId, setPublishedId] = useState(
+    () => sessionStorage.getItem("restaurant_saved_id") || null,
+  );
+
+  const handlePublish = async () => {
+    setPublishing(true);
+    setPublishError("");
+    try {
+      let thumbnailUrl = photos?.mainPhotoDataUrl || "";
+      if (thumbnailUrl?.startsWith("data:")) {
+        const r = await uploadImage({ data: thumbnailUrl, folder: "restaurants" }).unwrap();
+        thumbnailUrl = r.url;
+      }
+      let logoUrl = main.logoDataUrl || "";
+      if (logoUrl?.startsWith("data:")) {
+        const r = await uploadImage({ data: logoUrl, folder: "restaurants/logos" }).unwrap();
+        logoUrl = r.url;
+      }
+      // Upload gallery images
+      const rawGallery = photos?.galleryDataUrls || [];
+      const gallery = await Promise.all(
+        rawGallery.map(async (src) => {
+          if (src?.startsWith("data:")) {
+            const r = await uploadImage({ data: src, folder: "restaurants/gallery" }).unwrap();
+            return r.url;
+          }
+          return src;
+        }),
+      );
+      const body = {
+        name: main.nameEn || main.nameAr || "",
+        nameAr: main.nameAr || "",
+        description: description?.descriptionEn || "",
+        descriptionAr: description?.descriptionAr || "",
+        location: main.location || "",
+        city: main.city || "",
+        country: main.country || "",
+        cuisine: main.cuisine || "",
+        category: main.category || "",
+        stars: main.stars || 0,
+        thumbnail: thumbnailUrl,
+        logo: logoUrl,
+        gallery,
+        policy: policy?.policyEn || "",
+        policyAr: policy?.policyAr || "",
+      };
+      let result;
+      if (publishedId) {
+        result = await updateRestaurant({ _id: publishedId, ...body }).unwrap();
+      } else {
+        result = await createRestaurant(body).unwrap();
+        sessionStorage.setItem("restaurant_saved_id", result._id);
+        setPublishedId(result._id);
+      }
+    } catch {
+      setPublishError(lang === "ar" ? "فشل الحفظ. حاول مجدداً." : "Publish failed. Please try again.");
+    } finally {
+      setPublishing(false);
+    }
+  };
+
   const handleEdit = () => navigate("/restaurant/details/main");
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const handleDelete = () => setShowDeleteModal(true);
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
+    if (publishedId) {
+      try { await deleteRestaurant(publishedId).unwrap(); } catch {}
+    }
     STORAGE_KEYS.forEach((key) => sessionStorage.removeItem(key));
+    sessionStorage.removeItem("restaurant_saved_id");
     navigate("/restaurant/details/main");
   };
 
@@ -339,11 +419,34 @@ export default function RestaurantDetailsView() {
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <button
+                  onClick={handlePublish}
+                  disabled={publishing}
+                  className="flex h-9 items-center gap-1.5 rounded-xl px-3 text-xs font-semibold disabled:opacity-60"
+                  style={{
+                    backgroundColor: publishedId ? "#16a34a" : "var(--sidebar-active-text)",
+                    color: "#fff",
+                  }}
+                >
+                  {publishing ? (
+                    <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                  ) : publishedId ? (
+                    <Check size={13} />
+                  ) : (
+                    <Upload size={13} />
+                  )}
+                  {publishing
+                    ? (lang === "ar" ? "جارٍ النشر..." : "Publishing...")
+                    : publishedId
+                    ? (lang === "ar" ? "تحديث المطعم" : "Update Restaurant")
+                    : (lang === "ar" ? "نشر المطعم" : "Publish Restaurant")}
+                </button>
+                <button
                   onClick={handleEdit}
                   className="flex h-9 items-center gap-1.5 rounded-xl px-3 text-xs font-semibold"
                   style={{
-                    backgroundColor: "var(--sidebar-active-text)",
-                    color: "#fff",
+                    backgroundColor: "var(--bg-raised)",
+                    color: "var(--text-primary)",
+                    border: "1px solid var(--border)",
                   }}
                 >
                   <Edit3 size={13} /> {copy.edit}
@@ -360,6 +463,9 @@ export default function RestaurantDetailsView() {
                   <Trash2 size={13} /> {copy.delete}
                 </button>
               </div>
+              {publishError && (
+                <p className="mt-1 text-xs text-red-500">{publishError}</p>
+              )}
             </div>
 
             {stars > 0 && (

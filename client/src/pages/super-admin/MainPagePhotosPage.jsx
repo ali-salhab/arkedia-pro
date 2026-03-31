@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { Images, Hotel, Utensils, Zap, Package, Upload, Save } from "lucide-react";
-import { useLocalStorage } from "../../hooks/useLocalStorage";
+import { useAppSetting } from "../../hooks/useAppSetting";
 import { useLanguage } from "../../context/LanguageContext";
 
 const CATEGORIES = [
@@ -57,7 +57,7 @@ export default function MainPagePhotosPage() {
   const t  = TXT[lang] || TXT.ar;
   const dir = lang === "en" ? "ltr" : "rtl";
 
-  const [photos, setPhotos] = useLocalStorage("travky_main_page_photos", {});
+  const [photos, setPhotos] = useAppSetting("main_page_photos", {});
   const [urls,   setUrls]   = useState(() =>
     Object.fromEntries(CATEGORIES.map((c) => [c.key, photos[c.key]?.url || ""]))
   );

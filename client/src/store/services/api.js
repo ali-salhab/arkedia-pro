@@ -1,11 +1,10 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { setCredentials, logout } from "../slices/authSlice";
 import { showGlobalError } from "../slices/uiSlice";
-
-const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
+import { API_BASE_URL } from "../../utils/apiBase";
 
 const rawBaseQuery = fetchBaseQuery({
-  baseUrl,
+  baseUrl: API_BASE_URL,
   prepareHeaders: (headers, { getState }) => {
     const token = getState().auth.accessToken;
     if (token) headers.set("authorization", `Bearer ${token}`);
@@ -104,6 +103,8 @@ export const api = createApi({
     "Sidebar",
     "Icon",
     "HotelApiConfig",
+    "ChannelConfig",
+    "AppSettings",
   ],
   endpoints: (builder) => ({
     login: builder.mutation({
@@ -290,6 +291,10 @@ export const api = createApi({
       query: (body) => ({ url: "/icons/request", method: "POST", body }),
       invalidatesTags: ["Icon"],
     }),
+    // Image upload to Cloudinary via server
+    uploadImage: builder.mutation({
+      query: (body) => ({ url: "/upload", method: "POST", body }),
+    }),
     // Hotel selected icons
     updateHotelIcons: builder.mutation({
       query: ({ hotelId, selectedIcons }) => ({
@@ -352,6 +357,34 @@ export const api = createApi({
       query: (body) => ({ url: "/public/bookings", method: "POST", body }),
       invalidatesTags: ["Booking"],
     }),
+    // Channel Manager Config
+    getChannelConfig: builder.query({
+      query: () => "/channel-config",
+      providesTags: ["ChannelConfig"],
+    }),
+    updateChannelConfigSection: builder.mutation({
+      query: ({ section, data }) => ({
+        url: `/channel-config/${section}`,
+        method: "PUT",
+        body: { data },
+      }),
+      invalidatesTags: ["ChannelConfig"],
+    }),
+    // App Settings (super-admin CMS)
+    getAppSetting: builder.query({
+      query: (key) => `/app-settings/${key}`,
+      providesTags: (result, error, key) => [{ type: "AppSettings", id: key }],
+    }),
+    upsertAppSetting: builder.mutation({
+      query: ({ key, value }) => ({
+        url: `/app-settings/${key}`,
+        method: "PUT",
+        body: { value },
+      }),
+      invalidatesTags: (result, error, { key }) => [
+        { type: "AppSettings", id: key },
+      ],
+    }),
     // Admin entities (hotels/restaurants/activities belonging to admin)
     getAdminEntities: builder.query({
       query: () => "/admin/entities",
@@ -410,6 +443,7 @@ export const {
   useUpdateIconMutation,
   useDeleteIconMutation,
   useRequestIconMutation,
+  useUploadImageMutation,
   useUpdateHotelIconsMutation,
   // Hotel Developer API
   useGetApiConfigQuery,
@@ -426,4 +460,10 @@ export const {
   // Admin entities
   useGetAdminEntitiesQuery,
   useImpersonateMutation,
+  // Channel Manager Config
+  useGetChannelConfigQuery,
+  useUpdateChannelConfigSectionMutation,
+  // App Settings
+  useGetAppSettingQuery,
+  useUpsertAppSettingMutation,
 } = api;

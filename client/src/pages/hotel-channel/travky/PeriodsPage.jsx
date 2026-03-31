@@ -10,7 +10,7 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-import { useLocalStorage } from "../../../hooks/useLocalStorage";
+import { useChannelSection } from "../../../hooks/useChannelSection";
 import DeleteConfirmModal from "../../../components/DeleteConfirmModal";
 import { useLanguage } from "../../../context/LanguageContext";
 
@@ -200,8 +200,8 @@ function ActionRow({ onDelete, onEdit, onView, t }) {
 
 export default function PeriodsPage() {
   const { t } = useLanguage();
-  const [periods, setPeriods] = useLocalStorage(
-    "travky_periods",
+  const [periods, setPeriods] = useChannelSection(
+    "periods",
     INITIAL_PERIODS,
   );
   const [search, setSearch] = useState("");
