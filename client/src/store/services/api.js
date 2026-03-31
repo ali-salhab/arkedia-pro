@@ -375,6 +375,9 @@ export const api = createApi({
       query: (key) => `/app-settings/${key}`,
       providesTags: (result, error, key) => [{ type: "AppSettings", id: key }],
     }),
+    getPublicAppSetting: builder.query({
+      query: (key) => `/public/app-settings/${key}`,
+    }),
     upsertAppSetting: builder.mutation({
       query: ({ key, value }) => ({
         url: `/app-settings/${key}`,
@@ -465,5 +468,6 @@ export const {
   useUpdateChannelConfigSectionMutation,
   // App Settings
   useGetAppSettingQuery,
+  useGetPublicAppSettingQuery,
   useUpsertAppSettingMutation,
 } = api;

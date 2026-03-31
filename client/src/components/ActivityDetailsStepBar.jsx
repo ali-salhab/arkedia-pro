@@ -16,27 +16,27 @@ export default function ActivityDetailsStepBar() {
 
   const steps = [
     {
-      label: t("actStepMain") || "Main Details",
+      label: t("activityStepMain") || "Basic Details",
       path: "/activity/details/main",
       Icon: FileSearch,
     },
     {
-      label: t("actStepDescription") || "Description",
+      label: t("activityStepDescription") || "Description",
       path: "/activity/details/description",
       Icon: AlignLeft,
     },
     {
-      label: t("actStepIcons") || "Icons",
+      label: t("activityStepIcons") || "Amenities",
       path: "/activity/details/icons",
       Icon: Tag,
     },
     {
-      label: t("actStepPolicy") || "Policy",
+      label: t("activityStepPolicy") || "Policies",
       path: "/activity/details/policy",
       Icon: ShieldCheck,
     },
     {
-      label: t("actStepPhotos") || "Photos",
+      label: t("activityStepPhotos") || "Photos",
       path: "/activity/details/photos",
       Icon: Images,
     },

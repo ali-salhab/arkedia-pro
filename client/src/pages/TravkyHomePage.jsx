@@ -11,6 +11,7 @@ import PublicAuthModal from "../components/PublicAuthModal";
 import SearchDatePicker from "../components/SearchDatePicker";
 import SearchGuestsPicker from "../components/SearchGuestsPicker";
 import SearchDestinationPanel from "../components/SearchDestinationPanel";
+import { useGetPublicAppSettingQuery } from "../store/services/api";
 
 const TABS = [
   { key: "hotels",      ar: "فنادق",  Icon: Hotel },
@@ -38,9 +39,25 @@ export default function TravkyHomePage() {
   const [guests, setGuests] = useState({ rooms: 1, adults: 2, children: 0 });
   const [selectedDest, setSelectedDest] = useState(null);
 
-  const [mainPhotos] = useLocalStorage("travky_main_page_photos", {});
-  const [countries]  = useLocalStorage("travky_countries_list", []);
-  const [cPhotos]    = useLocalStorage("travky_countries_photos", {});
+  const [mainPhotos, setMainPhotos] = useLocalStorage("travky_main_page_photos", {});
+  const [countries, setCountries]   = useLocalStorage("travky_countries_list", []);
+  const [cPhotos, setCPhotos]       = useLocalStorage("travky_countries_photos", {});
+
+  const { data: mainPhotosRemote }    = useGetPublicAppSettingQuery("main_page_photos");
+  const { data: countriesRemote }     = useGetPublicAppSettingQuery("countries_list");
+  const { data: countriesPhotosRemote } = useGetPublicAppSettingQuery("countries_photos");
+
+  useEffect(() => {
+    if (mainPhotosRemote) setMainPhotos(mainPhotosRemote);
+  }, [mainPhotosRemote, setMainPhotos]);
+
+  useEffect(() => {
+    if (countriesRemote) setCountries(countriesRemote);
+  }, [countriesRemote, setCountries]);
+
+  useEffect(() => {
+    if (countriesPhotosRemote) setCPhotos(countriesPhotosRemote);
+  }, [countriesPhotosRemote, setCPhotos]);
 
   const heroBg = mainPhotos[activeTab]?.src || null;
 

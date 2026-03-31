@@ -1,4 +1,5 @@
 const User = require("../models/User");
+const Activity = require("../models/Activity");
 const asyncHandler = require("../middleware/asyncHandler");
 const { emitPermissionsUpdated } = require("../utils/socketStore");
 
@@ -79,6 +80,38 @@ function ensureInScope(req, res, targetUser) {
   if (isInRequesterScope(req.user, targetUser)) return true;
   res.status(403).json({ message: "Out of scope" });
   return false;
+}
+
+async function ensureActivityForManager(userDoc) {
+  if (!userDoc || userDoc.role !== "activity") return;
+
+  const managerId = userDoc._id;
+  const adminId = userDoc.adminId || null;
+  const fallbackName = userDoc.name || userDoc.email || "Activity";
+
+  let activity = await Activity.findOne({ manager: managerId });
+  if (!activity && userDoc.activityId) {
+    activity = await Activity.findById(userDoc.activityId);
+  }
+
+  if (!activity) {
+    activity = await Activity.create({
+      name: fallbackName,
+      manager: managerId,
+      adminId,
+    });
+  } else {
+    // Keep manager/admin ownership synced with the account.
+    activity.manager = managerId;
+    activity.adminId = adminId;
+    if (!activity.name) activity.name = fallbackName;
+    await activity.save();
+  }
+
+  if (!userDoc.activityId || String(userDoc.activityId) !== String(activity._id)) {
+    userDoc.activityId = activity._id;
+    await userDoc.save();
+  }
 }
 
 async function ensureValidOwnerForRole(res, targetRole, ownerId) {
@@ -256,6 +289,7 @@ const create = asyncHandler(async (req, res) => {
   }
 
   const item = await User.create(body);
+  await ensureActivityForManager(item);
   const doc = item.toObject();
   delete doc.password;
   res.status(201).json(doc);
@@ -268,6 +302,7 @@ const update = asyncHandler(async (req, res) => {
   const { password, ...rest } = req.body;
   const user = await User.findById(req.params.id).select("+password");
   if (!user) return res.status(404).json({ message: "User not found" });
+  const previousRole = user.role;
 
   if (!ensureInScope(req, res, user)) {
     return;
@@ -311,6 +346,19 @@ const update = asyncHandler(async (req, res) => {
   Object.assign(user, rest);
   if (password) user.password = password;
   await user.save();
+
+  if (user.role === "activity") {
+    await ensureActivityForManager(user);
+  } else if (previousRole === "activity") {
+    await Activity.deleteMany({
+      $or: [{ manager: user._id }, { _id: user.activityId }],
+    });
+    if (user.activityId) {
+      user.activityId = undefined;
+      await user.save();
+    }
+  }
+
   const doc = user.toObject();
   delete doc.password;
   // Notify the affected user in real-time if their permissions changed
@@ -331,6 +379,12 @@ const remove = asyncHandler(async (req, res) => {
   const deletePermission = permissionForRoleAction(item.role, "delete");
   if (!ensurePermission(req, res, deletePermission)) {
     return;
+  }
+
+  if (item.role === "activity") {
+    await Activity.deleteMany({
+      $or: [{ manager: item._id }, { _id: item.activityId }],
+    });
   }
 
   await item.deleteOne();

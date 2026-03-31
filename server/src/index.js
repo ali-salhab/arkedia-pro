@@ -1,8 +1,8 @@
+const path = require("path");
+// Load base .env first, then environment-specific override (so MONGO_URI is always present)
+require("dotenv").config({ path: path.resolve(__dirname, "../.env") });
 require("dotenv").config({
-  path: require("path").resolve(
-    __dirname,
-    `../.env.${process.env.NODE_ENV || "development"}`,
-  ),
+  path: path.resolve(__dirname, `../.env.${process.env.NODE_ENV || "development"}`),
 });
 const http = require("http");
 const express = require("express");
