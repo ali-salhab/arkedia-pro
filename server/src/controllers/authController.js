@@ -17,6 +17,9 @@ function buildUserPayload(userDoc, mergedPermissions) {
     logo: userDoc.logo || null,
     permissions: mergedPermissions,
     adminId: userDoc.adminId || null,
+    hotelId: userDoc.hotelId || null,
+    restaurantId: userDoc.restaurantId || null,
+    activityId: userDoc.activityId || null,
   };
 }
 

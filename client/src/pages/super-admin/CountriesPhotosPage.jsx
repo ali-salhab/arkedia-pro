@@ -1,6 +1,7 @@
 ﻿import { useRef, useState } from "react";
-import { Globe, ChevronDown, Search, Upload, Plus, X, Check, Trash2 } from "lucide-react";
+import { Globe, ChevronDown, Search, Upload, Plus, X, Check, Trash2, Loader2 } from "lucide-react";
 import { useAppSetting } from "../../hooks/useAppSetting";
+import { useUploadImageMutation } from "../../store/services/api";
 import { useLanguage } from "../../context/LanguageContext";
 
 const SEED_COUNTRIES = [
@@ -98,6 +99,8 @@ export default function CountriesPhotosPage() {
 
   const [addCityOpen, setAddCityOpen] = useState({});
   const [newCity, setNewCity]         = useState({});
+  const [uploading, setUploading]     = useState({});
+  const [uploadImage] = useUploadImageMutation();
 
   const filtered = countries.filter((c) => {
     const q = search.toLowerCase();
@@ -122,9 +125,17 @@ export default function CountriesPhotosPage() {
   async function handleCountryFile(code, e) {
     const file = e.target.files?.[0];
     if (!file) return;
-    const b64 = await resizeImage(file);
-    setPhotos((p) => ({ ...p, [code]: { ...(p[code] || {}), src: b64 } }));
-    e.target.value = "";
+    const uploadKey = `country-${code}`;
+    setUploading((p) => ({ ...p, [uploadKey]: true }));
+    try {
+      const b64 = await resizeImage(file);
+      const result = await uploadImage({ data: b64, folder: "countries" });
+      const src = result?.data?.url || b64;
+      setPhotos((p) => ({ ...p, [code]: { ...(p[code] || {}), src } }));
+    } finally {
+      setUploading((p) => ({ ...p, [uploadKey]: false }));
+      e.target.value = "";
+    }
   }
 
   function removeCountryPhoto(code) {
@@ -134,15 +145,23 @@ export default function CountriesPhotosPage() {
   async function handleCityFile(code, cityEn, e) {
     const file = e.target.files?.[0];
     if (!file) return;
-    const b64 = await resizeImage(file);
-    setPhotos((p) => ({
-      ...p,
-      [code]: {
-        ...(p[code] || {}),
-        cities: { ...(p[code]?.cities || {}), [cityEn]: { src: b64 } },
-      },
-    }));
-    e.target.value = "";
+    const uploadKey = `city-${code}-${cityEn}`;
+    setUploading((p) => ({ ...p, [uploadKey]: true }));
+    try {
+      const b64 = await resizeImage(file);
+      const result = await uploadImage({ data: b64, folder: "countries" });
+      const src = result?.data?.url || b64;
+      setPhotos((p) => ({
+        ...p,
+        [code]: {
+          ...(p[code] || {}),
+          cities: { ...(p[code]?.cities || {}), [cityEn]: { src } },
+        },
+      }));
+    } finally {
+      setUploading((p) => ({ ...p, [uploadKey]: false }));
+      e.target.value = "";
+    }
   }
 
   function removeCityPhoto(code, cityEn) {
@@ -311,10 +330,11 @@ export default function CountriesPhotosPage() {
                       onChange={(e) => handleCountryFile(country.code, e)} />
                     <button
                       onClick={() => fileRefs.current[country.code]?.click()}
+                      disabled={uploading[`country-${country.code}`]}
                       className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white"
-                      style={{ backgroundColor: "var(--sidebar-active-text)" }}
+                      style={{ backgroundColor: "var(--sidebar-active-text)", opacity: uploading[`country-${country.code}`] ? 0.6 : 1 }}
                     >
-                      <Upload size={15} />
+                      {uploading[`country-${country.code}`] ? <Loader2 size={15} className="animate-spin" /> : <Upload size={15} />}
                       {t.upload}
                     </button>
                   </div>
@@ -361,14 +381,16 @@ export default function CountriesPhotosPage() {
                             onChange={(e) => handleCityFile(country.code, city.en, e)} />
                           <button
                             onClick={() => fileRefs.current[cityFileKey]?.click()}
+                            disabled={uploading[`city-${country.code}-${city.en}`]}
                             className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold w-full justify-center"
                             style={{
                               backgroundColor: hasCityPhoto ? "var(--bg-raised)" : "var(--sidebar-active-text)",
                               border: hasCityPhoto ? "1px solid var(--border)" : "none",
-                              color: hasCityPhoto ? "var(--text-secondary)" : "white"
+                              color: hasCityPhoto ? "var(--text-secondary)" : "white",
+                              opacity: uploading[`city-${country.code}-${city.en}`] ? 0.6 : 1,
                             }}
                           >
-                            <Upload size={13} />
+                            {uploading[`city-${country.code}-${city.en}`] ? <Loader2 size={13} className="animate-spin" /> : <Upload size={13} />}
                             {t.upload}
                           </button>
                         </div>

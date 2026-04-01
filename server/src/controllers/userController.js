@@ -1,5 +1,7 @@
 const User = require("../models/User");
 const Activity = require("../models/Activity");
+const Hotel = require("../models/Hotel");
+const Restaurant = require("../models/Restaurant");
 const asyncHandler = require("../middleware/asyncHandler");
 const { emitPermissionsUpdated } = require("../utils/socketStore");
 
@@ -110,6 +112,68 @@ async function ensureActivityForManager(userDoc) {
 
   if (!userDoc.activityId || String(userDoc.activityId) !== String(activity._id)) {
     userDoc.activityId = activity._id;
+    await userDoc.save();
+  }
+}
+
+async function ensureHotelForManager(userDoc) {
+  if (!userDoc || userDoc.role !== "hotel") return;
+
+  const managerId = userDoc._id;
+  const adminId = userDoc.adminId || null;
+  const fallbackName = userDoc.name || userDoc.email || "Hotel";
+
+  let hotel = await Hotel.findOne({ manager: managerId });
+  if (!hotel && userDoc.hotelId) {
+    hotel = await Hotel.findById(userDoc.hotelId);
+  }
+
+  if (!hotel) {
+    hotel = await Hotel.create({
+      name: fallbackName,
+      manager: managerId,
+      adminId,
+    });
+  } else {
+    hotel.manager = managerId;
+    hotel.adminId = adminId;
+    if (!hotel.name) hotel.name = fallbackName;
+    await hotel.save();
+  }
+
+  if (!userDoc.hotelId || String(userDoc.hotelId) !== String(hotel._id)) {
+    userDoc.hotelId = hotel._id;
+    await userDoc.save();
+  }
+}
+
+async function ensureRestaurantForManager(userDoc) {
+  if (!userDoc || userDoc.role !== "restaurant") return;
+
+  const managerId = userDoc._id;
+  const adminId = userDoc.adminId || null;
+  const fallbackName = userDoc.name || userDoc.email || "Restaurant";
+
+  let restaurant = await Restaurant.findOne({ manager: managerId });
+  if (!restaurant && userDoc.restaurantId) {
+    restaurant = await Restaurant.findById(userDoc.restaurantId);
+  }
+
+  if (!restaurant) {
+    restaurant = await Restaurant.create({
+      name: fallbackName,
+      manager: managerId,
+      adminId,
+    });
+  } else {
+    restaurant.manager = managerId;
+    restaurant.adminId = adminId;
+    if (!restaurant.name) restaurant.name = fallbackName;
+    await restaurant.save();
+  }
+
+  if (!userDoc.restaurantId || String(userDoc.restaurantId) !== String(restaurant._id)) {
+    userDoc.restaurantId = restaurant._id;
     await userDoc.save();
   }
 }
@@ -290,6 +354,8 @@ const create = asyncHandler(async (req, res) => {
 
   const item = await User.create(body);
   await ensureActivityForManager(item);
+  await ensureHotelForManager(item);
+  await ensureRestaurantForManager(item);
   const doc = item.toObject();
   delete doc.password;
   res.status(201).json(doc);
@@ -359,6 +425,30 @@ const update = asyncHandler(async (req, res) => {
     }
   }
 
+  if (user.role === "hotel") {
+    await ensureHotelForManager(user);
+  } else if (previousRole === "hotel") {
+    await Hotel.deleteMany({
+      $or: [{ manager: user._id }, { _id: user.hotelId }],
+    });
+    if (user.hotelId) {
+      user.hotelId = undefined;
+      await user.save();
+    }
+  }
+
+  if (user.role === "restaurant") {
+    await ensureRestaurantForManager(user);
+  } else if (previousRole === "restaurant") {
+    await Restaurant.deleteMany({
+      $or: [{ manager: user._id }, { _id: user.restaurantId }],
+    });
+    if (user.restaurantId) {
+      user.restaurantId = undefined;
+      await user.save();
+    }
+  }
+
   const doc = user.toObject();
   delete doc.password;
   // Notify the affected user in real-time if their permissions changed
@@ -384,6 +474,18 @@ const remove = asyncHandler(async (req, res) => {
   if (item.role === "activity") {
     await Activity.deleteMany({
       $or: [{ manager: item._id }, { _id: item.activityId }],
+    });
+  }
+
+  if (item.role === "hotel") {
+    await Hotel.deleteMany({
+      $or: [{ manager: item._id }, { _id: item.hotelId }],
+    });
+  }
+
+  if (item.role === "restaurant") {
+    await Restaurant.deleteMany({
+      $or: [{ manager: item._id }, { _id: item.restaurantId }],
     });
   }
 

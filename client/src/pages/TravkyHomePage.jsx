@@ -39,25 +39,20 @@ export default function TravkyHomePage() {
   const [guests, setGuests] = useState({ rooms: 1, adults: 2, children: 0 });
   const [selectedDest, setSelectedDest] = useState(null);
 
-  const [mainPhotos, setMainPhotos] = useLocalStorage("travky_main_page_photos", {});
-  const [countries, setCountries]   = useLocalStorage("travky_countries_list", []);
-  const [cPhotos, setCPhotos]       = useLocalStorage("travky_countries_photos", {});
+  // Pull live data from DB via the public endpoint — no stale localStorage
+  const { data: mainPhotos = {} }  = useGetPublicAppSettingQuery("main_page_photos");
+  const { data: countriesRaw = [] } = useGetPublicAppSettingQuery("countries_list");
+  const { data: cPhotos = {} }     = useGetPublicAppSettingQuery("countries_photos");
 
-  const { data: mainPhotosRemote }    = useGetPublicAppSettingQuery("main_page_photos");
-  const { data: countriesRemote }     = useGetPublicAppSettingQuery("countries_list");
-  const { data: countriesPhotosRemote } = useGetPublicAppSettingQuery("countries_photos");
+  // Keep legacy localStorage keys in sync so other pages (if any) still read them
+  const [, setLSPhotos]    = useLocalStorage("travky_main_page_photos", {});
+  const [, setLSCountries] = useLocalStorage("travky_countries_list", []);
+  const [, setLSCPhotos]   = useLocalStorage("travky_countries_photos", {});
+  useEffect(() => { if (mainPhotos && Object.keys(mainPhotos).length)  setLSPhotos(mainPhotos); },    [mainPhotos]);    // eslint-disable-line
+  useEffect(() => { if (countriesRaw && countriesRaw.length)           setLSCountries(countriesRaw); }, [countriesRaw]); // eslint-disable-line
+  useEffect(() => { if (cPhotos && Object.keys(cPhotos).length)        setLSCPhotos(cPhotos); },       [cPhotos]);       // eslint-disable-line
 
-  useEffect(() => {
-    if (mainPhotosRemote) setMainPhotos(mainPhotosRemote);
-  }, [mainPhotosRemote, setMainPhotos]);
-
-  useEffect(() => {
-    if (countriesRemote) setCountries(countriesRemote);
-  }, [countriesRemote, setCountries]);
-
-  useEffect(() => {
-    if (countriesPhotosRemote) setCPhotos(countriesPhotosRemote);
-  }, [countriesPhotosRemote, setCPhotos]);
+  const countries = Array.isArray(countriesRaw) ? countriesRaw : [];
 
   const heroBg = mainPhotos[activeTab]?.src || null;
 

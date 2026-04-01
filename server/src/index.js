@@ -1,8 +1,9 @@
 const path = require("path");
-// Load base .env first, then environment-specific override (so MONGO_URI is always present)
+// Load base .env as fallback, then let the env-specific file override any key
 require("dotenv").config({ path: path.resolve(__dirname, "../.env") });
 require("dotenv").config({
   path: path.resolve(__dirname, `../.env.${process.env.NODE_ENV || "development"}`),
+  override: true,
 });
 const http = require("http");
 const express = require("express");
@@ -81,8 +82,8 @@ app.use(
     crossOriginEmbedderPolicy: false,
   }),
 );
-app.use(express.json({ limit: "5mb" }));
-app.use(express.urlencoded({ extended: true, limit: "5mb" }));
+app.use(express.json({ limit: "20mb" }));
+app.use(express.urlencoded({ extended: true, limit: "20mb" }));
 app.use(cookieParser());
 app.use(morgan("dev"));
 

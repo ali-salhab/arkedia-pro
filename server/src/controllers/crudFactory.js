@@ -42,6 +42,9 @@ function buildCrudControllers(Model, name) {
     const ownerId = getScopedOwnerId(req.user);
     if (req.user && !PLATFORM_ROLES.has(req.user.role)) {
       body.adminId = ownerId;
+      if (req.user.hotelId && !body.hotelId) body.hotelId = req.user.hotelId;
+      if (req.user.restaurantId && !body.restaurantId) body.restaurantId = req.user.restaurantId;
+      if (req.user.activityId && !body.activityId) body.activityId = req.user.activityId;
     }
     const item = await Model.create(body);
     res.status(201).json(item);

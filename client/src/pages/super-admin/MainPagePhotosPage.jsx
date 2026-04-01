@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
-import { Images, Hotel, Utensils, Zap, Package, Upload, Save } from "lucide-react";
+import { Images, Hotel, Utensils, Zap, Package, Upload, Save, Loader2 } from "lucide-react";
 import { useAppSetting } from "../../hooks/useAppSetting";
+import { useUploadImageMutation } from "../../store/services/api";
 import { useLanguage } from "../../context/LanguageContext";
 
 const CATEGORIES = [
@@ -61,17 +62,27 @@ export default function MainPagePhotosPage() {
   const [urls,   setUrls]   = useState(() =>
     Object.fromEntries(CATEGORIES.map((c) => [c.key, photos[c.key]?.url || ""]))
   );
-  const [saved,  setSaved]  = useState({});
+  const [saved,     setSaved]     = useState({});
+  const [uploading, setUploading] = useState({});
   const fileRefs = useRef({});
+  const [uploadImage] = useUploadImageMutation();
 
   async function handleFileChange(catKey, e) {
     const file = e.target.files?.[0];
     if (!file) return;
-    const b64 = await resizeImage(file);
-    setUrls((p) => ({ ...p, [catKey]: "" }));
-    setPhotos((p) => ({ ...p, [catKey]: { type: "upload", src: b64 } }));
-    setSaved((p) => ({ ...p, [catKey]: true }));
-    setTimeout(() => setSaved((p) => ({ ...p, [catKey]: false })), 2000);
+    setUploading((p) => ({ ...p, [catKey]: true }));
+    try {
+      const b64 = await resizeImage(file);
+      const result = await uploadImage({ data: b64, folder: "app-settings" });
+      const src = result?.data?.url || b64;
+      setUrls((p) => ({ ...p, [catKey]: "" }));
+      setPhotos((p) => ({ ...p, [catKey]: { type: "upload", src } }));
+      setSaved((p) => ({ ...p, [catKey]: true }));
+      setTimeout(() => setSaved((p) => ({ ...p, [catKey]: false })), 2000);
+    } finally {
+      setUploading((p) => ({ ...p, [catKey]: false }));
+      e.target.value = "";
+    }
   }
 
   function handleSaveUrl(catKey) {
@@ -163,14 +174,16 @@ export default function MainPagePhotosPage() {
                 />
                 <button
                   onClick={() => fileRefs.current[key]?.click()}
+                  disabled={uploading[key]}
                   className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium"
                   style={{
                     backgroundColor: "var(--bg-raised)",
                     color: "var(--text-secondary)",
                     border: "1px solid var(--border)",
+                    opacity: uploading[key] ? 0.6 : 1,
                   }}
                 >
-                  <Upload size={15} />
+                  {uploading[key] ? <Loader2 size={15} className="animate-spin" /> : <Upload size={15} />}
                   {t.upload}
                 </button>
               </div>

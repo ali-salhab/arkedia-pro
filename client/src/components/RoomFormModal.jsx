@@ -28,6 +28,7 @@ import {
   Building2,
 } from "lucide-react";
 import { useLanguage } from "../context/LanguageContext";
+import { useUploadImageMutation } from "../store/services/api";
 
 const AMENITY_LIST = [
   { key: "wifi", label: "WiFi", Icon: Wifi },
@@ -124,8 +125,10 @@ export default function RoomFormModal({
   const [form, setForm] = useState(EMPTY_FORM);
   const [tab, setTab] = useState("basic");
   const [saving, setSaving] = useState(false);
+  const [uploadingImages, setUploadingImages] = useState(false);
   const [error, setError] = useState("");
   const fileRef = useRef(null);
+  const [uploadImage] = useUploadImageMutation();
 
   useEffect(() => {
     if (room) {
@@ -148,29 +151,18 @@ export default function RoomFormModal({
   const setAmenity = (key, val) =>
     setForm((p) => ({ ...p, amenities: { ...p.amenities, [key]: val } }));
 
-  const compressImage = (file) =>
+  const compressToBase64 = (file) =>
     new Promise((resolve) => {
       const reader = new FileReader();
       reader.onloadend = () => {
         const img = new Image();
         img.onload = () => {
           const MAX = 800;
-          let w = img.width,
-            h = img.height;
-          if (w > h) {
-            if (w > MAX) {
-              h = Math.round((h * MAX) / w);
-              w = MAX;
-            }
-          } else {
-            if (h > MAX) {
-              w = Math.round((w * MAX) / h);
-              h = MAX;
-            }
-          }
+          let w = img.width, h = img.height;
+          if (w > h) { if (w > MAX) { h = Math.round((h * MAX) / w); w = MAX; } }
+          else { if (h > MAX) { w = Math.round((w * MAX) / h); h = MAX; } }
           const canvas = document.createElement("canvas");
-          canvas.width = w;
-          canvas.height = h;
+          canvas.width = w; canvas.height = h;
           canvas.getContext("2d").drawImage(img, 0, 0, w, h);
           resolve(canvas.toDataURL("image/jpeg", 0.8));
         };
@@ -179,14 +171,31 @@ export default function RoomFormModal({
       reader.readAsDataURL(file);
     });
 
+  const uploadFiles = async (files) => {
+    const urls = await Promise.all(
+      files.map(async (file) => {
+        const b64 = await compressToBase64(file);
+        const res = await uploadImage({ data: b64, folder: "rooms" });
+        return res?.data?.url || b64;
+      })
+    );
+    return urls;
+  };
+
   const handleImageUpload = async (e) => {
     const files = Array.from(e.target.files);
-    const results = await Promise.all(files.map(compressImage));
-    setForm((p) => {
-      const merged = [...(p.images || []), ...results].slice(0, 8);
-      return { ...p, images: merged, thumbnail: p.thumbnail || merged[0] };
-    });
-    e.target.value = "";
+    if (!files.length) return;
+    setUploadingImages(true);
+    try {
+      const urls = await uploadFiles(files);
+      setForm((p) => {
+        const merged = [...(p.images || []), ...urls].slice(0, 8);
+        return { ...p, images: merged, thumbnail: p.thumbnail || merged[0] };
+      });
+    } finally {
+      setUploadingImages(false);
+      e.target.value = "";
+    }
   };
 
   const removeImage = (idx) => {
@@ -960,39 +969,37 @@ export default function RoomFormModal({
                   const files = Array.from(e.dataTransfer.files).filter((f) =>
                     f.type.startsWith("image/"),
                   );
-                  const results = await Promise.all(files.map(compressImage));
-                  setForm((p) => {
-                    const merged = [...(p.images || []), ...results].slice(
-                      0,
-                      8,
-                    );
-                    return {
-                      ...p,
-                      images: merged,
-                      thumbnail: p.thumbnail || merged[0],
-                    };
-                  });
+                  if (!files.length) return;
+                  setUploadingImages(true);
+                  try {
+                    const urls = await uploadFiles(files);
+                    setForm((p) => {
+                      const merged = [...(p.images || []), ...urls].slice(0, 8);
+                      return { ...p, images: merged, thumbnail: p.thumbnail || merged[0] };
+                    });
+                  } finally {
+                    setUploadingImages(false);
+                  }
                 }}
               >
-                <div style={{ fontSize: 36, marginBottom: 8 }}>📸</div>
-                <div
-                  style={{
-                    fontSize: 14,
-                    fontWeight: 600,
-                    color: "var(--text-secondary)",
-                  }}
-                >
-                  {t("rm_photosUploadHint")}
-                </div>
-                <div
-                  style={{
-                    fontSize: 12,
-                    color: "var(--text-muted)",
-                    marginTop: 4,
-                  }}
-                >
-                  {t("rm_photosLimit")}
-                </div>
+                {uploadingImages ? (
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+                    <Loader2 size={32} style={{ color: "var(--sidebar-active-text)", animation: "spin 1s linear infinite" }} className="animate-spin" />
+                    <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text-secondary)" }}>
+                      {t("rm_photosUploading") || "Uploading…"}
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div style={{ fontSize: 36, marginBottom: 8 }}>📸</div>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: "var(--text-secondary)" }}>
+                      {t("rm_photosUploadHint")}
+                    </div>
+                    <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 4 }}>
+                      {t("rm_photosLimit")}
+                    </div>
+                  </>
+                )}
                 <input
                   ref={fileRef}
                   type="file"
@@ -1182,17 +1189,17 @@ export default function RoomFormModal({
           ) : (
             <button
               onClick={handleSubmit}
-              disabled={saving}
+              disabled={saving || uploadingImages}
               style={{
                 padding: "10px 28px",
                 borderRadius: 10,
                 border: "none",
-                background: saving
+                background: (saving || uploadingImages)
                   ? "var(--brand-muted)"
                   : "linear-gradient(135deg, var(--brand), var(--brand))",
                 color: "#fff",
                 fontWeight: 700,
-                cursor: saving ? "not-allowed" : "pointer",
+                cursor: (saving || uploadingImages) ? "not-allowed" : "pointer",
                 fontSize: 14,
                 display: "flex",
                 alignItems: "center",
