@@ -87,6 +87,7 @@ const BookingSchema = new mongoose.Schema(
       enum: ["cash", "card", "bank_transfer", "online", "other"],
       default: "cash",
     },
+    paymentReference: { type: String, trim: true, maxlength: 120 },
     paidAmount: { type: Number, default: 0, min: 0, max: 10000000 },
 
     // Status
@@ -101,6 +102,16 @@ const BookingSchema = new mongoose.Schema(
         "no_show",
       ],
       default: "pending",
+    },
+    confirmationSource: {
+      type: String,
+      enum: ["system", "manual", "travky", "staff"],
+      default: "system",
+    },
+    workflowStage: {
+      type: String,
+      enum: ["new", "confirmed", "awaiting_payment", "paid", "completed", "cancelled"],
+      default: "new",
     },
 
     // Relations
@@ -139,6 +150,27 @@ BookingSchema.pre("validate", function ensureBookingConsistency(next) {
       );
       this.nights = diffNights;
     }
+  }
+
+  if (!this.confirmationSource) {
+    this.confirmationSource =
+      this.source === "online" ? "system" : this.source === "direct" ? "manual" : "staff";
+  }
+
+  if (!this.paymentReference) {
+    this.paymentReference = this.reference;
+  }
+
+  if (["cancelled", "no_show"].includes(this.status)) {
+    this.workflowStage = "cancelled";
+  } else if (this.status === "checked_out") {
+    this.workflowStage = "completed";
+  } else if (this.paymentStatus === "paid") {
+    this.workflowStage = "paid";
+  } else if (this.status === "confirmed" || this.status === "checked_in") {
+    this.workflowStage = this.paymentStatus === "unpaid" ? "awaiting_payment" : "confirmed";
+  } else {
+    this.workflowStage = "new";
   }
 
   if (Number(this.paidAmount || 0) > Number(this.total || 0)) {

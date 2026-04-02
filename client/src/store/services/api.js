@@ -105,6 +105,7 @@ export const api = createApi({
     "HotelApiConfig",
     "ChannelConfig",
     "AppSettings",
+    "HotelService",
   ],
   endpoints: (builder) => ({
     login: builder.mutation({
@@ -115,6 +116,12 @@ export const api = createApi({
     }),
     publicClientSignup: builder.mutation({
       query: (body) => ({ url: "/public-auth/signup", method: "POST", body }),
+    }),
+    publicClientVerifyEmail: builder.query({
+      query: (token) => `/public-auth/verify-email?token=${token}`,
+    }),
+    publicClientResendVerification: builder.mutation({
+      query: (body) => ({ url: "/public-auth/resend-verification", method: "POST", body }),
     }),
     refresh: builder.mutation({
       query: (body) => ({ url: "/auth/refresh", method: "POST", body }),
@@ -230,6 +237,27 @@ export const api = createApi({
     deleteBooking: builder.mutation({
       query: (id) => ({ url: `/bookings/${id}`, method: "DELETE" }),
       invalidatesTags: ["Booking"],
+    }),
+    // Hotel Services CRUD
+    getHotelServices: builder.query({
+      query: () => "/hotel-services",
+      providesTags: ["HotelService"],
+    }),
+    createHotelService: builder.mutation({
+      query: (body) => ({ url: "/hotel-services", method: "POST", body }),
+      invalidatesTags: ["HotelService"],
+    }),
+    updateHotelService: builder.mutation({
+      query: ({ _id, ...body }) => ({
+        url: `/hotel-services/${_id}`,
+        method: "PUT",
+        body,
+      }),
+      invalidatesTags: ["HotelService"],
+    }),
+    deleteHotelService: builder.mutation({
+      query: (id) => ({ url: `/hotel-services/${id}`, method: "DELETE" }),
+      invalidatesTags: ["HotelService"],
     }),
     // Rooms CRUD
     getRooms: builder.query({
@@ -404,6 +432,8 @@ export const {
   useLoginMutation,
   usePublicClientLoginMutation,
   usePublicClientSignupMutation,
+  usePublicClientVerifyEmailQuery,
+  usePublicClientResendVerificationMutation,
   useRefreshMutation,
   useGetSidebarQuery,
   // Users
@@ -431,6 +461,11 @@ export const {
   useCreateBookingMutation,
   useUpdateBookingMutation,
   useDeleteBookingMutation,
+  // Hotel services
+  useGetHotelServicesQuery,
+  useCreateHotelServiceMutation,
+  useUpdateHotelServiceMutation,
+  useDeleteHotelServiceMutation,
   // Rooms
   useGetRoomsQuery,
   useCreateRoomMutation,

@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useLanguage } from "../context/LanguageContext";
 import LoadingScreen from "../components/LoadingScreen";
 import {
@@ -39,6 +39,7 @@ export default function BookingsPage() {
   const { t, dir } = useLanguage();
   const isRtl = dir === "rtl";
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const { data: bookings = [], isLoading } = useGetBookingsQuery();
   const [deleteBooking] = useDeleteBookingMutation();
 
@@ -46,6 +47,20 @@ export default function BookingsPage() {
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterPayment, setFilterPayment] = useState("all");
   const [confirmDelete, setConfirmDelete] = useState(null);
+
+  useEffect(() => {
+    if (pathname.endsWith("/confirmed")) {
+      setFilterStatus("confirmed");
+      return;
+    }
+
+    if (pathname.endsWith("/pending")) {
+      setFilterStatus("pending");
+      return;
+    }
+
+    setFilterStatus("all");
+  }, [pathname]);
 
   const filtered = bookings.filter((b) => {
     const q = search.toLowerCase();
@@ -72,8 +87,8 @@ export default function BookingsPage() {
     setConfirmDelete(null);
   };
 
-  const openAdd = () => navigate("/bookings/new", { state: { backTo: "/bookings" } });
-  const openEdit = (b) => navigate(`/bookings/${b._id}/edit`, { state: { booking: b, backTo: "/bookings" } });
+  const openAdd = () => navigate("/bookings/new", { state: { backTo: pathname } });
+  const openEdit = (b) => navigate(`/bookings/${b._id}/edit`, { state: { booking: b, backTo: pathname } });
 
   return (
     <div className="space-y-6 pb-10 animate-in fade-in duration-300" style={{ direction: isRtl ? "rtl" : "ltr" }}>

@@ -432,6 +432,7 @@ const translations = {
     managePlatformResources: "Manage all platform resources from here.",
     superAdminUsers: "Super Admin Users",
     bookings: "Bookings",
+    additionalServices: "Additional Services",
     adminDashboardTitle: "Admin Company Dashboard",
     adminDashboardSubtitle:
       "View hotels, restaurants, activities, and operations in one read-only control panel.",
@@ -998,6 +999,7 @@ const translations = {
     rooms: "الغرف",
     tables: "الطاولات",
     reservations: "الحجوزات",
+    additionalServices: "الخدمات الإضافية",
     activities: "الأنشطة",
     bookings: "الحجوزات",
     finance: "المالية",

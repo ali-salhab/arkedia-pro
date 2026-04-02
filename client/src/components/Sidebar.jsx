@@ -39,6 +39,7 @@ import {
   Landmark,
   BookOpen,
   ExternalLink,
+  Package2,
 } from "lucide-react";
 
 const ROLE_MENUS = {
@@ -120,7 +121,29 @@ const ROLE_MENUS = {
     { name: "Dashboard", route: "/hotel", perm: null },
     { name: "Users", route: "/users", perm: "users:view" },
     { name: "Rooms", route: "/rooms", perm: "rooms:view" },
-    { name: "Bookings", route: "/bookings", perm: "bookings:view" },
+    {
+      name: "Additional Services",
+      route: "/hotel/additional-services",
+      perm: "hotels:view",
+      Icon: Package2,
+    },
+    {
+      name: "Reservations",
+      perm: "bookings:view",
+      matchPrefix: "/bookings",
+      children: [
+        {
+          name: "Confirmed",
+          route: "/bookings/confirmed",
+          perm: "bookings:view",
+        },
+        {
+          name: "Pending",
+          route: "/bookings/pending",
+          perm: "bookings:view",
+        },
+      ],
+    },
     { name: "Finance", route: "/finance", perm: "finance:view" },
     { name: "Reports", route: "/reports", perm: "reports:view" },
     { name: "Settings", route: "/settings", perm: "settings:view" },
@@ -239,7 +262,29 @@ const ROLE_MENUS = {
     { name: "Dashboard", route: "/hotel", perm: null },
     { name: "Users", route: "/users", perm: "users:view" },
     { name: "Rooms", route: "/rooms", perm: "rooms:view" },
-    { name: "Bookings", route: "/bookings", perm: "bookings:view" },
+    {
+      name: "Additional Services",
+      route: "/hotel/additional-services",
+      perm: "hotels:view",
+      Icon: Package2,
+    },
+    {
+      name: "Reservations",
+      perm: "bookings:view",
+      matchPrefix: "/bookings",
+      children: [
+        {
+          name: "Confirmed",
+          route: "/bookings/confirmed",
+          perm: "bookings:view",
+        },
+        {
+          name: "Pending",
+          route: "/bookings/pending",
+          perm: "bookings:view",
+        },
+      ],
+    },
     { name: "Finance", route: "/finance", perm: "finance:view" },
     { name: "Reports", route: "/reports", perm: "reports:view" },
     { name: "Settings", route: "/settings", perm: "settings:view" },
@@ -492,6 +537,9 @@ const SIDEBAR_NAME_MAP = {
   "Hotel Policy": "hotelStepPolicy",
   Photos: "hotelStepPhotos",
   "API Settings": "apiSettings",
+  "Additional Services": "additionalServices",
+  Confirmed: "bk_statusConfirmed",
+  Pending: "bk_statusPending",
   "Platform Fees": "platformFees",
   "Hotel Fees": "platformFeesHotels",
   "Customer Services": "customerServices",
@@ -546,6 +594,7 @@ const ICON_MAP = {
   "API Settings": <Settings size={18} strokeWidth={2} />,
   "Platform Fees": <Landmark size={18} strokeWidth={2} />,
   "Customer Services": <Users size={18} strokeWidth={2} />,
+  "Additional Services": <Package2 size={18} strokeWidth={2} />,
 };
 
 const ROLE_HEADER_CONFIG = {

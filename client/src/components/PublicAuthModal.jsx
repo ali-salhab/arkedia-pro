@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Eye, EyeOff, LoaderCircle } from "lucide-react";
+import { Eye, EyeOff, LoaderCircle, MailCheck, Loader2 } from "lucide-react";
 import { ErrorModal } from "./Modal";
 import {
   usePublicClientLoginMutation,
   usePublicClientSignupMutation,
+  usePublicClientResendVerificationMutation,
 } from "../store/services/api";
 
 const INITIAL_LOGIN_FORM = {
@@ -85,11 +86,17 @@ export default function PublicAuthModal({
   const [signupErrorMessage, setSignupErrorMessage] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  // After successful signup — email of the newly-registered user
+  const [emailSent, setEmailSent] = useState(null);
+  // After hitting login while unverified
+  const [unverifiedEmail, setUnverifiedEmail] = useState(null);
 
   const [publicLogin, { isLoading: isLoginLoading }] =
     usePublicClientLoginMutation();
   const [publicSignup, { isLoading: isSignupLoading }] =
     usePublicClientSignupMutation();
+  const [resendVerification, { isLoading: isResending }] =
+    usePublicClientResendVerificationMutation();
 
   useEffect(() => {
     if (!open) {
@@ -99,6 +106,8 @@ export default function PublicAuthModal({
       setSignupErrorMessage("");
       setShowPassword(false);
       setShowConfirmPassword(false);
+      setEmailSent(null);
+      setUnverifiedEmail(null);
     }
   }, [open]);
 
@@ -113,14 +122,80 @@ export default function PublicAuthModal({
   const closeModal = () => {
     setLoginMessage("");
     setSignupErrorMessage("");
+    setEmailSent(null);
+    setUnverifiedEmail(null);
     onClose();
   };
+
+  /* ── "Check your inbox" screen shown after successful signup ── */
+  if (emailSent) {
+    return (
+      <ModalOverlay onClose={closeModal}>
+        <div style={{ textAlign: "center", padding: "0.5rem 0" }}>
+          <div style={{ width: 72, height: 72, borderRadius: 20, background: "#e8f4ff", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 1.25rem" }}>
+            <MailCheck size={36} color="#173f78" />
+          </div>
+          <h2 style={{ margin: "0 0 0.6rem", fontSize: "1.45rem", fontWeight: 900, color: "#101828" }}>تحقق من بريدك الإلكتروني</h2>
+          <p style={{ margin: "0 0 1.25rem", color: "#475569", fontSize: "0.94rem", lineHeight: 1.7 }}>
+            أرسلنا رابط التحقق إلى<br />
+            <strong style={{ color: "#101828" }}>{emailSent}</strong><br />
+            افتح بريدك الإلكتروني وانقر على الرابط لتفعيل حسابك.
+          </p>
+          <div style={{ background: "#fef9c3", border: "1px solid #fde68a", borderRadius: 12, padding: "0.75rem 1rem", marginBottom: "1.25rem" }}>
+            <p style={{ margin: 0, color: "#92400e", fontSize: "0.82rem" }}>⏱ الرابط صالح لمدة 24 ساعة. تحقق من مجلد الرسائل غير المرغوب فيها.</p>
+          </div>
+          <button
+            type="button"
+            disabled={isResending}
+            onClick={() => handleResendFromModal(emailSent)}
+            style={{ border: "1px solid #173f78", borderRadius: "999px", background: "white", color: "#173f78", padding: "0.65rem 1.4rem", fontFamily: "inherit", fontWeight: 800, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "0.4rem", fontSize: "0.9rem" }}
+          >
+            {isResending && <Loader2 size={15} className="animate-spin" />}
+            إعادة إرسال الرابط
+          </button>
+        </div>
+      </ModalOverlay>
+    );
+  }
+
+  /* ── "Email not verified" screen shown when logging in without verifying ── */
+  if (unverifiedEmail) {
+    return (
+      <ModalOverlay onClose={closeModal}>
+        <div style={{ textAlign: "center", padding: "0.5rem 0" }}>
+          <div style={{ width: 72, height: 72, borderRadius: 20, background: "#fff8e6", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 1.25rem" }}>
+            <MailCheck size={36} color="#f59e0b" />
+          </div>
+          <h2 style={{ margin: "0 0 0.6rem", fontSize: "1.45rem", fontWeight: 900, color: "#101828" }}>البريد الإلكتروني غير مفعّل</h2>
+          <p style={{ margin: "0 0 1.25rem", color: "#475569", fontSize: "0.94rem", lineHeight: 1.7 }}>
+            يجب تفعيل بريدك الإلكتروني قبل تسجيل الدخول.<br />
+            <strong style={{ color: "#101828" }}>{unverifiedEmail}</strong>
+          </p>
+          <div style={{ display: "flex", gap: "0.75rem", justifyContent: "center", flexWrap: "wrap" }}>
+            <button
+              type="button"
+              disabled={isResending}
+              onClick={() => handleResendFromModal(unverifiedEmail)}
+              style={{ background: "#173f78", border: "none", borderRadius: "999px", color: "white", padding: "0.7rem 1.5rem", fontFamily: "inherit", fontWeight: 800, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "0.4rem", fontSize: "0.9rem" }}
+            >
+              {isResending && <Loader2 size={15} className="animate-spin" />}
+              إعادة إرسال رابط التحقق
+            </button>
+            <button type="button" onClick={() => setUnverifiedEmail(null)} style={{ border: "1px solid #d5dceb", borderRadius: "999px", background: "white", color: "#475569", padding: "0.7rem 1.2rem", fontFamily: "inherit", fontWeight: 700, cursor: "pointer", fontSize: "0.9rem" }}>
+              رجوع
+            </button>
+          </div>
+        </div>
+      </ModalOverlay>
+    );
+  }
 
   const handleLoginSubmit = async (event) => {
     event.preventDefault();
     const nextErrors = buildLoginErrors(loginForm);
     setLoginErrors(nextErrors);
     setLoginMessage("");
+    setUnverifiedEmail(null);
 
     if (Object.keys(nextErrors).length > 0) return;
 
@@ -133,6 +208,11 @@ export default function PublicAuthModal({
       onAuthenticated(response.client);
       closeModal();
     } catch (error) {
+      // 403 = account exists but email not verified
+      if (error?.status === 403 && error?.data?.emailVerified === false) {
+        setUnverifiedEmail(error.data.email || loginForm.email.trim());
+        return;
+      }
       setLoginMessage(
         error?.data?.message || "تعذر تسجيل الدخول. تحقق من البيانات وحاول مرة أخرى.",
       );
@@ -154,12 +234,20 @@ export default function PublicAuthModal({
         password: signupForm.password,
       }).unwrap();
 
-      onAuthenticated(response.client);
-      closeModal();
+      // Show "check your email" screen instead of logging in
+      setEmailSent(response.email || signupForm.email.trim());
     } catch (error) {
       setSignupErrorMessage(
         error?.data?.message || "حدث خطأ أثناء إنشاء الحساب. حاول مرة أخرى.",
       );
+    }
+  };
+
+  const handleResendFromModal = async (emailAddr) => {
+    try {
+      await resendVerification({ email: emailAddr }).unwrap();
+    } catch (_) {
+      // Ignore — server always responds generically
     }
   };
 
@@ -545,3 +633,44 @@ const tabButtonStyle = (active) => ({
   cursor: "pointer",
   boxShadow: active ? "0 10px 30px rgba(18, 56, 106, 0.08)" : "none",
 });
+
+/* ── Reusable overlay wrapper for the "check email" + "unverified" screens ── */
+function ModalOverlay({ children, onClose }) {
+  return (
+    <div
+      dir="rtl"
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 2100,
+        background: "rgba(7, 15, 33, 0.55)",
+        backdropFilter: "blur(8px)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "1.25rem",
+      }}
+    >
+      <div
+        style={{
+          width: "100%",
+          maxWidth: "480px",
+          borderRadius: "28px",
+          background: "linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(246,248,252,0.98) 100%)",
+          boxShadow: "0 32px 90px rgba(14, 28, 59, 0.26)",
+          padding: "2rem 1.75rem",
+          border: "1px solid rgba(157, 173, 201, 0.32)",
+          position: "relative",
+        }}
+      >
+        <button
+          onClick={onClose}
+          style={{ position: "absolute", top: "1.1rem", left: "1.1rem", width: 36, height: 36, borderRadius: "50%", border: "1px solid #d5dceb", background: "white", cursor: "pointer", color: "#475467", fontSize: "0.95rem" }}
+        >
+          ✕
+        </button>
+        {children}
+      </div>
+    </div>
+  );
+}

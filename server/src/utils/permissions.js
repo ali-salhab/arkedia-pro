@@ -193,7 +193,13 @@ function defaultSidebar(userRole) {
         required_permission: "rooms:view",
       },
       {
-        name: "Bookings",
+        name: "Additional Services",
+        icon: "settings",
+        route: "/hotel/additional-services",
+        required_permission: "hotels:view",
+      },
+      {
+        name: "Reservations",
         icon: "calendar",
         route: "/bookings",
         required_permission: "bookings:view",

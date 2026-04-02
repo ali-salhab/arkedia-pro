@@ -33,6 +33,7 @@ const adminEntitiesRoutes = require("./routes/adminEntities");
 const uploadRoutes = require("./routes/upload");
 const channelConfigRoutes = require("./routes/channelConfig");
 const appSettingsRoutes = require("./routes/appSettings");
+const hotelServicesRoutes = require("./routes/hotelServices");
 const { notFound, errorHandler } = require("./middleware/errorHandler");
 const socketStore = require("./utils/socketStore");
 
@@ -116,6 +117,7 @@ app.use("/api/developer", publicApiRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/channel-config", channelConfigRoutes);
 app.use("/api/app-settings", appSettingsRoutes);
+app.use("/api/hotel-services", hotelServicesRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

@@ -8,6 +8,7 @@ import { useRefreshMutation } from "./store/services/api";
 import { setCredentials } from "./store/slices/authSlice";
 import LoginPage from "./pages/Login";
 import NotFound from "./pages/NotFound";
+import VerifyEmailPage from "./pages/VerifyEmailPage";
 import SettingsPage from "./pages/Settings";
 import DashboardPage from "./pages/Dashboard";
 import UsersPage from "./pages/Users";
@@ -70,6 +71,8 @@ import TravkyHomePage from "./pages/TravkyHomePage";
 import BecomePartnerPage from "./pages/BecomePartnerPage";
 import SearchResults from "./pages/public/SearchResults";
 import HotelDetailsPage from "./pages/public/HotelDetailsPage";
+import HotelAdditionalServicesPage from "./pages/HotelAdditionalServices";
+import HotelReservationsPage from "./pages/HotelReservationsPage";
 
 const ALL_ROLES = [
   "super_admin",
@@ -167,6 +170,19 @@ export default function App() {
           <Route
             path="/hotel"
             element={<DashboardRoute element={<HotelDashboard />} />}
+          />
+          <Route
+            path="/hotel/additional-services"
+            element={
+              <DashboardRoute
+                element={
+                  <PermissionRoute
+                    permission="hotels:view"
+                    element={<HotelAdditionalServicesPage />}
+                  />
+                }
+              />
+            }
           />
           <Route
             path="/hotel/details"
@@ -484,6 +500,14 @@ export default function App() {
             element={<DashboardRoute element={<BookingsPage />} />}
           />
           <Route
+            path="/bookings/confirmed"
+            element={<DashboardRoute element={<HotelReservationsPage mode="confirmed" />} />}
+          />
+          <Route
+            path="/bookings/pending"
+            element={<DashboardRoute element={<HotelReservationsPage mode="pending" />} />}
+          />
+          <Route
             path="/rooms"
             element={<DashboardRoute element={<RoomsPage />} />}
           />
@@ -566,6 +590,7 @@ export default function App() {
         <Route path="/become-partner" element={<BecomePartnerPage />} />
         <Route path="/search" element={<SearchResults />} />
         <Route path="/hotel/:id" element={<HotelDetailsPage />} />
+        <Route path="/verify-email" element={<VerifyEmailPage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       <GlobalErrorModal />
