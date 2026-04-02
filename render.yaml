@@ -4,7 +4,7 @@ services:
     runtime: node
     rootDir: server
     buildCommand: npm install
-    startCommand: node src/seed.js && node src/index.js
+    startCommand: node src/index.js
     envVars:
       - key: MONGO_URI
         sync: false
@@ -20,6 +20,14 @@ services:
         sync: false
       - key: NODE_ENV
         value: production
+      - key: RESEND_API_KEY
+        sync: false
+      - key: RESEND_FROM_EMAIL
+        sync: false
+      - key: SITE_NAME
+        sync: false
+      - key: CLIENT_URL
+        sync: false
 
   - type: web
     name: arkedia-pro-1
