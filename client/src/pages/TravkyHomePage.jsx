@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
 import { useLocalStorage } from "../hooks/useLocalStorage";
 import { usePublicClientSession } from "../hooks/usePublicClientSession";
 import {
@@ -75,6 +76,8 @@ export default function TravkyHomePage() {
 
   const hasCategoryPhotos = Object.values(mainPhotos).some((v) => v?.src);
   const hasDestinations   = countryCards.length > 0 || cityCards.length > 0;
+  const authUser = useSelector((s) => s.auth.user);
+  const isSuperAdmin = authUser?.role === "super_admin" || authUser?.role === "superadminuser";
 
   const openAuthModal = (mode = "login") => {
     setAuthModalMode(mode);
@@ -365,15 +368,19 @@ export default function TravkyHomePage() {
       {/* ══════════════════ EMPTY STATE ══════════════════ */}
       {!hasCategoryPhotos && !hasDestinations && (
         <section className="sa" style={{ padding: "5rem 2rem", textAlign: "center", backgroundColor: "white" }}>
-          <p style={{ fontSize: "1.1rem", color: "#6b7280", marginBottom: "1.5rem" }}>
-            لم يتم رفع صور بعد — قم بإضافة الصور من لوحة تحكم السوبر أدمن
+          <p style={{ fontSize: "1.1rem", color: "#6b7280", marginBottom: isSuperAdmin ? "1.5rem" : 0 }}>
+            {isSuperAdmin
+              ? "لم يتم رفع صور بعد — قم بإضافة الصور من لوحة تحكم السوبر أدمن"
+              : "لا تتوفر محتويات حالياً. يرجى المحاولة لاحقاً."}
           </p>
-          <Link to="/login" style={{
-            padding: "0.75rem 2.5rem", backgroundColor: "#1e3a5f", color: "white",
-            borderRadius: "0.875rem", textDecoration: "none", fontWeight: 700, fontSize: "0.95rem",
-          }}>
-            الدخول إلى لوحة التحكم
-          </Link>
+          {isSuperAdmin && (
+            <Link to="/super-admin" style={{
+              padding: "0.75rem 2.5rem", backgroundColor: "#1e3a5f", color: "white",
+              borderRadius: "0.875rem", textDecoration: "none", fontWeight: 700, fontSize: "0.95rem",
+            }}>
+              الدخول إلى لوحة التحكم
+            </Link>
+          )}
         </section>
       )}
 
