@@ -3,6 +3,19 @@ import { useNavigate } from "react-router-dom";
 import { ImageIcon, Plus, X, Camera } from "lucide-react";
 import HotelDetailsStepBar from "../../components/HotelDetailsStepBar";
 import { useLanguage } from "../../context/LanguageContext";
+import {
+  useCreateHotelMutation,
+  useUpdateHotelMutation,
+  useUploadImageMutation,
+} from "../../store/services/api";
+import {
+  buildHotelDraftFromRecord,
+  buildHotelPayload,
+  getStoredHotelId,
+  persistHotelDraftToSession,
+  readHotelDraftFromSession,
+  setStoredHotelId,
+} from "./draftUtils";
 
 const COPY = {
   en: {
@@ -16,7 +29,7 @@ const COPY = {
     save: "Save & View Details",
     saving: "Saving...",
     errorMain: "Please upload a main photo before saving",
-    errorSave: "Failed to save. Please try again.",
+    errorSave: "Failed to save hotel details. Please try again.",
   },
   ar: {
     mainPhoto: "الصورة الرئيسية",
@@ -29,7 +42,7 @@ const COPY = {
     save: "حفظ وعرض التفاصيل",
     saving: "جارٍ الحفظ...",
     errorMain: "يرجى رفع الصورة الرئيسية قبل الحفظ",
-    errorSave: "تعذر الحفظ. حاول مرة أخرى.",
+    errorSave: "تعذر حفظ تفاصيل الفندق. حاول مرة أخرى.",
   },
 };
 
@@ -47,6 +60,9 @@ export default function HotelPhotosStep() {
   const copy = COPY[lang] || COPY.en;
   const mainInputRef = useRef(null);
   const galleryInputRef = useRef(null);
+  const [createHotel] = useCreateHotelMutation();
+  const [updateHotel] = useUpdateHotelMutation();
+  const [uploadImage] = useUploadImageMutation();
 
   useEffect(() => {
     if (!sessionStorage.getItem("hotel_details_policy")) {
@@ -102,14 +118,76 @@ export default function HotelPhotosStep() {
     }
 
     setSaving(true);
+    setError("");
+
     try {
-      sessionStorage.setItem(
-        "hotel_details_photos",
-        JSON.stringify({
-          mainPhotoDataUrl: mainPhoto.dataUrl,
-          galleryDataUrls: gallery.map((item) => item.dataUrl),
+      const photosDraft = {
+        mainPhotoDataUrl: mainPhoto.dataUrl,
+        galleryDataUrls: gallery.map((item) => item.dataUrl),
+      };
+
+      persistHotelDraftToSession({ photos: photosDraft });
+
+      const draft = readHotelDraftFromSession();
+
+      let thumbnailUrl = photosDraft.mainPhotoDataUrl || "";
+      if (thumbnailUrl?.startsWith("data:")) {
+        const result = await uploadImage({
+          data: thumbnailUrl,
+          folder: "hotels",
+        }).unwrap();
+        thumbnailUrl = result.url;
+      }
+
+      let logoUrl = draft.main?.logoDataUrl || "";
+      if (logoUrl?.startsWith("data:")) {
+        const result = await uploadImage({
+          data: logoUrl,
+          folder: "hotels/logos",
+        }).unwrap();
+        logoUrl = result.url;
+      }
+
+      const galleryUrls = await Promise.all(
+        photosDraft.galleryDataUrls.map(async (source) => {
+          if (source?.startsWith("data:")) {
+            const result = await uploadImage({
+              data: source,
+              folder: "hotels/gallery",
+            }).unwrap();
+            return result.url;
+          }
+
+          return source;
         }),
       );
+
+      const body = buildHotelPayload({
+        ...draft,
+        main: {
+          ...draft.main,
+          logoDataUrl: logoUrl,
+        },
+        photos: {
+          mainPhotoDataUrl: thumbnailUrl,
+          galleryDataUrls: galleryUrls,
+        },
+      });
+
+      const currentId = getStoredHotelId();
+      let savedHotel;
+
+      if (currentId) {
+        savedHotel = await updateHotel({ _id: currentId, ...body }).unwrap();
+      } else {
+        savedHotel = await createHotel(body).unwrap();
+      }
+
+      if (savedHotel?._id) {
+        setStoredHotelId(savedHotel._id);
+        persistHotelDraftToSession(buildHotelDraftFromRecord(savedHotel));
+      }
+
       navigate("/hotel/details/view");
     } catch {
       setError(copy.errorSave);

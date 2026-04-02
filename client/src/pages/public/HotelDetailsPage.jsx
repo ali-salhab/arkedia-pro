@@ -3,7 +3,7 @@ import { useParams, useSearchParams, Link, useNavigate } from "react-router-dom"
 import {
   MapPin, Star, ChevronDown, ChevronUp, X, Check,
   Heart, Share2, BedDouble, Users, CheckCircle2, Clock,
-  PawPrint, CigaretteOff, CalendarDays, Bed,
+  PawPrint, CigaretteOff, CalendarDays, Bed, Plus, Minus,
 } from "lucide-react";
 import {
   useGetPublicHotelDetailsQuery,
@@ -67,6 +67,7 @@ export default function HotelDetailsPage() {
   const [expandedRoom, setExpandedRoom] = useState(null);
   const [imgIdx, setImgIdx] = useState({});
   const [selectedRoom, setSelectedRoom] = useState(null);
+  const [selectedRateCounts, setSelectedRateCounts] = useState({});
   const [bookingForm, setBookingForm] = useState({ customerName: "", customerEmail: "", customerPhone: "", nationality: "", specialRequests: "" });
   const [createBooking, { isLoading: bl }] = useCreatePublicBookingMutation();
   const [bookingResult, setBookingResult] = useState(null);
@@ -84,6 +85,31 @@ export default function HotelDetailsPage() {
   }, [rooms]);
 
   const currency = rooms[0]?.currency || "USD";
+
+  const updateRateCount = (roomId, optionId, delta) => {
+    const key = `${roomId}-${optionId}`;
+    setSelectedRateCounts((prev) => ({
+      ...prev,
+      [key]: Math.max(0, Number(prev[key] || 0) + delta),
+    }));
+  };
+
+  const handleSelectRate = (room, option, selectedCount) => {
+    const effectiveRoomCount = Math.max(1, Number(selectedCount) || Number(roomCount) || 1);
+    const nightly = Math.round(Number(option?.pricePerNight || room.pricePerNight || 0));
+
+    setSelectedRoom({
+      ...room,
+      _id: room._id,
+      pricePerNight: nightly,
+      currency: option?.currency || room.currency || "USD",
+      discount: 0,
+      roomCount: effectiveRoomCount,
+      rateTitle: option?.title || "",
+      rateSubtitle: option?.subtitle || "",
+      policyLabel: option?.policyLabel || "",
+    });
+  };
 
   /* Derive policies from rooms */
   const policies = useMemo(() => {
@@ -121,7 +147,7 @@ export default function HotelDetailsPage() {
         checkIn: checkIn || new Date().toISOString(),
         checkOut: checkOut || new Date(Date.now() + 86400000).toISOString(),
         adultsCount: Number(adults), childrenCount: Number(children),
-        roomCount: Number(roomCount),
+        roomCount: Number(selectedRoom.roomCount || roomCount || 1),
       }).unwrap();
       setBookingResult(res);
     } catch (err) {
@@ -367,19 +393,52 @@ export default function HotelDetailsPage() {
                                 </div>
                               )}
 
-                              {/* Rate card */}
-                              <div style={{
-                                display: "flex", gap: "0.8rem", overflowX: "auto",
-                                paddingBottom: "0.5rem",
-                                scrollSnapType: "x mandatory",
-                              }}>
-                                <RateCard
-                                  room={room}
-                                  price={price}
-                                  nights={nights}
-                                  roomCount={Number(roomCount)}
-                                  onBook={() => setSelectedRoom(room)}
-                                />
+                              {/* Rate cards */}
+                              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.75rem", marginBottom: "0.65rem", flexWrap: "wrap" }}>
+                                <span style={{ fontSize: "0.75rem", color: "#173f78", fontWeight: 700 }}>
+                                  {(Array.isArray(room.rateOptions) && room.rateOptions.length > 0 ? room.rateOptions.length : 1)} خيارات متاحة
+                                </span>
+                                <span style={{ fontSize: "0.72rem", color: "#94a3b8" }}>
+                                  اسحب لعرض كل الأسعار ←
+                                </span>
+                              </div>
+                              <div
+                                className="public-rate-scroll"
+                                style={{
+                                  display: "flex",
+                                  gap: "0.8rem",
+                                  overflowX: "auto",
+                                  paddingBottom: "0.75rem",
+                                  scrollSnapType: "x proximity",
+                                  WebkitOverflowScrolling: "touch",
+                                  scrollbarWidth: "thin",
+                                }}
+                              >
+                                {(Array.isArray(room.rateOptions) && room.rateOptions.length > 0
+                                  ? room.rateOptions
+                                  : [{
+                                    id: "default",
+                                    title: "Bed & Breakfast",
+                                    subtitle: "• Bed & Breakfast (BB)",
+                                    policyLabel: "إلغاء مجاني",
+                                    pricePerNight: price,
+                                    currency: room.currency,
+                                  }]).map((opt) => {
+                                    const rateKey = `${room._id}-${opt.id}`;
+                                    return (
+                                      <RateCard
+                                        key={rateKey}
+                                        room={room}
+                                        option={opt}
+                                        nights={nights}
+                                        roomCount={Number(roomCount)}
+                                        selectedCount={Number(selectedRateCounts[rateKey] || 0)}
+                                        onIncrease={() => updateRateCount(room._id, opt.id, 1)}
+                                        onDecrease={() => updateRateCount(room._id, opt.id, -1)}
+                                        onBook={() => handleSelectRate(room, opt, selectedRateCounts[rateKey] || 0)}
+                                      />
+                                    );
+                                  })}
                               </div>
                             </div>
                           </div>
@@ -443,8 +502,13 @@ export default function HotelDetailsPage() {
             </div>
             <div style={{ background: "#f8fafc", borderRadius: "1rem", padding: "0.8rem 1rem", marginBottom: "1rem", border: "1px solid #e5e7eb" }}>
               <div style={{ fontWeight: 800, color: "#111827", fontSize: "0.95rem" }}>{selectedRoom.name || selectedRoom.number}</div>
+              {selectedRoom.rateTitle && (
+                <div style={{ fontSize: "0.78rem", color: "#173f78", marginTop: "0.25rem", fontWeight: 700 }}>
+                  {selectedRoom.rateTitle}
+                </div>
+              )}
               <div style={{ fontSize: "0.8rem", color: "#64748b", marginTop: "0.2rem" }}>
-                {nights} ليلة • {Math.round(selectedRoom.pricePerNight * (1 - (selectedRoom.discount || 0) / 100) * nights * Number(roomCount))} {selectedRoom.currency}
+                {nights} ليلة • {selectedRoom.roomCount || Number(roomCount) || 1} غرفة • {Math.round(Number(selectedRoom.pricePerNight || 0) * nights * Math.max(1, Number(selectedRoom.roomCount) || Number(roomCount) || 1))} {selectedRoom.currency}
               </div>
             </div>
             {[
@@ -517,7 +581,15 @@ export default function HotelDetailsPage() {
         onAuthenticated={(s) => { setClientSession(s); setAuthModalOpen(false); }}
       />
 
-      <style>{`@media(max-width:640px){.hotel-room-card-inner{flex-direction:column!important}}`}</style>
+      <style>{`
+        @media(max-width:640px){.hotel-room-card-inner{flex-direction:column!important}}
+        .public-rate-scroll::-webkit-scrollbar{height:8px}
+        .public-rate-scroll::-webkit-scrollbar-track{background:#e5e7eb;border-radius:999px}
+        .public-rate-scroll::-webkit-scrollbar-thumb{background:#94a3b8;border-radius:999px}
+        .rate-qty-btn{width:40px;height:40px;border:none;border-radius:999px;background:#e5e7eb;color:#1f2937;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
+        .rate-qty-btn.primary{background:#173f78;color:#fff}
+        .rate-qty-btn:disabled{opacity:.45;cursor:not-allowed}
+      `}</style>
     </div>
   );
 }
@@ -549,35 +621,92 @@ function FBadge({ color, text, muted }) {
   );
 }
 
-function RateCard({ room, price, nights, roomCount, onBook }) {
-  const total = Math.round(price * nights * roomCount);
+function RateCard({
+  room,
+  option,
+  nights,
+  roomCount,
+  selectedCount = 0,
+  onIncrease,
+  onDecrease,
+  onBook,
+}) {
+  const nightly = Math.round(Number(option?.pricePerNight || room.pricePerNight || 0));
+  const effectiveRoomCount = Math.max(1, Number(selectedCount) || Number(roomCount) || 1);
+  const total = Math.round(nightly * nights * effectiveRoomCount);
+  const title = option?.title || "Bed & Breakfast";
+  const subtitle = option?.subtitle || "• Bed & Breakfast (BB)";
+  const policyLabel = option?.policyLabel || "إلغاء مجاني";
+  const displayCurrency = option?.currency || room.currency || "USD";
+
   return (
-    <div style={{
-      minWidth: 220, flexShrink: 0, scrollSnapAlign: "start",
-      border: "1.5px solid #e5e7eb", borderRadius: "1rem", padding: "1rem",
-      display: "flex", flexDirection: "column", gap: "0.5rem",
-    }}>
-      <div style={{ fontWeight: 800, fontSize: "0.88rem", color: "#111827" }}>
-        Bed &amp; Breakfast
+    <div
+      style={{
+        minWidth: 320,
+        flexShrink: 0,
+        scrollSnapAlign: "start",
+        border: "1.5px solid #e5e7eb",
+        borderRadius: "1rem",
+        padding: "1rem",
+        display: "flex",
+        flexDirection: "column",
+        gap: "0.55rem",
+        background: "#fff",
+      }}
+    >
+      <div style={{ fontWeight: 800, fontSize: "0.88rem", color: "#111827", lineHeight: 1.5 }}>
+        {title}
       </div>
-      <div style={{ fontSize: "0.72rem", color: "#64748b" }}>• Bed &amp; Breakfast (BB)</div>
-      <div style={{ display: "flex", alignItems: "center", gap: "0.25rem", fontSize: "0.75rem", color: "#059669", fontWeight: 600 }}>
-        <CheckCircle2 size={13} /> إلغاء مجاني
+      <div style={{ fontSize: "0.72rem", color: "#64748b" }}>{subtitle}</div>
+      <div style={{ display: "flex", alignItems: "center", gap: "0.25rem", fontSize: "0.75rem", color: "#173f78", fontWeight: 700 }}>
+        <CheckCircle2 size={13} /> {policyLabel}
       </div>
-      <div style={{ marginTop: "auto", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+
+      <div style={{ marginTop: "auto", display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: "0.8rem", flexWrap: "wrap" }}>
         <div>
           <div style={{ fontSize: "1.15rem", fontWeight: 900, color: "#111827" }}>
-            {room.currency} {Math.round(price)}
+            {displayCurrency} {nightly}
           </div>
           <div style={{ fontSize: "0.68rem", color: "#94a3b8" }}>لكل ليلة</div>
+          <div style={{ fontSize: "0.68rem", color: "#64748b", marginTop: "0.15rem" }}>
+            الإجمالي {displayCurrency} {total}
+          </div>
         </div>
-        <button onClick={onBook} style={{
-          display: "flex", alignItems: "center", gap: "0.3rem",
-          padding: "0.5rem 1rem", background: "#173f78", color: "white",
-          border: "none", borderRadius: "0.7rem", fontWeight: 800,
-          fontSize: "0.8rem", cursor: "pointer", fontFamily: "inherit",
-        }}>احجز</button>
+
+        <div style={{ display: "flex", alignItems: "center", gap: "0.7rem" }}>
+          <button type="button" className="rate-qty-btn primary" onClick={onIncrease}>
+            <Plus size={16} />
+          </button>
+          <span style={{ minWidth: 20, textAlign: "center", fontSize: "1rem", fontWeight: 800, color: "#111827" }}>
+            {selectedCount}
+          </span>
+          <button type="button" className="rate-qty-btn" onClick={onDecrease} disabled={selectedCount <= 0}>
+            <Minus size={16} />
+          </button>
+        </div>
       </div>
+
+      <button
+        onClick={onBook}
+        style={{
+          marginTop: "0.25rem",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: "0.3rem",
+          padding: "0.6rem 1rem",
+          background: "#173f78",
+          color: "white",
+          border: "none",
+          borderRadius: "0.8rem",
+          fontWeight: 800,
+          fontSize: "0.82rem",
+          cursor: "pointer",
+          fontFamily: "inherit",
+        }}
+      >
+        احجز الآن
+      </button>
     </div>
   );
 }

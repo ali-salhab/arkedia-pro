@@ -19,6 +19,13 @@ const HotelSchema = new mongoose.Schema(
     gallery: [{ type: String }],
     policy: String,
     policyAr: String,
+    policyDetails: {
+      checkIn: String,
+      checkOut: String,
+      petPolicy: String,
+      smokingPolicy: String,
+      additionalDetails: String,
+    },
     manager: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     adminId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     selectedIcons: [{ type: mongoose.Schema.Types.ObjectId, ref: "Icon" }],

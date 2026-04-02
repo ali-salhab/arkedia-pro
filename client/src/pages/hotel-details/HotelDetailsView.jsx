@@ -14,23 +14,35 @@ import {
   ShieldCheck,
   Upload,
   Check,
+  Loader2,
 } from "lucide-react";
 import { useLanguage } from "../../context/LanguageContext";
 import {
   useGetIconsQuery,
+  useGetHotelsQuery,
   useCreateHotelMutation,
   useUpdateHotelMutation,
   useDeleteHotelMutation,
   useUploadImageMutation,
 } from "../../store/services/api";
 import DeleteConfirmModal from "../../components/DeleteConfirmModal";
+import {
+  HOTEL_STORAGE_KEYS,
+  buildHotelDraftFromRecord,
+  buildHotelPayload,
+  buildPolicyText,
+  getStoredHotelId,
+  persistHotelDraftToSession,
+  readHotelDraftFromSession,
+  setStoredHotelId,
+} from "./draftUtils";
 
 const STORAGE_KEYS = [
-  "hotel_details_main",
-  "hotel_details_description",
-  "hotel_details_icons",
-  "hotel_details_policy",
-  "hotel_details_photos",
+  HOTEL_STORAGE_KEYS.main,
+  HOTEL_STORAGE_KEYS.description,
+  HOTEL_STORAGE_KEYS.icons,
+  HOTEL_STORAGE_KEYS.policy,
+  HOTEL_STORAGE_KEYS.photos,
 ];
 
 const COPY = {
@@ -55,6 +67,13 @@ const COPY = {
     openMap: "Open in OpenStreetMap",
     pendingRequested: "Pending icon requests",
     awaitingDesign: "Awaiting Design",
+    uploadingDetails: "Uploading hotel details...",
+    loadingSavedDetails: "Loading saved hotel details...",
+    uploadingCover: "Uploading cover photo...",
+    uploadingLogo: "Uploading hotel logo...",
+    uploadingGallery: "Uploading gallery photos...",
+    savingDatabase: "Saving hotel to database...",
+    publishing: "Publishing...",
   },
   ar: {
     emptyTitle: "لا توجد بيانات للفندق بعد",
@@ -77,6 +96,13 @@ const COPY = {
     openMap: "فتح في OpenStreetMap",
     pendingRequested: "طلبات الأيقونات المعلقة",
     awaitingDesign: "بانتظار التصميم",
+    uploadingDetails: "جارٍ رفع تفاصيل الفندق...",
+    loadingSavedDetails: "جارٍ تحميل بيانات الفندق المحفوظة...",
+    uploadingCover: "جارٍ رفع الصورة الرئيسية...",
+    uploadingLogo: "جارٍ رفع شعار الفندق...",
+    uploadingGallery: "جارٍ رفع صور المعرض...",
+    savingDatabase: "جارٍ حفظ الفندق في قاعدة البيانات...",
+    publishing: "جارٍ النشر...",
   },
 };
 
@@ -88,22 +114,6 @@ const CATEGORY_LABELS = {
   Motel: { en: "Motel", ar: "موتيل" },
   Villa: { en: "Villa", ar: "فيلا" },
 };
-
-function readSession() {
-  return {
-    main: JSON.parse(sessionStorage.getItem("hotel_details_main") || "null"),
-    description: JSON.parse(
-      sessionStorage.getItem("hotel_details_description") || "null",
-    ),
-    icons: JSON.parse(sessionStorage.getItem("hotel_details_icons") || "null"),
-    policy: JSON.parse(
-      sessionStorage.getItem("hotel_details_policy") || "null",
-    ),
-    photos: JSON.parse(
-      sessionStorage.getItem("hotel_details_photos") || "null",
-    ),
-  };
-}
 
 function PhotoSlider({ photos }) {
   const [index, setIndex] = useState(0);
@@ -326,8 +336,16 @@ export default function HotelDetailsView() {
   const navigate = useNavigate();
   const { lang } = useLanguage();
   const copy = COPY[lang] || COPY.en;
+  const { data: hotels = [], isLoading: loadingHotels } = useGetHotelsQuery();
   const { data: allIcons = [] } = useGetIconsQuery();
-  const { main, description, icons, policy, photos } = readSession();
+  const sessionDraft = readHotelDraftFromSession();
+  const persistedHotel = hotels[0] || null;
+  const persistedDraft = persistedHotel
+    ? buildHotelDraftFromRecord(persistedHotel)
+    : null;
+  const { main, description, icons, policy, photos } = sessionDraft.main
+    ? sessionDraft
+    : persistedDraft || sessionDraft;
 
   const [createHotel] = useCreateHotelMutation();
   const [updateHotel] = useUpdateHotelMutation();
@@ -335,68 +353,106 @@ export default function HotelDetailsView() {
   const [uploadImage] = useUploadImageMutation();
   const [publishing, setPublishing] = useState(false);
   const [publishError, setPublishError] = useState("");
-  const [publishedId, setPublishedId] = useState(() => sessionStorage.getItem("hotel_saved_id") || null);
+  const [publishStage, setPublishStage] = useState("");
+  const [publishedId, setPublishedId] = useState(() => getStoredHotelId());
+
+  useEffect(() => {
+    if (!persistedHotel?._id) return;
+
+    if (!publishedId) {
+      setPublishedId(persistedHotel._id);
+      setStoredHotelId(persistedHotel._id);
+    }
+
+    if (!sessionDraft.main && persistedDraft) {
+      persistHotelDraftToSession(persistedDraft);
+    }
+  }, [persistedHotel, persistedDraft, publishedId, sessionDraft.main]);
 
   const handlePublish = async () => {
     if (!main) return;
+
     setPublishing(true);
     setPublishError("");
+    setPublishStage(copy.uploadingDetails);
+
     try {
-      // Upload images to Cloudinary (falls back to base64 if Cloudinary not configured)
       let thumbnailUrl = photos?.mainPhotoDataUrl || "";
       if (thumbnailUrl?.startsWith("data:")) {
-        const r = await uploadImage({ data: thumbnailUrl, folder: "hotels" }).unwrap();
-        thumbnailUrl = r.url;
+        setPublishStage(copy.uploadingCover);
+        const result = await uploadImage({
+          data: thumbnailUrl,
+          folder: "hotels",
+        }).unwrap();
+        thumbnailUrl = result.url;
       }
+
       let logoUrl = main.logoDataUrl || "";
       if (logoUrl?.startsWith("data:")) {
-        const r = await uploadImage({ data: logoUrl, folder: "hotels/logos" }).unwrap();
-        logoUrl = r.url;
+        setPublishStage(copy.uploadingLogo);
+        const result = await uploadImage({
+          data: logoUrl,
+          folder: "hotels/logos",
+        }).unwrap();
+        logoUrl = result.url;
       }
-      // Upload gallery images
-      const rawGallery = photos?.galleryDataUrls || [];
-      const gallery = await Promise.all(
-        rawGallery.map(async (src) => {
-          if (src?.startsWith("data:")) {
-            const r = await uploadImage({ data: src, folder: "hotels/gallery" }).unwrap();
-            return r.url;
-          }
-          return src;
-        }),
-      );
 
-      const body = {
-        name: main.nameEn || main.nameAr || "",
-        nameAr: main.nameAr || "",
-        description: description?.descriptionEn || "",
-        descriptionAr: description?.descriptionAr || "",
-        location: main.location || "",
-        city: main.city || "",
-        country: main.country || "",
-        postCode: main.postCode || "",
-        lat: main.lat || undefined,
-        lng: main.lng || undefined,
-        stars: main.stars || 3,
-        category: main.category || "",
-        thumbnail: thumbnailUrl,
-        logo: logoUrl,
-        gallery,
-        policy: policy?.policyEn || "",
-        policyAr: policy?.policyAr || "",
-        selectedIcons: icons?.selectedIcons || [],
-      };
+      const rawGallery = photos?.galleryDataUrls || [];
+      let gallery = rawGallery;
+
+      if (rawGallery.some((src) => src?.startsWith("data:"))) {
+        setPublishStage(copy.uploadingGallery);
+        gallery = await Promise.all(
+          rawGallery.map(async (src) => {
+            if (src?.startsWith("data:")) {
+              const result = await uploadImage({
+                data: src,
+                folder: "hotels/gallery",
+              }).unwrap();
+              return result.url;
+            }
+
+            return src;
+          }),
+        );
+      }
+
+      setPublishStage(copy.savingDatabase);
+      const body = buildHotelPayload({
+        main: {
+          ...main,
+          logoDataUrl: logoUrl,
+        },
+        description,
+        icons,
+        policy,
+        photos: {
+          mainPhotoDataUrl: thumbnailUrl,
+          galleryDataUrls: gallery,
+        },
+      });
 
       let result;
       if (publishedId) {
         result = await updateHotel({ _id: publishedId, ...body }).unwrap();
       } else {
         result = await createHotel(body).unwrap();
-        sessionStorage.setItem("hotel_saved_id", result._id);
+      }
+
+      if (result?._id) {
         setPublishedId(result._id);
+        setStoredHotelId(result._id);
+        persistHotelDraftToSession(buildHotelDraftFromRecord(result));
       }
     } catch (err) {
-      setPublishError(lang === "ar" ? "فشل الحفظ. تحقق من الاتصال." : "Publish failed. Check your connection.");
+      setPublishError(
+        err?.data?.message ||
+          (lang === "ar"
+            ? "فشل الحفظ. تحقق من الاتصال."
+            : "Publish failed. Check your connection."),
+      );
     } finally {
+      setPublishStage("");
       setPublishing(false);
     }
   };
@@ -407,9 +463,24 @@ export default function HotelDetailsView() {
   const confirmDelete = () => {
     if (publishedId) deleteHotel(publishedId).catch(() => {});
     STORAGE_KEYS.forEach((key) => sessionStorage.removeItem(key));
-    sessionStorage.removeItem("hotel_saved_id");
+    sessionStorage.removeItem(HOTEL_STORAGE_KEYS.savedId);
     navigate("/hotel/details/main");
   };
+
+  if (!main && loadingHotels) {
+    return (
+      <div className="page-shell flex min-h-[50vh] flex-col items-center justify-center gap-3">
+        <Loader2
+          size={28}
+          className="animate-spin"
+          style={{ color: "var(--sidebar-active-text)" }}
+        />
+        <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+          {copy.loadingSavedDetails}
+        </p>
+      </div>
+    );
+  }
 
   if (!main) {
     return (
@@ -464,9 +535,15 @@ export default function HotelDetailsView() {
       : description?.descriptionEn;
   const secondaryDescription =
     lang === "ar" ? description?.descriptionEn : description?.descriptionAr;
-  const primaryPolicy =
-    lang === "ar" && policy?.policyAr ? policy.policyAr : policy?.policyEn;
-  const secondaryPolicy = lang === "ar" ? policy?.policyEn : policy?.policyAr;
+  const primaryPolicy = buildPolicyText(policy, lang);
+  const secondaryPolicyRaw = buildPolicyText(
+    policy,
+    lang === "ar" ? "en" : "ar",
+  );
+  const secondaryPolicy =
+    secondaryPolicyRaw && secondaryPolicyRaw !== primaryPolicy
+      ? secondaryPolicyRaw
+      : "";
   const localizedCategory = main.category
     ? CATEGORY_LABELS[main.category]?.[lang] || main.category
     : "";
@@ -479,6 +556,50 @@ export default function HotelDetailsView() {
         onConfirm={confirmDelete}
         message={copy.deleteConfirm}
       />
+      {publishing && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 1200,
+            backgroundColor: "rgba(15,23,42,0.18)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            pointerEvents: "none",
+          }}
+        >
+          <div
+            style={{
+              minWidth: 250,
+              maxWidth: "90vw",
+              backgroundColor: "var(--bg-surface)",
+              border: "1px solid var(--border)",
+              borderRadius: "0.9rem",
+              padding: "0.75rem 0.9rem",
+              boxShadow: "0 10px 28px rgba(15,23,42,0.14)",
+              display: "flex",
+              alignItems: "center",
+              gap: "0.65rem",
+            }}
+          >
+            <span
+              style={{
+                width: 16,
+                height: 16,
+                borderRadius: "999px",
+                border: "2px solid #173f78",
+                borderTopColor: "transparent",
+                animation: "spin 0.8s linear infinite",
+                flexShrink: 0,
+              }}
+            />
+            <span style={{ fontSize: "0.84rem", fontWeight: 700, color: "var(--text-primary)" }}>
+              {publishStage || copy.uploadingDetails}
+            </span>
+          </div>
+        </div>
+      )}
       {allPhotos.length > 0 && <PhotoSlider photos={allPhotos} />}
 
       <div
@@ -541,7 +662,10 @@ export default function HotelDetailsView() {
                   }}
                 >
                   {publishing ? (
-                    <span>...</span>
+                    <>
+                      <Loader2 size={13} className="animate-spin" />
+                      {copy.publishing}
+                    </>
                   ) : publishedId ? (
                     <><Check size={13} /> {lang === "ar" ? "تحديث الفندق" : "Update Hotel"}</>
                   ) : (
@@ -626,6 +750,7 @@ export default function HotelDetailsView() {
           </div>
         </div>
       </div>
+      <style>{"@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }"}</style>
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
         <SectionCard
@@ -758,7 +883,7 @@ export default function HotelDetailsView() {
           {primaryPolicy ? (
             <p
               className="text-sm leading-relaxed"
-              style={{ color: "var(--text-primary)" }}
+              style={{ color: "var(--text-primary)", whiteSpace: "pre-line" }}
               dir={lang === "ar" ? "rtl" : "ltr"}
             >
               {primaryPolicy}
@@ -779,6 +904,7 @@ export default function HotelDetailsView() {
               style={{
                 color: "var(--text-secondary)",
                 borderTop: "1px solid var(--border)",
+                whiteSpace: "pre-line",
               }}
             >
               {secondaryPolicy}

@@ -3,6 +3,12 @@ import { useNavigate } from "react-router-dom";
 import { Upload, MapPin, Star, ChevronDown, Camera } from "lucide-react";
 import HotelDetailsStepBar from "../../components/HotelDetailsStepBar";
 import { useLanguage } from "../../context/LanguageContext";
+import { useGetHotelsQuery } from "../../store/services/api";
+import {
+  buildHotelDraftFromRecord,
+  persistHotelDraftToSession,
+  setStoredHotelId,
+} from "./draftUtils";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 
@@ -258,6 +264,7 @@ export default function HotelMainDetailsStep() {
   const logoInputRef = useRef(null);
   const { lang } = useLanguage();
   const copy = COPY[lang] || COPY.en;
+  const { data: hotels = [] } = useGetHotelsQuery();
 
   const [form, setForm] = useState(() => {
     const saved = JSON.parse(
@@ -280,6 +287,18 @@ export default function HotelMainDetailsStep() {
 
   const [nameLang, setNameLang] = useState("en");
   const [errors, setErrors] = useState({});
+
+  useEffect(() => {
+    if (sessionStorage.getItem("hotel_details_main") || !hotels.length) return;
+
+    const persistedDraft = buildHotelDraftFromRecord(hotels[0]);
+    setForm((prev) => ({ ...prev, ...persistedDraft.main }));
+    persistHotelDraftToSession({ main: persistedDraft.main });
+
+    if (hotels[0]?._id) {
+      setStoredHotelId(hotels[0]._id);
+    }
+  }, [hotels]);
 
   const set = (field, value) =>
     setForm((prev) => ({ ...prev, [field]: value }));
