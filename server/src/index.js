@@ -36,6 +36,8 @@ const appSettingsRoutes = require("./routes/appSettings");
 const hotelServicesRoutes = require("./routes/hotelServices");
 const { notFound, errorHandler } = require("./middleware/errorHandler");
 const socketStore = require("./utils/socketStore");
+const Role = require("./models/Role");
+const { flattenPermissions } = require("./utils/permissions");
 
 const app = express();
 const server = http.createServer(app);
@@ -129,8 +131,87 @@ process.on("uncaughtException", (err) => {
   console.error("[uncaughtException]", err);
 });
 
+/**
+ * Upsert all role permission sets so the cloud DB is always in sync.
+ * Safe to run on every startup — does not touch user documents.
+ */
+async function syncRoles() {
+  const roleDefinitions = {
+    super_admin: flattenPermissions(),
+    superadminuser: [
+      "users:view","users:add","users:edit","users:delete",
+      "admins:view","admins:add","admins:edit","admins:delete",
+      "hotels:view","hotels:add","hotels:edit","hotels:delete",
+      "restaurants:view","restaurants:add","restaurants:edit","restaurants:delete",
+      "activities:view","activities:add","activities:edit","activities:delete",
+      "bookings:view","rooms:view","finance:view","reports:view","settings:view",
+    ],
+    admin: [
+      "users:view","users:add","users:edit","users:delete",
+      "hotels:view","hotels:add","hotels:edit","hotels:delete",
+      "restaurants:view","restaurants:add","restaurants:edit","restaurants:delete",
+      "activities:view","activities:add","activities:edit","activities:delete",
+      "bookings:view","bookings:add","bookings:edit",
+      "rooms:view","rooms:add","rooms:edit","rooms:delete",
+      "finance:view","reports:view","settings:view","settings:edit",
+    ],
+    adminuser: [
+      "hotels:view","restaurants:view","activities:view",
+      "bookings:view","finance:view","reports:view","settings:view",
+    ],
+    hotel: [
+      "users:view","users:add","users:edit","users:delete",
+      "hotels:view","hotels:add","hotels:edit","hotels:delete",
+      "bookings:view","bookings:add","bookings:edit",
+      "rooms:view","rooms:add","rooms:edit","rooms:delete",
+      "finance:view","reports:view","settings:view",
+      "channel_manager:view","channel_manager_travky:view","channel_manager_external:view",
+      "guest_groups:view","meal_plans:view","periods:view","supplements:view",
+      "refund_policies:view","channel_manager_rooms:view","rates:view","availability:view",
+      "hotel:details",
+    ],
+    hoteluser: [
+      "bookings:view","bookings:add","bookings:edit",
+      "rooms:view","finance:view","reports:view","settings:view",
+      "channel_manager:view","channel_manager_travky:view",
+      "guest_groups:view","meal_plans:view","periods:view","supplements:view",
+      "refund_policies:view","channel_manager_rooms:view","rates:view","availability:view",
+    ],
+    restaurant: [
+      "users:view","users:add","users:edit","users:delete",
+      "restaurants:view","restaurants:add","restaurants:edit","restaurants:delete",
+      "bookings:view","bookings:add","bookings:edit",
+      "rooms:view","rooms:add","rooms:edit","rooms:delete",
+      "finance:view","reports:view","settings:view",
+    ],
+    restaurantuser: [
+      "bookings:view","bookings:add","bookings:edit",
+      "rooms:view","finance:view","reports:view","settings:view",
+    ],
+    activity: [
+      "users:view","users:add","users:edit","users:delete",
+      "activities:view","activities:add","activities:edit","activities:delete",
+      "bookings:view","bookings:add","bookings:edit",
+      "finance:view","reports:view","settings:view",
+    ],
+    activityuser: [
+      "bookings:view","bookings:add","bookings:edit",
+      "finance:view","reports:view","settings:view",
+    ],
+  };
+  for (const [name, permissions] of Object.entries(roleDefinitions)) {
+    await Role.findOneAndUpdate(
+      { name },
+      { name, permissions },
+      { upsert: true, new: true, setDefaultsOnInsert: true },
+    );
+  }
+  console.log("Roles synced.");
+}
+
 connectDb()
-  .then(() => {
+  .then(async () => {
+    await syncRoles();
     server.listen(port, () => {
       console.log(`API listening on port ${port}`);
     });
